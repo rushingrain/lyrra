@@ -1,26 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --color-accent: #10B981;
+  --color-accent-hover: #059669;
+  --color-on-accent: #FFFFFF;
+  --color-accent-bg: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  --color-background: #FFFFFF;
+  --color-surface: #F0F3F6;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-scrollbar-thumb: #c1c1c1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 html {
-    background-color: rgba(27, 38, 54, 1);
-    text-align: center;
-    color: white;
+  font-family: "Geist Variable", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: var(--color-text-primary);
+  background-color: var(--color-background);
 }
 
 body {
-    margin: 0;
-    color: white;
-    font-family: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  margin: 0;
+  overflow: hidden;
 }
 
-@font-face {
-    font-family: "Nunito";
-    font-style: normal;
-    font-weight: 400;
-    src: local(""),
-    url("assets/fonts/nunito-v16-latin-regular.woff2") format("woff2");
+#root {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
 }
 
-#app {
-    height: 100vh;
-    text-align: center;
+/* 隐藏横向滚动条的容器 */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* 横向滚动区域 scroll-snap */
+.snap-x-mandatory {
+  scroll-snap-type: x mandatory;
+}
+
+.scrollbar .simplebar-track.simplebar-vertical {
+  width: 8px;
+}
+
+.scrollbar .simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
+  background-color: var(--color-scrollbar-thumb);
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.scrollbar:hover .simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
+  opacity: 1;
+}
+
