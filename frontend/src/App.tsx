@@ -1,37 +1,28 @@
-import { useCallback } from 'react'
+import { HashRouter, Routes, Route } from 'react-router-dom'
 import { MainLayout } from './components/layout/MainLayout'
-import { BannerCarousel } from './components/home/BannerCarousel'
-import { PlaylistRecommend } from './components/home/PlaylistRecommend'
-import { SongList } from './components/home/SongList'
-import { mockBanners, mockPlaylists, mockSongs } from './data/mock'
+import Home from './pages/Home'
+import Following from './pages/Following'
+import FM from './pages/FM'
+import Likes from './pages/Likes'
+import History from './pages/History'
+import Cloud from './pages/Cloud'
+import Search from './pages/Search'
 
 function App() {
-  // 一页项数变化时通知父级，便于向后端请求对应数量的官方歌单
-  const handlePlaylistPageSizeChange = useCallback((count: number) => {
-    // TODO: 根据 count 调用后端接口请求对应数量的官方歌单
-    console.log('[PlaylistRecommend] 一页项数:', count)
-  }, [])
-
-  // 最新音乐一页项数变化时通知父级，便于向后端请求对应数量的歌曲
-  const handleSongPageSizeChange = useCallback((count: number) => {
-    // TODO: 根据 count 调用后端接口请求对应数量的歌曲
-    console.log('[SongList] 一页项数:', count)
-  }, [])
-
   return (
-    <MainLayout>
-      <BannerCarousel banners={mockBanners} />
-      <div className="mt-10">
-        <PlaylistRecommend
-          playlists={mockPlaylists}
-          onPageSizeChange={handlePlaylistPageSizeChange}
-        />
-      </div>
-      {/* 最新音乐 */}
-      <SongList title="最新音乐" songs={mockSongs} onPageSizeChange={handleSongPageSizeChange} />
-      {/* 热门音乐 */}
-      <SongList title="热门音乐" songs={mockSongs} onPageSizeChange={handleSongPageSizeChange} />
-    </MainLayout>
+    <HashRouter>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route index element={<Home />} />
+          <Route path="following" element={<Following />} />
+          <Route path="fm" element={<FM />} />
+          <Route path="likes" element={<Likes />} />
+          <Route path="history" element={<History />} />
+          <Route path="cloud" element={<Cloud />} />
+          <Route path="search" element={<Search />} />
+        </Route>
+      </Routes>
+    </HashRouter>
   )
 }
 

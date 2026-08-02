@@ -192,7 +192,7 @@ export function MiniPlayer() {
         {/* 左：封面 + 歌曲信息 + 点赞 + 评论 */}
         <div className="flex w-[340px] items-center gap-3">
           {/* 唱片样式：黑圈包裹圆形图片 */}
-          <div className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2 transition-transform hover:scale-105">
+          <div className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2.5 transition-transform hover:scale-105">
             <img
               src={currentSong.coverUrl}
               alt={currentSong.title}

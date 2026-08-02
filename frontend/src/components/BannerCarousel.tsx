@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import type { Banner } from '../../types'
+import type { Banner } from '@/types'
 
 interface BannerCarouselProps {
   banners: Banner[]

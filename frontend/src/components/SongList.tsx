@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { SongRow } from './SongRow'
-import type { Song } from '../../types'
+import { SongRow } from '@/components/SongRow'
+import type { Song } from '@/types'
 
 interface SongListProps {
   songs: Song[]

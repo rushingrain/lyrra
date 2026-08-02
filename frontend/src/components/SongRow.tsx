@@ -1,4 +1,4 @@
-import type { Song } from '../../types'
+import type { Song } from '@/types'
 
 interface SongRowProps {
   song: Song

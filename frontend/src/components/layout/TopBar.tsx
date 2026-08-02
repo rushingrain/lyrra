@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Search, User, Settings, Shirt, Crown, Mail } from 'lucide-react'
 
 interface UserInfo {
@@ -11,25 +12,35 @@ interface TopBarProps {
 }
 
 export function TopBar({ user = null }: TopBarProps) {
+  const navigate = useNavigate()
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      const query = (e.target as HTMLInputElement).value.trim()
+      if (query) {
+        navigate(`/search?q=${encodeURIComponent(query)}`)
+      }
+    }
+  }
+
   return (
     <div className="flex w-full items-center justify-between">
-
       {/* 左侧：回退按钮 + 搜索框 */}
       <div className="flex items-center gap-3">
         <button
           className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100"
           aria-label="回退"
+          onClick={() => navigate(-1)}
         >
           <ArrowLeft size={16} />
         </button>
 
-        <div
-          className="flex w-[280px] items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 transition-colors duration-200 focus-within:border-[var(--color-accent)]"
-        >
+        <div className="flex w-[280px] items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 transition-colors duration-200 focus-within:border-[var(--color-accent)]">
           <Search size={16} className="shrink-0 text-[var(--color-text-secondary)]" />
           <input
             type="text"
             placeholder="在这里输入你要搜索的内容"
+            onKeyDown={handleKeyDown}
             className="flex-1 border-none bg-transparent text-sm outline-none placeholder:text-[var(--color-text-secondary)]/50 text-[var(--color-text-primary)]"
           />
         </div>
@@ -64,23 +75,17 @@ export function TopBar({ user = null }: TopBarProps) {
         </button>
 
         {/* 消息按钮 */}
-        <button
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100"
-        >
+        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
           <Mail size={18} />
         </button>
 
         {/* 皮肤按钮 */}
-        <button
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100"
-        >
+        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
           <Shirt size={18} />
         </button>
 
         {/* 设置按钮 */}
-        <button
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100"
-        >
+        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
           <Settings size={18} />
         </button>
       </div>

@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
-import { PlaylistCard } from './PlaylistCard'
-import type { Playlist } from '../../types'
+import { PlaylistCard } from '@/components/PlaylistCard'
+import type { Playlist } from '@/types'
 
 interface PlaylistRecommendProps {
   playlists: Playlist[]

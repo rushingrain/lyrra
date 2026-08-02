@@ -1,4 +1,4 @@
-import type { Playlist } from '../../types'
+import type { Playlist } from '@/types'
 import { Play } from 'lucide-react'
 
 interface PlaylistCardProps {
