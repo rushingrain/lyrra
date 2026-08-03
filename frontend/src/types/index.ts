@@ -40,3 +40,30 @@ export interface PlayHistory {
   song: Song
   playedAt: string
 }
+
+/** 扫码登录 - 获取二维码的响应 */
+export interface QrLoginResponse {
+  /** 二维码唯一标识，用于轮询登录状态 */
+  qrKey: string
+  /** 二维码图片地址 */
+  qrUrl: string
+  /** 二维码过期时间戳(ms) */
+  expiresAt: number
+}
+
+/** 扫码登录状态：未扫码 / 已扫码待确认 / 已确认 / 已过期 */
+export type QrLoginStatus = 'pending' | 'scanned' | 'confirmed' | 'expired'
+
+/** 登录成功后的用户信息与凭证 */
+export interface LoginResult {
+  token: string
+  user: {
+    nickname: string
+    avatar: string
+    isVip: boolean
+    /** 好友 / 关注 / 粉丝数（来自 user_detail 接口，未返回时缺省） */
+    friends?: number
+    follows?: number
+    fans?: number
+  }
+}

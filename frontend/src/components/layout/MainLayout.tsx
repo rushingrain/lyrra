@@ -1,9 +1,11 @@
-import { useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { MiniPlayer } from './MiniPlayer'
 import { TopBar } from './TopBar'
-import { mockPlayHistory } from '../../data/mock'
+import { getCurrentUser, logout } from '@/services/auth'
+import type { LoginResult } from '@/types'
+import { mockPlayHistory } from '@/data/mock'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 
@@ -12,6 +14,24 @@ const CONTENT_WRAPPER = 'mx-auto w-full max-w-[1400px]'
 export function MainLayout() {
   const [playHistory] = useState(() => mockPlayHistory.length > 0 ? mockPlayHistory : [])
   const showPlayer = playHistory.length > 0
+  const [user, setUser] = useState<LoginResult['user'] | null>(null)
+
+  // 启动时恢复已保存的登录会话
+  useEffect(() => {
+    getCurrentUser().then(setUser)
+  }, [])
+
+  /** 登录成功：由 TopBar 透传 LoginModal 回填的用户信息 */
+  const handleLoginSuccess = useCallback((u: LoginResult['user']) => {
+    setUser(u)
+  }, [])
+
+  /** 退出登录：调用后端清空会话，无论成功与否都清除本地登录态 */
+  const handleLogout = useCallback(() => {
+    logout()
+      .catch(() => {})
+      .finally(() => setUser(null))
+  }, [])
 
   return (
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
@@ -22,7 +42,7 @@ export function MainLayout() {
         <div className="flex flex-1 flex-col overflow-hidden">
           <header className="flex h-[72px] min-h-[72px] items-center bg-[var(--color-background)] px-10">
             <div className={CONTENT_WRAPPER}>
-              <TopBar />
+              <TopBar user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
             </div>
           </header>
 

@@ -15,8 +15,15 @@ func main() {
 	// Create an instance of the app structure
 	app := NewApp()
 
+	// Create the auth service instance
+	authService, err := NewAuthService()
+	if err != nil {
+		println("Error:", err.Error())
+		return
+	}
+
 	// Create application with options
-	err := wails.Run(&options.App{
+	err = wails.Run(&options.App{
 		Title:  "kuwave",
 		Width:  1024,
 		Height: 768,
@@ -27,6 +34,7 @@ func main() {
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
+			authService,
 		},
 	})
 
