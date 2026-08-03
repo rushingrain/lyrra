@@ -5,6 +5,7 @@ go 1.25.0
 require (
 	github.com/lfhy/kugou-music-api v0.0.2
 	github.com/wailsapp/wails/v2 v2.13.0
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (

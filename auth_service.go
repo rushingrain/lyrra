@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"sync"
@@ -22,6 +23,7 @@ var ErrNotLoggedIn = errors.New("未登录")
 // 前端通过 Wails 绑定调用其导出方法（window.go.main.AuthService.xxx）。
 type AuthService struct {
 	client *kg.Client
+	log    *slog.Logger
 	// kg.Client 内部维护 cookie 与登录态，非并发安全，
 	// 用互斥锁串行化所有 client 调用。
 	mu sync.Mutex
@@ -31,7 +33,7 @@ type AuthService struct {
 // 只做本地初始化（加载已保存的会话 cookie 注入 client），
 // 不发起网络请求，因此不会阻塞应用启动。
 // 会话有效性校验延迟到首次 GetCurrentUser 调用。
-func NewAuthService() (*AuthService, error) {
+func NewAuthService(log *slog.Logger) (*AuthService, error) {
 	client, err := kg.New(
 		kg.WithCookie(loadSession()),
 		// TODO: token 续期功能暂未启用；后续接入续期时改为 kg.WithAutoRefresh(true)，
@@ -41,7 +43,7 @@ func NewAuthService() (*AuthService, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AuthService{client: client}, nil
+	return &AuthService{client: client, log: log}, nil
 }
 
 // GetLoginQrCode 获取扫码登录二维码。
@@ -52,6 +54,7 @@ func (s *AuthService) GetLoginQrCode() (*QrLoginResponse, error) {
 
 	keyResp, err := s.client.LoginQrKey(context.Background(), kg.LoginQrKeyRequest{})
 	if err != nil {
+		s.log.Warn("failed to get login QR key", "err", err.Error())
 		return nil, err
 	}
 	key := keyResp.QRCodeKey()
@@ -64,6 +67,7 @@ func (s *AuthService) GetLoginQrCode() (*QrLoginResponse, error) {
 		Qrimg: true, // 本地生成 base64 PNG，返回 data:image/png;base64,...
 	})
 	if err != nil {
+		s.log.Warn("failed to create login QR code", "err", err.Error())
 		return nil, err
 	}
 
@@ -84,18 +88,22 @@ func (s *AuthService) CheckQrLoginStatus(qrKey string) (string, error) {
 
 	checkResp, err := s.client.LoginQrCheck(context.Background(), kg.LoginQrCheckRequest{Key: qrKey})
 	if err != nil {
+		s.log.Debug("QR login status check failed", "err", err.Error())
 		return string(QrLoginPending), nil
 	}
 	switch checkResp.StatusCode() {
 	case 0:
 		// 二维码已过期，前端会刷新二维码
+		s.log.Info("login QR code expired")
 		return string(QrLoginExpired), nil
 	case 2:
 		// 已扫码，等待用户在手机上确认
+		s.log.Info("QR code scanned, awaiting confirmation")
 		return string(QrLoginScanned), nil
 	case 4:
 		// 登录成功，token/userid 已由 SDK 自动注入 client，此刻持久化会话
 		saveSession(s.client.Cookie())
+		s.log.Info("QR login succeeded")
 		return string(QrLoginConfirmed), nil
 	default:
 		return string(QrLoginPending), nil
@@ -112,6 +120,7 @@ func (s *AuthService) GetCurrentUser() (*UserInfo, error) {
 	// 当前行为：UserDetail 失败即视为未登录，前端静默进入未登录态。
 	resp, err := s.client.UserDetail(context.Background(), kg.UserDetailRequest{})
 	if err != nil {
+		s.log.Warn("failed to fetch user info, treating as not logged in", "err", err.Error())
 		return nil, ErrNotLoggedIn
 	}
 
@@ -175,6 +184,7 @@ func (s *AuthService) Logout() error {
 	s.client.SetCookie("vip_token", "")
 	s.client.SetCookie("vip_type", "")
 	clearSession()
+	s.log.Info("logged out")
 	return nil
 }
 
