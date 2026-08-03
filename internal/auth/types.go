@@ -1,4 +1,4 @@
-package main
+package auth
 
 // 登录相关 DTO，json tag 与前端 frontend/src/types/index.ts 对齐。
 

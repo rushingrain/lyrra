@@ -1,4 +1,4 @@
-export namespace main {
+export namespace auth {
 	
 	export class QrLoginResponse {
 	    qrKey: string;

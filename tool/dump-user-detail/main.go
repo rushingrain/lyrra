@@ -1,7 +1,7 @@
 //go:build ignore
 
 // 自己调用 /v3/get_my_info 的独立脚本（不参与应用编译）。
-// 用法： go run dump_user_detail.go
+// 用法： go run ./tool/dump-user-detail
 // 它会：
 //  1. 打印一条与 SDK 构造完全一致的 curl 命令（signature/p/mid 已现场算好）
 //  2. 实际执行请求，并美化打印完整响应 JSON
