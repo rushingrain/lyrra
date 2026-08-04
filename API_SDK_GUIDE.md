@@ -67,17 +67,17 @@
 ## 1. 安装与导入
 
 ```bash
-go get github.com/lfhy/kugou-music-api
+go get github.com/rushingrain/kugou-music-api
 ```
 
 ### 导入方式
 
 ```go
 // 推荐：直接从根包导入，别名 kg
-import kg "github.com/lfhy/kugou-music-api"
+import kg "github.com/rushingrain/kugou-music-api"
 
 // 兼容旧代码：也可导入子包
-import "github.com/lfhy/kugou-music-api/sdk"
+import "github.com/rushingrain/kugou-music-api/sdk"
 ```
 
 根包通过类型别名暴露了 `sdk` 包的所有公开符号，两者等价。**新项目推荐使用根包**。
@@ -94,7 +94,7 @@ import (
     "fmt"
     "log"
 
-    kg "github.com/lfhy/kugou-music-api"
+    kg "github.com/rushingrain/kugou-music-api"
 )
 
 func main() {

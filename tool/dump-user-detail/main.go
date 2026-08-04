@@ -22,8 +22,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lfhy/kugou-music-api/core/kugou"
-	"github.com/lfhy/kugou-music-api/core/util"
+	"github.com/rushingrain/kugou-music-api/core/kugou"
+	"github.com/rushingrain/kugou-music-api/core/util"
 )
 
 // 与 SDK sdk/user_detail_manual.go 保持一致（JSON 字段顺序影响签名）

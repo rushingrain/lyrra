@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	kg "github.com/lfhy/kugou-music-api"
+	kg "github.com/rushingrain/kugou-music-api"
 )
 
 // ErrNotLoggedIn 未登录或会话已过期
