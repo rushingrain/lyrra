@@ -38,8 +38,8 @@ func NewBannerService(log *slog.Logger) (*BannerService, error) {
 
 // GetHomeBanners 拉取首页轮播 banner（/pc/diantai 电台 banner 接口）。
 //
-// 该接口返回广告与内容混合列表，isAd 为 true 的第三方推广项（直播/HiFi 等）
-// 直接过滤；剩余项 code 为 banner 图片地址、url 为点击跳转链接。
+// 该接口返回广告与内容混合列表，全部透传返回：广告项（直播/HiFi 等）与
+// 内容项共用 code（图片地址）、url（跳转链接）字段。
 func (s *BannerService) GetHomeBanners() ([]HomeBanner, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -75,18 +75,25 @@ func (s *BannerService) GetHomeBanners() ([]HomeBanner, error) {
 		if !ok {
 			continue
 		}
-		// 过滤第三方广告
-		if isAd, _ := m["isAd"].(bool); isAd {
-			continue
-		}
 		banners = append(banners, HomeBanner{
 			ID:       fmt.Sprintf("%v", m["id"]),
-			ImageURL: imageurl.Normalize(pickString(m, "code")),
+			ImageURL: bannerImageURL(pickString(m, "code")),
 			Title:    pickString(m, "title"),
 			LinkURL:  pickString(m, "url"),
 		})
 	}
 	return banners, nil
+}
+
+// bannerImageURL 规范化 banner 图片地址：
+// adsfile 图床（广告位）不支持 https（证书与域名不匹配，WKWebView 会拒绝），
+// 保留 http 原样返回，配合 Info.plist 的 ATS 例外加载；
+// 其余图床（mdpfile 等）统一转 https，避免被 ATS 拦截。
+func bannerImageURL(raw string) string {
+	if strings.HasPrefix(raw, "http://adsfile") {
+		return raw
+	}
+	return imageurl.Normalize(raw)
 }
 
 // pickString 从 item map 提取字符串字段。
