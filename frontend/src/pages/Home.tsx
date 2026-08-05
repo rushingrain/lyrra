@@ -41,9 +41,11 @@ export default function Home() {
     getNewSongs(DEFAULT_SONG_PAGE, DEFAULT_SONG_PAGE_SIZE).then((data) => {
       if (!cancelled) setSongs(data)
     })
-    // 热门音乐：TopCard 固定返回一批，无分页参数
+    // 热门音乐：TopCard 固定返回一批，无分页参数。
+    // 后端可能返回多条：服务层缓存仍保留全量数据，
+    // 页面只渲染前 DEFAULT_SONG_PAGE_SIZE 条，避免卡片过多。
     getHotSongs().then((data) => {
-      if (!cancelled) setHotSongs(data)
+      if (!cancelled) setHotSongs(data.slice(0, DEFAULT_SONG_PAGE_SIZE))
     })
     return () => {
       cancelled = true

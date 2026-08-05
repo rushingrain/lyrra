@@ -34,7 +34,7 @@ type SongService struct {
 // NewSongService 创建最新音乐服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
 func NewSongService(log *slog.Logger) (*SongService, error) {
-	client, err := kg.New(kg.WithAutoRefresh(false))
+	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithLite(false))
 	if err != nil {
 		return nil, err
 	}
