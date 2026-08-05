@@ -1,4 +1,5 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
+import { Toaster } from 'react-hot-toast'
 import { MainLayout } from './components/layout/MainLayout'
 import Home from './pages/Home'
 import Following from './pages/Following'
@@ -10,19 +11,40 @@ import Search from './pages/Search'
 
 function App() {
   return (
-    <HashRouter>
-      <Routes>
-        <Route element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="following" element={<Following />} />
-          <Route path="fm" element={<FM />} />
-          <Route path="likes" element={<Likes />} />
-          <Route path="history" element={<History />} />
-          <Route path="cloud" element={<Cloud />} />
-          <Route path="search" element={<Search />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <>
+      <HashRouter>
+        <Routes>
+          <Route element={<MainLayout />}>
+            <Route index element={<Home />} />
+            <Route path="following" element={<Following />} />
+            <Route path="fm" element={<FM />} />
+            <Route path="likes" element={<Likes />} />
+            <Route path="history" element={<History />} />
+            <Route path="cloud" element={<Cloud />} />
+            <Route path="search" element={<Search />} />
+          </Route>
+        </Routes>
+      </HashRouter>
+      {/* 全局错误提示容器：主题色与 style.css 的 CSS 变量保持一致 */}
+      <Toaster
+        position="top-center"
+        toastOptions={{
+          // 停留时长（ms）
+          duration: 2000,
+          style: {
+            background: 'var(--color-background)',
+            color: 'var(--color-text-primary)',
+            border: '1px solid var(--color-border)',
+            fontSize: '14px',
+            borderRadius: '10px',
+            padding: '10px 16px',
+          },
+          error: {
+            iconTheme: { primary: '#EF4444', secondary: '#FFFFFF' },
+          },
+        }}
+      />
+    </>
   )
 }
 

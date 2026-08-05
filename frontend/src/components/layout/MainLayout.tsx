@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { Sidebar } from './Sidebar'
 import { MiniPlayer } from './MiniPlayer'
 import { TopBar } from './TopBar'
@@ -29,7 +30,9 @@ export function MainLayout() {
   /** 退出登录：调用后端清空会话，无论成功与否都清除本地登录态 */
   const handleLogout = useCallback(() => {
     logout()
-      .catch(() => {})
+      .catch(() => {
+        toast.error('退出登录失败，请稍后重试')
+      })
       .finally(() => setUser(null))
   }, [])
 

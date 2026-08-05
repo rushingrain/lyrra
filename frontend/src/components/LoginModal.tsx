@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Loader2, RefreshCw, Smartphone, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 import {
   checkQrLoginStatus,
   getCurrentUser,
@@ -140,6 +141,8 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
     try {
       const info = await getLoginQrCode()
       setQrInfo(info)
+    } catch {
+      toast.error('获取登录二维码失败，请稍后重试')
     } finally {
       setLoading(false)
     }
