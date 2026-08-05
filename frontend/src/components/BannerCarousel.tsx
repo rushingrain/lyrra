@@ -16,7 +16,10 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
 
   // 展示数量不超过 banner 总数
   const vc = Math.min(visibleCount, len)
-  const numPages = Math.max(1, Math.ceil(len / vc))
+  // len 为 0（banner 数据异步加载中）时避免 0/0 得到 NaN：
+  // 否则页面校正 effect 里 Math.min(p, NaN) 会把 page 污染成 NaN，
+  // 导致 activeIndex 恒为 NaN、所有 banner 都 opacity-0（首次进入空白、轮播失效）。
+  const numPages = len === 0 ? 1 : Math.max(1, Math.ceil(len / vc))
   const startIndex = page * vc
 
   // 根据容器实际宽度决定一次展示 2 张还是 3 张
@@ -30,7 +33,9 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+    // 依赖 len：首次挂载 banner 为空时容器未渲染（containerRef 为 null），
+    // 观察器挂不上；数据到达后容器出现，依赖变化触发重新挂载。
+  }, [len])
 
   // 展示数量变化后纠正越界的页码
   useEffect(() => {

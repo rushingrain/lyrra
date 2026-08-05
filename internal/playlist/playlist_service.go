@@ -1,0 +1,117 @@
+package playlist
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"log/slog"
+	"strconv"
+	"strings"
+	"sync"
+
+	kg "github.com/rushingrain/kugou-music-api"
+)
+
+// PlaylistService 首页官方歌单服务。
+//
+// 结构体实例常驻进程，持有独立的 *kg.Client（无需登录态）；前端通过 Wails
+// 绑定调用其导出方法（window.go.main.PlaylistService.xxx）。
+type PlaylistService struct {
+	client *kg.Client
+	log    *slog.Logger
+	// kg.Client 非并发安全，用互斥锁串行化所有 client 调用（同 auth/banner 包）。
+	mu sync.Mutex
+}
+
+// NewPlaylistService 创建官方歌单服务。
+// 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
+func NewPlaylistService(log *slog.Logger) (*PlaylistService, error) {
+	client, err := kg.New(kg.WithAutoRefresh(false))
+	if err != nil {
+		return nil, err
+	}
+	return &PlaylistService{client: client, log: log}, nil
+}
+
+// GetHomePlaylists 拉取首页官方歌单（/top/playlist）。
+// pageSize 为期望返回条数（<=0 时回退默认 15）；withSong 为是否携带歌曲
+// （0 不携带 / 1 携带），两个参数都会透传给上游请求。
+func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]HomePlaylist, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if pageSize <= 0 {
+		pageSize = 15
+	}
+	resp, err := s.client.TopPlaylist(context.Background(), kg.TopPlaylistRequest{
+		Pagesize: pageSize,
+		Withsong: withSong,
+	})
+	if err != nil {
+		s.log.Warn("failed to fetch home playlists", "err", err.Error())
+		return nil, err
+	}
+	// 业务成功判断同 auth 包：body 里 status=="1" 且 error_code==0。
+	if fmt.Sprintf("%v", resp.Body["status"]) != "1" {
+		return nil, errors.New("top/playlist 接口业务失败")
+	}
+
+	data, _ := resp.Body["data"].(map[string]any)
+	items, _ := data["special_list"].([]any)
+	playlists := make([]HomePlaylist, 0, len(items))
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		playlists = append(playlists, HomePlaylist{
+			// specialid 是大数，直接 fmt.Sprintf("%v") 会把 float64 输出成科学计数法（如 4.44554e+06），
+			// 必须先转整数再格式化。
+			ID:          strconv.FormatInt(int64(pickInt(m, "specialid")), 10),
+			Name:        pickString(m, "specialname"),
+			CoverURL:    normalizeCoverURL(pickString(m, "imgurl")),
+			Description: pickString(m, "intro"),
+			PlayCount:   pickInt(m, "play_count"),
+		})
+	}
+	return playlists, nil
+}
+
+// pickString 从 item map 提取字符串字段。
+func pickString(m map[string]any, key string) string {
+	if s, ok := m[key].(string); ok {
+		return strings.TrimSpace(s)
+	}
+	return ""
+}
+
+// pickInt 从 item map 提取整数字段，兼容 JSON 反序列化后的 float64 及字符串形式。
+func pickInt(m map[string]any, key string) int {
+	switch n := m[key].(type) {
+	case float64:
+		return int(n)
+	case int:
+		return n
+	case int64:
+		return int(n)
+	case string:
+		if v, err := strconv.Atoi(strings.TrimSpace(n)); err == nil {
+			return v
+		}
+	}
+	return 0
+}
+
+// normalizeCoverURL 处理歌单封面地址：尺寸占位符替换 + http 图床转 https。
+//
+// 酷狗封面形如 http://c1.kgimg.com/custom/{size}/...jpg，{size} 需替换为具体
+// 尺寸（取 400，2x 清晰度常用档位，实测 https 可用）。
+// http 转 https 原因同 auth 包 normalizeAvatarUrl：wails dev 下 .app 受 ATS
+// 限制会拦截远程 http:// 资源。
+func normalizeCoverURL(raw string) string {
+	raw = strings.ReplaceAll(raw, "{size}", "400")
+	if strings.HasPrefix(raw, "http://") {
+		return "https://" + strings.TrimPrefix(raw, "http://")
+	}
+	return raw
+}

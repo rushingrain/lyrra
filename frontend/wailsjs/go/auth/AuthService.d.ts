@@ -8,4 +8,6 @@ export function GetCurrentUser():Promise<auth.UserInfo>;
 
 export function GetLoginQrCode():Promise<auth.QrLoginResponse>;
 
+export function GetUserPlaylists(arg1:number,arg2:number):Promise<Array<auth.UserPlaylist>>;
+
 export function Logout():Promise<void>;

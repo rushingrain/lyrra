@@ -1,52 +1,24 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { PlaylistCard } from '@/components/PlaylistCard'
 import type { Playlist } from '@/types'
 
 interface PlaylistRecommendProps {
   playlists: Playlist[]
-  /** 单个歌单项的最小宽度（px），用于根据容器宽度计算一页展示多少项 */
-  minCardWidth?: number
-  /** 一页项数变化时回调，便于父级向后端请求对应数量的数据 */
-  onPageSizeChange?: (count: number) => void
 }
 
-const GAP = 20 // gap-5 = 1.25rem
-
-export function PlaylistRecommend({
-  playlists,
-  minCardWidth = 180,
-  onPageSizeChange,
-}: PlaylistRecommendProps) {
-  const containerRef = useRef<HTMLDivElement>(null)
-  const [pageSize, setPageSize] = useState(1)
-
-  // 根据容器宽度计算一页能容纳多少项：
-  // N = floor((容器宽度 + GAP) / (minCardWidth + GAP))，每项实际宽度由 flex-1 平分
-  useLayoutEffect(() => {
-    const el = containerRef.current
-    if (!el) return
-    const compute = () => {
-      const width = el.clientWidth
-      const count = Math.max(1, Math.floor((width + GAP) / (minCardWidth + GAP)))
-      setPageSize((prev) => (prev === count ? prev : count))
-    }
-    // 同步计算一次，避免首帧闪现错误数量；再监听后续尺寸变化
-    compute()
-    const ro = new ResizeObserver(compute)
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [minCardWidth, playlists.length])
-
-  // 通知父级当前一页的项数，便于向后端请求对应数量的歌单
-  useEffect(() => {
-    onPageSizeChange?.(pageSize)
-  }, [pageSize, onPageSizeChange])
-
+/**
+ * 首页官方歌单板块。
+ *
+ * 多列自适应布局：CSS Grid 按容器宽度自动决定列数，
+ * 每列 minmax(clamp(110px, 15vw, 180px), 1fr)：
+ * - 1fr 保证卡片铺满整行，任何窗口宽度都没有行尾留白；
+ * - 窗口小时下限收紧到 110px → 列数变多，避免卡片过大；
+ * - 窗口大时下限放宽到 180px → 卡片保持舒适尺寸，不随行宽无限撑大；
+ * 窗口变化时列数与卡片尺寸连续缩放。
+ * 纯 CSS 实现，无 ResizeObserver，不存在监听器泄漏；窗口变化也不重新请求。
+ */
+export function PlaylistRecommend({ playlists }: PlaylistRecommendProps) {
   if (playlists.length === 0) return null
-
-  // 一页只展示 pageSize 项
-  const visible = playlists.slice(0, pageSize)
 
   return (
     <section className="mb-10">
@@ -59,8 +31,9 @@ export function PlaylistRecommend({
           <ChevronRight size={20} />
         </a>
       </div>
-      <div ref={containerRef} className="flex items-start gap-5">
-        {visible.map((p) => (
+      {/* 多列 grid：auto-fit + 1fr 铺满整行，最小卡片宽度随窗口 clamp 动态缩放 */}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(clamp(110px,15vw,180px),1fr))] gap-5">
+        {playlists.map((p) => (
           <PlaylistCard key={p.id} playlist={p} />
         ))}
       </div>

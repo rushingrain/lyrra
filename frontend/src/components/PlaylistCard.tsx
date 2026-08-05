@@ -3,6 +3,8 @@ import { Play } from 'lucide-react'
 
 interface PlaylistCardProps {
   playlist: Playlist
+  /** 外层布局注入的尺寸控制（如 flex/grid 中的 min/max-width），默认不设随父容器 */
+  className?: string
 }
 
 function formatCount(count: number): string {
@@ -15,10 +17,14 @@ function formatCount(count: number): string {
   return `${count}`
 }
 
-export function PlaylistCard({ playlist }: PlaylistCardProps) {
+export function PlaylistCard({ playlist, className = '' }: PlaylistCardProps) {
   return (
-    <button className="group min-w-0 flex-1 cursor-pointer text-left">
-      {/* 封面：960:640 = 3:2，随容器宽度等比缩放 */}
+    <div
+      role="button"
+      tabIndex={0}
+      className={`group flex min-w-0 flex-col cursor-pointer text-left ${className}`}
+    >
+      {/* 封面：960:640 = 3:2，随容器宽度等比缩放；右下角叠加播放次数角标 */}
       <div className="relative mb-2 overflow-hidden rounded-xl">
         <img
           src={playlist.coverUrl}
@@ -26,21 +32,19 @@ export function PlaylistCard({ playlist }: PlaylistCardProps) {
           className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-      </div>
-      {/* 名称 + 播放次数 */}
-      <div className="flex items-center gap-2">
-        <p className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--color-text-primary)]">
-          {playlist.name}
-        </p>
-        <span className="flex shrink-0 items-center gap-1 text-xs text-[var(--color-text-secondary)]">
+        <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/45 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
           <Play size={12} fill="currentColor" />
           <span>{formatCount(playlist.playCount)}</span>
         </span>
       </div>
+      {/* 名称：独占整行，超长省略，避免与播放次数挤压 */}
+      <p className="min-w-0 truncate text-sm font-medium text-[var(--color-text-primary)]">
+        {playlist.name}
+      </p>
       {/* 描述 */}
       <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
         {playlist.description}
       </p>
-    </button>
+    </div>
   )
 }

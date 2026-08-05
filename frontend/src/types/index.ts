@@ -18,7 +18,19 @@ export interface Playlist {
   coverUrl: string
   description: string
   playCount: number
+  songCount?: number
+}
+
+/** 用户歌单（侧边栏展示，来自 /v7/get_all_list） */
+export interface UserPlaylist {
+  id: string
+  name: string
   songCount: number
+  coverUrl: string
+  /** 1=默认收藏，2=我喜欢，0=普通歌单 */
+  isDefault: number
+  /** 0=创建的歌单，1=收藏的歌单 */
+  type: number
 }
 
 export interface Artist {

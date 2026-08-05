@@ -14,6 +14,10 @@ export function GetLoginQrCode() {
   return window['go']['auth']['AuthService']['GetLoginQrCode']();
 }
 
+export function GetUserPlaylists(arg1, arg2) {
+  return window['go']['auth']['AuthService']['GetUserPlaylists'](arg1, arg2);
+}
+
 export function Logout() {
   return window['go']['auth']['AuthService']['Logout']();
 }

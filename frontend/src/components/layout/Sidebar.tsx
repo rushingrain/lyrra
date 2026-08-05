@@ -10,12 +10,13 @@ import {
   ChevronDown,
 } from 'lucide-react'
 import { NavLink } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 import logo from '../../assets/images/logo-universal.png'
-import { mockPlaylists } from '../../data/mock'
-import type { Playlist } from '../../types'
-import { useState } from 'react'
+import type { LoginResult, UserPlaylist } from '@/types'
+import { useEffect, useState } from 'react'
+import { getUserPlaylists } from '@/services/userPlaylist'
 
 interface NavItemProps {
   icon: React.ReactNode
@@ -41,9 +42,16 @@ function NavItem({ icon, label, to }: NavItemProps) {
   )
 }
 
+/** 侧边栏歌单项的最小结构：创建/收藏的歌单共用 */
+interface SidebarPlaylist {
+  id: string
+  name: string
+  coverUrl: string
+}
+
 interface PlaylistSectionProps {
   title: string
-  playlists: Playlist[]
+  playlists: SidebarPlaylist[]
   showCreate?: boolean
 }
 
@@ -82,12 +90,18 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
               href="#"
               className="flex items-center gap-3 rounded-lg px-3 py-1 mx-3 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-200"
             >
-              <img
-                src={pl.coverUrl}
-                alt={pl.name}
-                className="h-8 w-8 shrink-0 rounded object-cover"
-                loading="lazy"
-              />
+              {pl.coverUrl ? (
+                <img
+                  src={pl.coverUrl}
+                  alt={pl.name}
+                  className="h-8 w-8 shrink-0 rounded object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-200">
+                  <Music size={14} className="text-[var(--color-text-secondary)]" />
+                </div>
+              )}
               <span className="truncate">{pl.name}</span>
             </a>
           ))}
@@ -97,7 +111,37 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
   )
 }
 
-export function Sidebar() {
+interface SidebarProps {
+  /** 当前登录用户；未登录时为 null，此时不请求用户歌单 */
+  user: LoginResult['user'] | null
+}
+
+export function Sidebar({ user }: SidebarProps) {
+  // 用户歌单：SideBar 常驻挂载，登录后拉取一次即可，无需缓存。
+  // 依赖 user 变化重新拉取（登录/登出），卸载或切换时用 cancelled 标志防泄漏。
+  const [userPlaylists, setUserPlaylists] = useState<UserPlaylist[]>([])
+  // type=1 为收藏的歌单，其余为创建的歌单
+  const createdPlaylists = userPlaylists.filter((p) => p.type !== 1)
+  const collectedPlaylists = userPlaylists.filter((p) => p.type === 1)
+
+  useEffect(() => {
+    if (!user) {
+      setUserPlaylists([])
+      return
+    }
+    let cancelled = false
+    getUserPlaylists()
+      .then((data) => {
+        if (!cancelled) setUserPlaylists(data)
+      })
+      .catch(() => {
+        if (!cancelled) toast.error('获取歌单失败，请稍后重试')
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [user])
+
   return (
     <aside className="h-full w-[200px] min-w-[200px] bg-gray-50">
       <SimpleBar className="h-full scrollbar">
@@ -127,11 +171,11 @@ export function Sidebar() {
         {/* 分隔线 */}
         <div className="border-t border-solid border-[var(--color-border)] my-4 mx-5" />
         {/* 创建的歌单 */}
-        <PlaylistSection title="创建的歌单" playlists={mockPlaylists} showCreate />
+        <PlaylistSection title="创建的歌单" playlists={createdPlaylists} showCreate />
         {/* 分隔线 */}
         <div className="border-t border-solid border-[var(--color-border)] my-4 mx-5" />
         {/* 收藏的歌单 */}
-        <PlaylistSection title="收藏的歌单" playlists={mockPlaylists} />
+        <PlaylistSection title="收藏的歌单" playlists={collectedPlaylists} />
       </SimpleBar>
     </aside>
   )

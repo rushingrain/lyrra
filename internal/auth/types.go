@@ -32,3 +32,16 @@ type UserInfo struct {
 	Follows int `json:"follows"`
 	Fans    int `json:"fans"`
 }
+
+// UserPlaylist 用户歌单 DTO（侧边栏展示）。
+// json tag 与前端 frontend/src/types/index.ts 的 UserPlaylist 类型对齐。
+type UserPlaylist struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	SongCount int    `json:"songCount"`
+	CoverURL  string `json:"coverUrl"`
+	// 歌单类型：1=默认收藏，2=我喜欢，0=普通歌单
+	IsDefault int `json:"isDefault"`
+	// 归属：0=创建的歌单，1=收藏的歌单
+	Type int `json:"type"`
+}

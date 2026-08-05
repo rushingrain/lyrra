@@ -8,7 +8,10 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 
 	"kuwave/internal/auth"
+	"kuwave/internal/banner"
 	"kuwave/internal/log"
+	"kuwave/internal/playlist"
+	"kuwave/internal/song"
 )
 
 //go:embed all:frontend/dist
@@ -35,6 +38,27 @@ func main() {
 		return
 	}
 
+	// Create the banner service instance
+	bannerService, err := banner.NewBannerService(logger)
+	if err != nil {
+		logger.Error("failed to init banner service", "err", err.Error())
+		return
+	}
+
+	// Create the playlist service instance
+	playlistService, err := playlist.NewPlaylistService(logger)
+	if err != nil {
+		logger.Error("failed to init playlist service", "err", err.Error())
+		return
+	}
+
+	// Create the song service instance
+	songService, err := song.NewSongService(logger)
+	if err != nil {
+		logger.Error("failed to init song service", "err", err.Error())
+		return
+	}
+
 	// Create application with options
 	err = wails.Run(&options.App{
 		Title:  "kuwave",
@@ -49,6 +73,9 @@ func main() {
 		Bind: []interface{}{
 			app,
 			authService,
+			bannerService,
+			playlistService,
+			songService,
 		},
 	})
 

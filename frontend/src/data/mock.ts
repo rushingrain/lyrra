@@ -30,7 +30,7 @@ export const mockBanners: Banner[] = [
 export const mockPlaylists: Playlist[] = [
   {
     id: '1',
-    name: '华语经典百首',
+    name: '心动rap：借夏天的名义，暗恋变成了热恋',
     coverUrl: 'https://picsum.photos/seed/playlist1/200/200',
     description: '收录了华语乐坛最经典的百首金曲，从邓丽君到周杰伦，跨越时代的音乐记忆',
     playCount: 12530000,

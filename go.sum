@@ -28,8 +28,6 @@ github.com/leaanthony/slicer v1.6.0 h1:1RFP5uiPJvT93TAHi+ipd3NACobkW53yUiBqZheE/
 github.com/leaanthony/slicer v1.6.0/go.mod h1:o/Iz29g7LN0GqH3aMjWAe90381nyZlDNquK+mtH2Fj8=
 github.com/leaanthony/u v1.1.1 h1:TUFjwDGlNX+WuwVEzDqQwC2lOv0P4uhTQw7CMFdiK7M=
 github.com/leaanthony/u v1.1.1/go.mod h1:9+o6hejoRljvZ3BzdYlVL0JYCwtnAsVuN9pVTQcaRfI=
-github.com/lfhy/kugou-music-api v0.0.2 h1:NrHm4xCwkwTwHBgNx4Ddkht6sqCHoYQxX4uqhvTIkKw=
-github.com/lfhy/kugou-music-api v0.0.2/go.mod h1:1V7tuI0+iV1gcSu/zMg1DmCmvb/CwfRcYFwIdfSaBo0=
 github.com/matryer/is v1.4.0/go.mod h1:8I/i5uYgLzgsgEloJE1U6xx5HkBQpAZvepWuujKwMRU=
 github.com/matryer/is v1.4.1 h1:55ehd8zaGABKLXQUe2awZ99BD/PTc2ls+KV/dXphgEQ=
 github.com/matryer/is v1.4.1/go.mod h1:8I/i5uYgLzgsgEloJE1U6xx5HkBQpAZvepWuujKwMRU=
@@ -47,8 +45,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/rushingrain/kugou-music-api v0.0.0-20260804141632-540ae4a63c90 h1:KfUEsacmyLuV90xr88AFS3/7ICT0PgnQTyrrPIqsxec=
-github.com/rushingrain/kugou-music-api v0.0.0-20260804141632-540ae4a63c90/go.mod h1:nyY5/CFcqGGkQZbTODBL0br6Zglk1vp97c6jIFbVZW8=
+github.com/rushingrain/kugou-music-api v0.0.0-20260805005055-29ced8acc9dc h1:YRSxCfc+MCVbMzGZ8AQuEq6twRUxJqmZRWPp6allJk8=
+github.com/rushingrain/kugou-music-api v0.0.0-20260805005055-29ced8acc9dc/go.mod h1:nyY5/CFcqGGkQZbTODBL0br6Zglk1vp97c6jIFbVZW8=
 github.com/samber/lo v1.49.1 h1:4BIFyVfuQSEpluc7Fua+j1NolZHiEHEpaSEKdsH0tew=
 github.com/samber/lo v1.49.1/go.mod h1:dO6KHFzUKXgP8LDhU0oI8d2hekjXnGOu0DB8Jecxd6o=
 github.com/skip2/go-qrcode v0.0.0-20200617195104-da1b6568686e h1:MRM5ITcdelLK2j1vwZ3Je0FKVCfqOLp5zO6trqMLYs0=

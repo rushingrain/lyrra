@@ -40,7 +40,7 @@ export function MainLayout() {
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
       {/* 上部分：侧边栏 + 顶部栏/主内容区 */}
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar />
+        <Sidebar user={user} />
 
         <div className="flex flex-1 flex-col overflow-hidden">
           <header className="flex h-[72px] min-h-[72px] items-center bg-[var(--color-background)] px-10">
