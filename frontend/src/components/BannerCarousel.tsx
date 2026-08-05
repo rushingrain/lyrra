@@ -67,7 +67,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           {Array.from({ length: vc }).map((_, slot) => (
             <div
               key={slot}
-              className="relative aspect-[800/240] flex-1 overflow-hidden rounded-xl"
+              className="relative aspect-[800/360] flex-1 overflow-hidden rounded-xl"
             >
               {banners.map((banner, index) => {
                 const activeIndex = (startIndex + slot) % len
