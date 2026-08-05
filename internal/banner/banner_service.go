@@ -10,6 +10,8 @@ import (
 	"time"
 
 	kg "github.com/rushingrain/kugou-music-api"
+
+	"kuwave/internal/imageurl"
 )
 
 // BannerService 首页 banner 服务。
@@ -79,7 +81,7 @@ func (s *BannerService) GetHomeBanners() ([]HomeBanner, error) {
 		}
 		banners = append(banners, HomeBanner{
 			ID:       fmt.Sprintf("%v", m["id"]),
-			ImageURL: normalizeImageURL(pickString(m, "code")),
+			ImageURL: imageurl.Normalize(pickString(m, "code")),
 			Title:    pickString(m, "title"),
 			LinkURL:  pickString(m, "url"),
 		})
@@ -93,18 +95,4 @@ func pickString(m map[string]any, key string) string {
 		return strings.TrimSpace(s)
 	}
 	return ""
-}
-
-// normalizeImageURL 将酷狗图床地址统一为 https。
-//
-// 背景同 auth 包 normalizeAvatarUrl：wails dev 模式下应用以 .app 形式运行，
-// 受 App Transport Security 限制，Info.dev.plist 只放行本地网络，远程 http://
-// 资源会被 WKWebView 拦截，导致 banner 图加载失败。非广告 banner 图均在
-// mdpfile 图床（实测 https 可用），统一替换后各启动方式行为一致。
-// 广告位用的 adsfile 图床不支持 https，但广告已在 GetHomeBanners 中过滤。
-func normalizeImageURL(raw string) string {
-	if strings.HasPrefix(raw, "http://") {
-		return "https://" + strings.TrimPrefix(raw, "http://")
-	}
-	return raw
 }

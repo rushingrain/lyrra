@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	kg "github.com/rushingrain/kugou-music-api"
+
+	"kuwave/internal/imageurl"
 )
 
 // PlaylistService 首页官方歌单服务。
@@ -69,7 +71,7 @@ func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]HomePl
 			// 必须先转整数再格式化。
 			ID:          strconv.FormatInt(int64(pickInt(m, "specialid")), 10),
 			Name:        pickString(m, "specialname"),
-			CoverURL:    normalizeCoverURL(pickString(m, "imgurl")),
+			CoverURL:    imageurl.Normalize(pickString(m, "imgurl")),
 			Description: pickString(m, "intro"),
 			PlayCount:   pickInt(m, "play_count"),
 		})
@@ -100,18 +102,4 @@ func pickInt(m map[string]any, key string) int {
 		}
 	}
 	return 0
-}
-
-// normalizeCoverURL 处理歌单封面地址：尺寸占位符替换 + http 图床转 https。
-//
-// 酷狗封面形如 http://c1.kgimg.com/custom/{size}/...jpg，{size} 需替换为具体
-// 尺寸（取 400，2x 清晰度常用档位，实测 https 可用）。
-// http 转 https 原因同 auth 包 normalizeAvatarUrl：wails dev 下 .app 受 ATS
-// 限制会拦截远程 http:// 资源。
-func normalizeCoverURL(raw string) string {
-	raw = strings.ReplaceAll(raw, "{size}", "400")
-	if strings.HasPrefix(raw, "http://") {
-		return "https://" + strings.TrimPrefix(raw, "http://")
-	}
-	return raw
 }

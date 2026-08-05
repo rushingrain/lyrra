@@ -10,6 +10,8 @@ import (
 	"sync"
 
 	kg "github.com/rushingrain/kugou-music-api"
+
+	"kuwave/internal/imageurl"
 )
 
 // 新歌首发榜 rank_id：与 SDK TopSong 默认值一致。
@@ -170,11 +172,11 @@ func songID(m map[string]any) string {
 func songCover(m map[string]any) string {
 	for _, key := range []string{"album_sizable_cover", "sizable_cover"} {
 		if s := pickString(m, key); s != "" {
-			return normalizeCoverURL(s)
+			return imageurl.Normalize(s)
 		}
 	}
 	if trans, ok := m["trans_param"].(map[string]any); ok {
-		return normalizeCoverURL(pickString(trans, "union_cover"))
+		return imageurl.Normalize(pickString(trans, "union_cover"))
 	}
 	return ""
 }
@@ -238,15 +240,4 @@ func pickInt(m map[string]any, key string) int {
 		}
 	}
 	return 0
-}
-
-// normalizeCoverURL 处理歌曲封面地址：尺寸占位符替换 + http 图床转 https。
-// 原因同 playlist/banner 包：wails dev 下 .app 受 ATS 限制会拦截远程 http:// 资源，
-// 统一替换后各启动方式行为一致。
-func normalizeCoverURL(raw string) string {
-	raw = strings.ReplaceAll(raw, "{size}", "400")
-	if strings.HasPrefix(raw, "http://") {
-		return "https://" + strings.TrimPrefix(raw, "http://")
-	}
-	return raw
 }

@@ -12,6 +12,8 @@ import (
 	"time"
 
 	kg "github.com/rushingrain/kugou-music-api"
+
+	"kuwave/internal/imageurl"
 )
 
 // ErrNotLoggedIn 未登录或会话已过期
@@ -138,7 +140,7 @@ func (s *AuthService) GetCurrentUser() (*UserInfo, error) {
 	data, _ := resp.Body["data"].(map[string]any)
 	user := &UserInfo{
 		Nickname: pickString(data, "nickname", "k_nickname", "fx_nickname"),
-		Avatar:   normalizeAvatarUrl(pickString(data, "pic", "k_pic", "fx_pic", "avatar")),
+		Avatar:   imageurl.Normalize(pickString(data, "pic", "k_pic", "fx_pic", "avatar")),
 		Friends:  pickInt(data, "friends"),
 		Follows:  pickInt(data, "follows"),
 		Fans:     pickInt(data, "fans"),
@@ -235,7 +237,7 @@ func (s *AuthService) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, 
 			ID:        strconv.FormatInt(int64(pickInt(m, "listid")), 10),
 			Name:      pickString(m, "name"),
 			SongCount: pickInt(m, "count"),
-			CoverURL:  normalizeUserPlaylistCover(pickString(m, "pic")),
+			CoverURL:  imageurl.Normalize(pickString(m, "pic")),
 			IsDefault: pickInt(m, "is_def"),
 			Type:      pickInt(m, "type"),
 		})
@@ -253,31 +255,6 @@ func normalizeUserID(raw string) int {
 		return int(f)
 	}
 	return 0
-}
-
-// normalizeUserPlaylistCover 处理用户歌单封面：尺寸占位符替换 + http 图床转 https。
-// 原因同 normalizeAvatarUrl：wails dev 下 .app 受 ATS 限制会拦截远程 http:// 资源。
-func normalizeUserPlaylistCover(raw string) string {
-	raw = strings.ReplaceAll(raw, "{size}", "400")
-	if strings.HasPrefix(raw, "http://") {
-		return "https://" + strings.TrimPrefix(raw, "http://")
-	}
-	return raw
-}
-
-// normalizeAvatarUrl 将酷狗图床地址统一为 https。
-//
-// 背景：wails dev 模式下应用以 .app 形式运行，受 App Transport Security 限制，
-// Info.dev.plist 只放行本地网络（NSAllowsLocalNetworking），远程 http:// 资源会被
-// WKWebView 拦截，导致头像加载失败；而 GoLand 直接运行裸二进制（无 bundle）时 ATS
-// 不生效，同样的 http 地址却能加载，两种启动方式行为不一致。
-// 酷狗图床同时支持 https（实测 https://imge.kugou.com 返回 200 + image/jpeg），
-// 统一替换后各启动方式（wails dev / IDE / 生产构建）行为一致。
-func normalizeAvatarUrl(raw string) string {
-	if strings.HasPrefix(raw, "http://") {
-		return "https://" + strings.TrimPrefix(raw, "http://")
-	}
-	return raw
 }
 
 // pickInt 在嵌套 map 中按 key 依次查找第一个可解析为整数的值。
