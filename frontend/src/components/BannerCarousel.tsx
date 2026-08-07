@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
 import type { Banner } from '@/types'
 
 interface BannerCarouselProps {
@@ -120,6 +121,11 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
 
   return (
     <div>
+      {/* 板块标题：与“官方歌单”等标题同款样式，但仅为标题，无箭头、不可点击 */}
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="font-bold text-lg text-[var(--color-text-primary)]">精选活动</h2>
+      </div>
+
       <div ref={containerRef} className="group relative overflow-hidden rounded-xl">
         {/* 轨道：transform 过渡由 GPU 合成，切换流畅 */}
         <div
@@ -139,12 +145,19 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
                   style={{ width: `${100 / vc}%` }}
                 >
                   {banner && (
-                    <img
-                      src={banner.imageUrl}
-                      alt={banner.title}
-                      className="aspect-[800/360] w-full rounded-lg object-cover"
-                      loading="lazy"
-                    />
+                    <button
+                      type="button"
+                      className={`block w-full ${banner.linkUrl ? 'cursor-pointer' : ''}`}
+                      onClick={banner.linkUrl ? () => BrowserOpenURL(banner.linkUrl) : undefined}
+                      aria-label={`打开：${banner.title}`}
+                    >
+                      <img
+                        src={banner.imageUrl}
+                        alt={banner.title}
+                        className="aspect-[800/360] w-full rounded-lg object-cover"
+                        loading="lazy"
+                      />
+                    </button>
                   )}
                 </div>
               ))}
