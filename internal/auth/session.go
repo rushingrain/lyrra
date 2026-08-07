@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strconv"
+	"strings"
 )
 
 // 会话持久化：只保存关键的登录态 cookie 字段。
@@ -25,7 +27,7 @@ func sessionPath() string {
 func saveSession(cookie map[string]string) {
 	essential := map[string]string{
 		"token":     cookie["token"],
-		"userid":    cookie["userid"],
+		"userid":    normalizeUserIDString(cookie["userid"]),
 		"vip_token": cookie["vip_token"],
 		"vip_type":  cookie["vip_type"],
 	}
@@ -49,7 +51,23 @@ func loadSession() map[string]string {
 	if err := json.Unmarshal(data, &cookie); err != nil {
 		return nil
 	}
+	// 兼容历史会话：早期扫码登录可能把 userid 存成科学计数法
+	// （如 "8.63006722e+08"），加载时统一规整为十进制整数。
+	cookie["userid"] = normalizeUserIDString(cookie["userid"])
 	return cookie
+}
+
+// normalizeUserIDString 把科学计数法形式的 userid（如 "8.63006722e+08"）
+// 规整为十进制整数字符串；空串或无法解析的值原样返回。
+func normalizeUserIDString(raw string) string {
+	raw = strings.TrimSpace(raw)
+	if raw == "" {
+		return ""
+	}
+	if f, err := strconv.ParseFloat(raw, 64); err == nil {
+		return strconv.FormatInt(int64(f), 10)
+	}
+	return raw
 }
 
 // clearSession 清除本地会话，登出时调用。

@@ -247,14 +247,15 @@ func (s *AuthService) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, 
 
 // normalizeUserID 把可能为科学计数法（如 "8.63006722e+08"）的 userid 规整为十进制整数。
 func normalizeUserID(raw string) int {
-	raw = strings.TrimSpace(raw)
-	if raw == "" {
+	uid := normalizeUserIDString(raw)
+	if uid == "" {
 		return 0
 	}
-	if f, err := strconv.ParseFloat(raw, 64); err == nil {
-		return int(f)
+	i, err := strconv.ParseInt(uid, 10, 64)
+	if err != nil {
+		return 0
 	}
-	return 0
+	return int(i)
 }
 
 // pickInt 在嵌套 map 中按 key 依次查找第一个可解析为整数的值。
