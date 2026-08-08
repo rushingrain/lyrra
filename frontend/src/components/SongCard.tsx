@@ -1,10 +1,10 @@
 import type { Song } from '@/types'
 
-interface SongRowProps {
+interface SongCardProps {
   song: Song
 }
 
-export function SongRow({ song }: SongRowProps) {
+export function SongCard({ song }: SongCardProps) {
   return (
     <div className="group flex cursor-pointer items-center gap-3 rounded-lg transition-colors hover:bg-gray-50">
       {/* 封面 */}

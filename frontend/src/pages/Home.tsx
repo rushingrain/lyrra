@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BannerCarousel } from '@/components/BannerCarousel'
 import { PlaylistRecommend } from '@/components/PlaylistRecommend'
-import { SongRecommend } from '@/components/SongRecommend'
+import { SongList } from '@/components/SongList'
 import type { Banner, Playlist, Song } from '@/types'
 import { getHomeBanners } from '@/services/banner'
 import {
@@ -58,8 +58,8 @@ export default function Home() {
       <div className="mt-10">
         <PlaylistRecommend playlists={playlists} />
       </div>
-      <SongRecommend songs={songs} title="最新音乐" />
-      <SongRecommend songs={hotSongs} title="热门音乐" />
+      <SongList songs={songs} title="最新音乐" />
+      <SongList songs={hotSongs} title="热门音乐" />
     </>
   )
 }
