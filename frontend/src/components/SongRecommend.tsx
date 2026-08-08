@@ -4,7 +4,6 @@ import type { Song } from '@/types'
 
 interface SongRecommendProps {
   songs: Song[]
-  /** 板块标题，默认“最新音乐” */
   title?: string
 }
 
@@ -20,7 +19,7 @@ export function SongRecommend({ songs, title }: SongRecommendProps) {
 
   return (
     <section className="mb-10">
-      <div className="mb-4 flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <a
           href="#"
           className="flex cursor-pointer items-center font-bold text-lg text-[var(--color-text-primary)] transition-colors hover:opacity-80"
