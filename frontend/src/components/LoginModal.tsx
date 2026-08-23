@@ -169,12 +169,19 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
     const expiryTimer = window.setInterval(tick, 1000)
 
     // mock 阶段始终返回 pending，接入后端轮询接口后自动生效
+    let pollingStopped = false
     const pollTimer = window.setInterval(async () => {
+      if (pollingStopped) return
       try {
         const next = await checkQrLoginStatus(qrInfo.qrKey)
         setStatus(next)
-      } catch {
-        // 请求失败时忽略，等待下一次轮询
+      } catch (error) {
+        pollingStopped = true
+        window.clearInterval(pollTimer)
+        const message = error instanceof Error && error.message
+          ? error.message
+          : '登录初始化失败，请刷新二维码后重试'
+        toast.error(message)
       }
     }, POLL_INTERVAL)
 

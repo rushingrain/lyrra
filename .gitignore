@@ -7,3 +7,5 @@ frontend/tsconfig.tsbuildinfo
 
 .claude
 tmp
+
+.vscode

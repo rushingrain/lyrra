@@ -111,6 +111,43 @@ export namespace playlist {
 
 }
 
+export namespace search {
+	
+	export class SearchComplexResponse {
+	    status: string;
+	    errorCode: any;
+	    data: Record<string, any>;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchComplexResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.errorCode = source["errorCode"];
+	        this.data = source["data"];
+	    }
+	}
+	export class SearchResponse {
+	    status: string;
+	    errorCode: any;
+	    data: Record<string, any>;
+	
+	    static createFrom(source: any = {}) {
+	        return new SearchResponse(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.status = source["status"];
+	        this.errorCode = source["errorCode"];
+	        this.data = source["data"];
+	    }
+	}
+
+}
+
 export namespace song {
 	
 	export class HomeSong {

@@ -1,4 +1,4 @@
-import type { Banner, Playlist, Song, Artist, PlayHistory } from '../types'
+import type { Banner, Playlist, Song, Artist, PlayHistory } from '@/types'
 
 export const mockBanners: Banner[] = [
   {
@@ -264,4 +264,93 @@ export const mockPlayHistory: PlayHistory[] = [
     song: mockSongs[0],
     playedAt: '2026-07-30T22:15:00Z',
   },
+]
+
+// ===== 综合搜索 mock 数据（后续接入真实接口后替换） =====
+
+export interface MockComplexArtist {
+  id: string
+  name: string
+  avatarUrl: string
+  songCount: number
+  fans: number
+}
+
+export interface MockAlbum {
+  id: string
+  name: string
+  artist: string
+  coverUrl: string
+  date: string
+}
+
+export interface MockComplexSong {
+  id: string
+  title: string
+  artist: string
+  coverUrl: string
+  quality?: string
+  isOriginal?: boolean
+  /** 后端以字符串标签形式返回的附加信息，如 "TOP500 第29名"、"评论过万" */
+  tagContent: string[]
+}
+
+export interface MockMv {
+  id: string
+  name: string
+  artist: string
+  coverUrl: string
+}
+
+export interface MockSearchUser {
+  id: string
+  nickname: string
+  signature: string
+  avatarUrl: string
+  gender?: 'male' | 'female'
+}
+
+export const mockComplexArtists: MockComplexArtist[] = [
+  { id: 'ca1', name: '孙燕姿', avatarUrl: 'https://picsum.photos/seed/artist1/200/200', songCount: 606, fans: 5406000 },
+  { id: 'ca2', name: '周杰伦', avatarUrl: 'https://picsum.photos/seed/artist2/200/200', songCount: 820, fans: 58000000 },
+  { id: 'ca3', name: '林俊杰', avatarUrl: 'https://picsum.photos/seed/artist3/200/200', songCount: 412, fans: 42000000 },
+  { id: 'ca4', name: '陈奕迅', avatarUrl: 'https://picsum.photos/seed/artist4/200/200', songCount: 389, fans: 35000000 },
+  { id: 'ca5', name: '邓紫棋', avatarUrl: 'https://picsum.photos/seed/artist5/200/200', songCount: 256, fans: 31000000 },
+  { id: 'ca6', name: '薛之谦', avatarUrl: 'https://picsum.photos/seed/artist6/200/200', songCount: 298, fans: 28000000 },
+]
+
+export const mockAlbums: MockAlbum[] = [
+  { id: 'al1', name: '是时候', artist: '孙燕姿', coverUrl: 'https://picsum.photos/seed/album1/200/200', date: '2011-03-08' },
+  { id: 'al2', name: '叶惠美', artist: '周杰伦', coverUrl: 'https://picsum.photos/seed/album2/200/200', date: '2003-07-31' },
+  { id: 'al3', name: '编号89757', artist: '林俊杰', coverUrl: 'https://picsum.photos/seed/album3/200/200', date: '2005-04-01' },
+  { id: 'al4', name: 'U87', artist: '陈奕迅', coverUrl: 'https://picsum.photos/seed/album4/200/200', date: '2005-06-07' },
+  { id: 'al5', name: '新的心跳', artist: '邓紫棋', coverUrl: 'https://picsum.photos/seed/album5/200/200', date: '2015-11-06' },
+  { id: 'al6', name: '初学者', artist: '薛之谦', coverUrl: 'https://picsum.photos/seed/album6/200/200', date: '2016-07-18' },
+]
+
+export const mockComplexSongs: MockComplexSong[] = [
+  { id: 'cs1', title: '是时候', artist: '孙燕姿', coverUrl: 'https://picsum.photos/seed/song1/200/200', quality: 'Hi-Res', isOriginal: true, tagContent: ['TOP500 第29名', '评论过万'] },
+  { id: 'cs2', title: '逆光', artist: '孙燕姿', coverUrl: 'https://picsum.photos/seed/song2/200/200', quality: 'Hi-Res', tagContent: ['评论过万'] },
+  { id: 'cs3', title: '晴天', artist: '周杰伦', coverUrl: 'https://picsum.photos/seed/song3/200/200', quality: '无损', isOriginal: true, tagContent: ['TOP500 第1名', '万人收藏'] },
+  { id: 'cs4', title: '七里香', artist: '周杰伦', coverUrl: 'https://picsum.photos/seed/song4/200/200', quality: 'Hi-Res', isOriginal: true, tagContent: ['TOP500 第3名'] },
+  { id: 'cs5', title: '江南', artist: '林俊杰', coverUrl: 'https://picsum.photos/seed/song5/200/200', quality: '无损', tagContent: ['评论过万'] },
+  { id: 'cs6', title: '十年', artist: '陈奕迅', coverUrl: 'https://picsum.photos/seed/song6/200/200', quality: 'Hi-Res', isOriginal: true, tagContent: ['TOP500 第16名', '万人收藏'] },
+]
+
+export const mockMvs: MockMv[] = [
+  { id: 'mv1', name: '是时候 MV', artist: '孙燕姿', coverUrl: 'https://picsum.photos/seed/mv1/400/225' },
+  { id: 'mv2', name: '晴天 MV', artist: '周杰伦', coverUrl: 'https://picsum.photos/seed/mv2/400/225' },
+  { id: 'mv3', name: '江南 MV', artist: '林俊杰', coverUrl: 'https://picsum.photos/seed/mv3/400/225' },
+  { id: 'mv4', name: '富士山下 MV', artist: '陈奕迅', coverUrl: 'https://picsum.photos/seed/mv4/400/225' },
+  { id: 'mv5', name: '光年之外 MV', artist: '邓紫棋', coverUrl: 'https://picsum.photos/seed/mv5/400/225' },
+  { id: 'mv6', name: '演员 MV', artist: '薛之谦', coverUrl: 'https://picsum.photos/seed/mv6/400/225' },
+]
+
+export const mockSearchUsers: MockSearchUser[] = [
+  { id: 'u1', nickname: '燕姿后援会', signature: '每一天都是是时候', avatarUrl: 'https://picsum.photos/seed/user1/200/200', gender: 'female' },
+  { id: 'u2', nickname: '杰伦的小可爱', signature: '想听你的演唱会', avatarUrl: 'https://picsum.photos/seed/user2/200/200', gender: 'female' },
+  { id: 'u3', nickname: 'JMの城堡', signature: '林距离，同林俊杰', avatarUrl: 'https://picsum.photos/seed/user3/200/200', gender: 'male' },
+  { id: 'u4', nickname: 'Eason粉丝团', signature: '十年之前我不认识你', avatarUrl: 'https://picsum.photos/seed/user4/200/200', gender: 'male' },
+  { id: 'u5', nickname: 'G.E.M.歌迷会', signature: '光年之外等你', avatarUrl: 'https://picsum.photos/seed/user5/200/200', gender: 'female' },
+  { id: 'u6', nickname: '谦谦的星河', signature: '我好像在哪见过你', avatarUrl: 'https://picsum.photos/seed/user6/200/200', gender: 'male' },
 ]

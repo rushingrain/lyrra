@@ -22,12 +22,13 @@ func sessionPath() string {
 }
 
 // saveSession 保存会话，登录成功后调用。
-// 固定写入 token / userid / vip_token / vip_type 四个登录态 cookie 字段。
+// 固定写入 token / userid / dfid / vip_token / vip_type 五个登录态 cookie 字段。
 // 非 VIP 账号的 vip_token / vip_type 可能为空，但保持一致的结构便于后续扩展。
 func saveSession(cookie map[string]string) {
 	essential := map[string]string{
 		"token":     cookie["token"],
 		"userid":    normalizeUserIDString(cookie["userid"]),
+		"dfid":      cookie["dfid"],
 		"vip_token": cookie["vip_token"],
 		"vip_type":  cookie["vip_type"],
 	}
@@ -41,8 +42,9 @@ func saveSession(cookie map[string]string) {
 	_ = os.WriteFile(sessionPath(), data, 0o600)
 }
 
-// loadSession 恢复会话，初始化 client 时调用。无会话时返回 nil。
-func loadSession() map[string]string {
+// LoadSession 恢复会话。无会话时返回 nil。
+// 除 AuthService 外，需使用当前登录态的服务也通过该方法读取会话。
+func LoadSession() map[string]string {
 	data, err := os.ReadFile(sessionPath())
 	if err != nil {
 		return nil

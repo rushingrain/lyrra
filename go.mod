@@ -40,4 +40,6 @@ require (
 	golang.org/x/text v0.37.0 // indirect
 )
 
+replace github.com/rushingrain/kugou-music-api => /Users/dancingrain/code/project/kugou-music-api
+
 // replace github.com/wailsapp/wails/v2 v2.13.0 => /Users/dancingrain/go/pkg/mod

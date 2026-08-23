@@ -11,6 +11,7 @@ import (
 	"kuwave/internal/banner"
 	"kuwave/internal/log"
 	"kuwave/internal/playlist"
+	"kuwave/internal/search"
 	"kuwave/internal/song"
 )
 
@@ -59,6 +60,13 @@ func main() {
 		return
 	}
 
+	// Create the search service instance
+	searchService, err := search.NewSearchService(logger)
+	if err != nil {
+		logger.Error("failed to init search service", "err", err.Error())
+		return
+	}
+
 	// Create application with options
 	err = wails.Run(&options.App{
 		Title:  "kuwave",
@@ -76,6 +84,7 @@ func main() {
 			bannerService,
 			playlistService,
 			songService,
+			searchService,
 		},
 	})
 

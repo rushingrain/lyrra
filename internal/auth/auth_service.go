@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -37,7 +38,7 @@ type AuthService struct {
 // 会话有效性校验延迟到首次 GetCurrentUser 调用。
 func NewAuthService(log *slog.Logger) (*AuthService, error) {
 	client, err := kg.New(
-		kg.WithCookie(loadSession()),
+		kg.WithCookie(LoadSession()),
 		// TODO: token 续期功能暂未启用；后续接入续期时改为 kg.WithAutoRefresh(true)，
 		// 并处理会话过期（登录态失效）时的行为。
 		kg.WithAutoRefresh(false),
@@ -103,13 +104,37 @@ func (s *AuthService) CheckQrLoginStatus(qrKey string) (string, error) {
 		s.log.Info("QR code scanned, awaiting confirmation")
 		return string(QrLoginScanned), nil
 	case 4:
-		// 登录成功，token/userid 已由 SDK 自动注入 client，此刻持久化会话
+		// SDK 的 RegisterDev 遇到异常响应时可能 panic。registerDevice 会将其转为
+		// 普通错误，确保 Wails 能向前端返回失败原因而不是中断回调。
+		s.client.SetCookie("dfid", "")
+		if err := s.registerDevice(); err != nil {
+			s.log.Warn("failed to register device after QR login", "err", err.Error())
+			return "", fmt.Errorf("登录已确认，但设备注册失败: %w", err)
+		}
 		saveSession(s.client.Cookie())
 		s.log.Info("QR login succeeded")
 		return string(QrLoginConfirmed), nil
 	default:
 		return string(QrLoginPending), nil
 	}
+}
+
+// registerDevice 将 SDK 的异常响应转换为普通错误，防止 panic 穿透到 Wails 回调。
+func (s *AuthService) registerDevice() (err error) {
+	defer func() {
+		if recovered := recover(); recovered != nil {
+			s.log.Error("RegisterDev panicked", "panic", recovered, "stack", string(debug.Stack()))
+			err = fmt.Errorf("注册设备异常: %v", recovered)
+		}
+	}()
+
+	if _, err := s.client.RegisterDev(context.Background(), kg.RegisterDevRequest{}); err != nil {
+		return err
+	}
+	if strings.TrimSpace(s.client.Cookie()["dfid"]) == "" {
+		return errors.New("注册设备未返回 dfid")
+	}
+	return nil
 }
 
 // GetCurrentUser 获取当前登录用户信息。
@@ -183,6 +208,7 @@ func (s *AuthService) Logout() error {
 
 	s.client.SetCookie("token", "")
 	s.client.SetCookie("userid", "")
+	s.client.SetCookie("dfid", "")
 	s.client.SetCookie("vip_token", "")
 	s.client.SetCookie("vip_type", "")
 	clearSession()

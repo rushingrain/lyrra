@@ -1,9 +1,9 @@
 import { ChevronRight } from 'lucide-react'
-import { PlaylistCard } from '@/components/PlaylistCard'
-import type { Playlist } from '@/types'
+import { Playlist } from '@/components/Playlist'
+import type { Playlist as PlaylistType } from '@/types'
 
 interface PlaylistRecommendProps {
-  playlists: Playlist[]
+  playlists: PlaylistType[]
 }
 
 /**
@@ -34,7 +34,7 @@ export function PlaylistRecommend({ playlists }: PlaylistRecommendProps) {
       {/* 多列 grid：auto-fit + 1fr 铺满整行，最小卡片宽度随窗口 clamp 动态缩放 */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(clamp(110px,15vw,180px),1fr))] gap-5">
         {playlists.map((p) => (
-          <PlaylistCard key={p.id} playlist={p} />
+          <Playlist key={p.id} playlist={p} />
         ))}
       </div>
     </section>

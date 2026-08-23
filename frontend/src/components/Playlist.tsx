@@ -1,7 +1,7 @@
 import type { Playlist } from '@/types'
 import { Play } from 'lucide-react'
 
-interface PlaylistCardProps {
+interface PlaylistProps {
   playlist: Playlist
   /** 外层布局注入的尺寸控制（如 flex/grid 中的 min/max-width），默认不设随父容器 */
   className?: string
@@ -17,7 +17,7 @@ function formatCount(count: number): string {
   return `${count}`
 }
 
-export function PlaylistCard({ playlist, className = '' }: PlaylistCardProps) {
+export function Playlist({ playlist, className = '' }: PlaylistProps) {
   return (
     <div
       role="button"
@@ -42,7 +42,7 @@ export function PlaylistCard({ playlist, className = '' }: PlaylistCardProps) {
         {playlist.name}
       </p>
       {/* 描述 */}
-      <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-[var(--color-text-secondary)]">
+      <p className="mt-1 truncate text-xs leading-relaxed text-[var(--color-text-secondary)]">
         {playlist.description}
       </p>
     </div>
