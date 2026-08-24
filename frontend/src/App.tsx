@@ -1,6 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { MainLayout } from './components/layout/MainLayout'
+import { MainLayout } from '@/layouts/MainLayout'
 import Home from './pages/Home'
 import Following from './pages/Following'
 import FM from './pages/FM'

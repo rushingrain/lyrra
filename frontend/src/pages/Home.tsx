@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { BannerCarousel } from '@/components/BannerCarousel'
-import { PlaylistRecommend } from '@/components/PlaylistRecommend'
-import { SongList } from '@/components/SongList'
+import { BannerCarousel } from '@/components/common/BannerCarousel'
+import { PlayListGrid } from '@/components/common/PlaylistGrid'
+import { ChevronRight } from 'lucide-react'
+import { SongList } from '@/components/common/SongList'
 import type { Banner, Playlist, Song } from '@/types'
 import { getHomeBanners } from '@/services/banner'
 import {
@@ -25,7 +26,7 @@ export default function Home() {
   // 首页官方歌单：同上，服务层缓存 1h，导航切换不重复请求
   const [playlists, setPlaylists] = useState<Playlist[]>([])
   // 首页最新音乐：真实 TopSong 数据，服务层缓存 1h
-  const [songs, setSongs] = useState<Song[]>([])
+  const [newSongs, setNewSongs] = useState<Song[]>([])
   // 首页热门音乐：真实 TopCard 数据，服务层缓存 1h
   const [hotSongs, setHotSongs] = useState<Song[]>([])
 
@@ -39,7 +40,7 @@ export default function Home() {
     })
     // 显式携带 page=1、pagesize=15 请求最新音乐
     getNewSongs(DEFAULT_SONG_PAGE, DEFAULT_SONG_PAGE_SIZE).then((data) => {
-      if (!cancelled) setSongs(data)
+      if (!cancelled) setNewSongs(data)
     })
     // 热门音乐：TopCard 固定返回一批，无分页参数。
     // 后端可能返回多条：服务层缓存仍保留全量数据，
@@ -52,14 +53,39 @@ export default function Home() {
     }
   }, [])
 
-  return (
-    <>
-      <BannerCarousel banners={banners} />
-      <div className="mt-10">
-        <PlaylistRecommend playlists={playlists} />
+  // clickable=false 时标题为纯文本,不带箭头、不可点击/跳转(如「精选活动」)
+  const renderSection = (
+    title: string,
+    children: React.ReactNode,
+    clickable = true
+  ) => (
+    <div>
+      <div className="mb-4 flex items-center justify-between">
+        {clickable ? (
+          <a
+            href="#"
+            className="flex cursor-pointer items-center font-bold text-lg text-[var(--color-text-primary)] transition-colors hover:opacity-80"
+            onClick={(e) => e.preventDefault()}
+          >
+            {title}
+            <ChevronRight size={20} />
+          </a>
+        ) : (
+          <h2 className="font-bold text-lg text-[var(--color-text-primary)]">
+            {title}
+          </h2>
+        )}
       </div>
-      <SongList songs={songs} title="最新音乐" />
-      <SongList songs={hotSongs} title="热门音乐" />
-    </>
+      {children}
+    </div>
+  )
+
+  return (
+    <div>
+      {renderSection('精选活动', <BannerCarousel banners={banners} />, false)}
+      {renderSection('官方歌单', <PlayListGrid playlists={playlists} />)}
+      {renderSection('最新音乐', <SongList songs={newSongs} />)}
+      {renderSection('热门音乐', <SongList songs={hotSongs} />)}
+    </div>
   )
 }

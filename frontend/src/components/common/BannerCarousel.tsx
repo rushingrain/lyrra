@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
+import { BrowserOpenURL } from '../../../wailsjs/runtime/runtime'
 import type { Banner } from '@/types'
 
 interface BannerCarouselProps {
@@ -120,12 +120,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
   const offset = visual + 1
 
   return (
-    <div>
-      {/* 板块标题：与“官方歌单”等标题同款样式，但仅为标题，无箭头、不可点击 */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-bold text-lg text-[var(--color-text-primary)]">精选活动</h2>
-      </div>
-
+    <div className="mb-10">
       <div ref={containerRef} className="group relative overflow-hidden rounded-xl">
         {/* 轨道：transform 过渡由 GPU 合成，切换流畅 */}
         <div

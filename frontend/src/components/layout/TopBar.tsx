@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Search, User, Settings, Shirt, Mail, ChevronDown, Power } from 'lucide-react'
-import { LoginModal } from '@/components/LoginModal'
+import { LoginModal } from '@/components/business/LoginModal'
 import type { LoginResult } from '@/types'
 
 interface UserInfo {

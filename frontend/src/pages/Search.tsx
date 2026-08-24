@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { Playlist } from '@/components/Playlist'
+import { Playlist } from '@/components/common/Playlist'
 import {
   EMPTY_RESULT,
   getSearch,
@@ -44,7 +44,7 @@ function SectionHeader({ title }: { title: string }) {
 }
 
 function ResponsiveCardGrid({ children }: { children: ReactNode }) {
-  return <div className="grid grid-cols-4 gap-4 lg:grid-cols-5 2xl:grid-cols-6">{children}</div>
+  return <div className="grid grid-cols-4 gap-4 lg:grid-cols-6 2xl:grid-cols-8">{children}</div>
 }
 
 function ArtistSummaryCard({ artist }: { artist: ComplexSearchArtist }) {

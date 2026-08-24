@@ -10,6 +10,8 @@ export interface Song {
   quality?: string
   /** 是否为原唱 */
   isOriginal?: boolean
+  /** 歌曲标签，如 "昨日超万人播放"、"上周播放top1W"；首页数据源可能不返回，消费端需做空值守卫 */
+  tags?: string[]
 }
 
 export interface Playlist {
