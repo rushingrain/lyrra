@@ -8,7 +8,7 @@ interface SongProps {
 export function Song({ song }: SongProps) {
   return (
     <div className="flex min-w-0 items-center gap-4 rounded-lg">
-      <img src={song.coverUrl ? song.coverUrl : defaultCover} alt={song.title} className="h-16 w-16 shrink-0 rounded-lg object-cover" loading="lazy" />
+      <img src={song.coverUrl ? song.coverUrl : defaultCover} alt={song.title} className="h-15 w-15 shrink-0 rounded-lg object-cover" loading="lazy" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">{song.title}</p>
         <div className="mt-1.5 flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">

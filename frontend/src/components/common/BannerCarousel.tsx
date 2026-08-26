@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { BrowserOpenURL } from '../../../wailsjs/runtime/runtime'
 import type { Banner } from '@/types'
@@ -11,12 +11,59 @@ interface BannerCarouselProps {
 const AUTOPLAY_MS = 4000
 /** 切换动画时长(ms)，与轨道 transition 保持一致 */
 const TRANSITION_MS = 500
+/** 轮播固定为 5 页 */
+const PAGE_COUNT = 5
+/** 窄窗口至少展示 3 列 */
+const MIN_COLUMNS = 3
+/** 每列理想宽度(px)，超过此宽度时增加一列 */
+const TARGET_CARD_WIDTH = 300
+
+/**
+ * 将 banner 分配到固定页数中。每页优先选取尚未出现过的 banner；
+ * 当不同 banner 的数量不足一页列数时，才允许在当前页重复。
+ */
+function buildPages(banners: Banner[], columnCount: number): Banner[][] {
+  if (banners.length === 0) return []
+
+  const pages: Banner[][] = []
+  let cursor = 0
+
+  for (let pageIndex = 0; pageIndex < PAGE_COUNT; pageIndex += 1) {
+    const page: Banner[] = []
+    const usedIds = new Set<string>()
+
+    while (page.length < columnCount) {
+      let nextIndex = -1
+      for (let offset = 0; offset < banners.length; offset += 1) {
+        const candidateIndex = (cursor + offset) % banners.length
+        if (!usedIds.has(banners[candidateIndex].id)) {
+          nextIndex = candidateIndex
+          break
+        }
+      }
+
+      if (nextIndex === -1) {
+        // 数据中的不同 banner 不足一页，按用户确认的规则允许重复补齐。
+        nextIndex = cursor % banners.length
+      }
+
+      const banner = banners[nextIndex]
+      page.push(banner)
+      usedIds.add(banner.id)
+      cursor = (nextIndex + 1) % banners.length
+    }
+
+    pages.push(page)
+  }
+
+  return pages
+}
 
 /**
  * 首页轮播。
  *
- * 轨道滑动方案：banner 按每页 vc 张分页，最后一页不足 vc 张时用空位占位
- * （每页等宽、且不出现重复 banner）。轨道头尾各追加一页副本，
+ * 轨道滑动方案：banner 固定分为 5 页，每页填满且尽量不出现重复 banner。
+ * 轨道头尾各追加一页副本，
  * 向前/向后回卷都先滑到副本再瞬间跳回，两个方向均无缝。
  * 切页通过 translateX 过渡（GPU 合成，流畅且无 DOM 结构变化）；
  * 手动翻页/点指示器会重置自动播放计时，避免与自动轮播重叠。
@@ -24,8 +71,8 @@ const TRANSITION_MS = 500
 export function BannerCarousel({ banners }: BannerCarouselProps) {
   const len = banners.length
   const containerRef = useRef<HTMLDivElement>(null)
-  // 一次展示的图片数量：默认 2 张，容器足够宽时切换为 3 张
-  const [visibleCount, setVisibleCount] = useState(2)
+  // 每页图片数量随容器宽度变化，且必须能在固定 5 页内放下全部 banner。
+  const [visibleCount, setVisibleCount] = useState(MIN_COLUMNS)
   // 轨道平移位置（单位：一页 = 100%），范围 -1..numPages：
   // -1 / numPages 对应复制出的回卷页，动画结束后瞬间跳回逻辑页
   const [visual, setVisual] = useState(0)
@@ -34,24 +81,28 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
   // 手动操作后 +1，触发自动播放 effect 重新计时
   const [autoplayKey, setAutoplayKey] = useState(0)
 
-  const vc = Math.min(visibleCount, Math.max(len, 1))
-  const numPages = len === 0 ? 1 : Math.max(1, Math.ceil(len / vc))
+  const vc = visibleCount
+  const numPages = PAGE_COUNT
   // 逻辑页码（指示器用）：-1 视为最后一页，numPages 视为第 0 页
   const page = ((visual % numPages) + numPages) % numPages
 
-  // 根据容器实际宽度决定一次展示 2 张还是 3 张
+  // 以理想卡片宽度决定列数：窗口更宽时，列数和卡片宽度都会随之增大。
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const update = () => setVisibleCount(el.clientWidth > 1200 ? 3 : 2)
+    const update = () => {
+      const responsiveColumns = Math.max(MIN_COLUMNS, Math.floor(el.clientWidth / TARGET_CARD_WIDTH))
+      const columnsForAllBanners = Math.ceil(len / PAGE_COUNT)
+      setVisibleCount(Math.max(responsiveColumns, columnsForAllBanners))
+    }
     update()
     const ro = new ResizeObserver(update)
     ro.observe(el)
     return () => ro.disconnect()
-    // 依赖 len：首次挂载 banner 为空时容器未渲染，数据到达后重新挂载观察器
+    // 依赖 len：数据变化时重新计算固定 5 页所需的容量。
   }, [len])
 
-  // 容器变窄/数据变化导致页数变化时，把越界的平移位置拉回有效范围
+  // 保证回卷结束后始终落在有效逻辑页。
   useEffect(() => {
     setVisual((v) => Math.min(Math.max(v, 0), numPages - 1))
   }, [numPages])
@@ -104,15 +155,10 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
     return () => window.clearInterval(timer)
   }, [numPages, next, autoplayKey])
 
+  const pages = useMemo(() => buildPages(banners, vc), [banners, vc])
+
   if (len === 0) return null
 
-  // 分页：每页 vc 张，最后一页不足 vc 张时用 null 占位，保证每页等宽且不重复
-  const pages: (Banner | null)[][] = []
-  for (let i = 0; i < numPages; i++) {
-    const slice: (Banner | null)[] = banners.slice(i * vc, i * vc + vc)
-    while (slice.length < vc) slice.push(null)
-    pages.push(slice)
-  }
   // 轨道：[最后一页副本, ...各页, 第一页副本]
   // 头尾各加一页副本，向前/向后回卷都先滑到副本再瞬间跳回，两个方向均无缝。
   const track = [pages[numPages - 1], ...pages, pages[0]]
@@ -132,28 +178,29 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           }}
         >
           {track.map((pageItems, pi) => (
-            <div key={pi} className="flex w-full shrink-0">
+            <div
+              key={pi}
+              className="grid w-full shrink-0 gap-4"
+              style={{ gridTemplateColumns: `repeat(${vc}, minmax(0, 1fr))` }}
+            >
               {pageItems.map((banner, bi) => (
                 <div
                   key={`${pi}-${bi}`}
-                  className="shrink-0 px-2"
-                  style={{ width: `${100 / vc}%` }}
+                  className="min-w-0"
                 >
-                  {banner && (
-                    <button
-                      type="button"
-                      className={`block w-full ${banner.linkUrl ? 'cursor-pointer' : ''}`}
-                      onClick={banner.linkUrl ? () => BrowserOpenURL(banner.linkUrl) : undefined}
-                      aria-label={`打开：${banner.title}`}
-                    >
-                      <img
-                        src={banner.imageUrl}
-                        alt={banner.title}
-                        className="aspect-[800/360] w-full rounded-lg object-cover"
-                        loading="lazy"
-                      />
-                    </button>
-                  )}
+                  <button
+                    type="button"
+                    className={`block w-full ${banner.linkUrl ? 'cursor-pointer' : ''}`}
+                    onClick={banner.linkUrl ? () => BrowserOpenURL(banner.linkUrl) : undefined}
+                    aria-label={`打开：${banner.title}`}
+                  >
+                    <img
+                      src={banner.imageUrl}
+                      alt={banner.title}
+                      className="aspect-[11/6] w-full rounded-lg object-cover"
+                      loading="lazy"
+                    />
+                  </button>
                 </div>
               ))}
             </div>
@@ -183,14 +230,14 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
 
       {/* 指示器（圆形）：放在图片下方空白处 */}
       {numPages > 1 && (
-        <div className="mt-3 flex items-center justify-center gap-2">
+        <div className="mt-3 flex items-center justify-center gap-1.5">
           {Array.from({ length: numPages }).map((_, i) => (
             <button
               key={i}
               className={`cursor-pointer rounded-full transition-all ${
                 i === page
-                  ? 'h-2.5 w-2.5 bg-[var(--color-accent)]'
-                  : 'h-2 w-2 bg-gray-300'
+                  ? 'h-2 w-2 bg-[var(--color-accent)]'
+                  : 'h-1.5 w-1.5 bg-gray-300'
               }`}
               onClick={() => {
                 setVisual(i)

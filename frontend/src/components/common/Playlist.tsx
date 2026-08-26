@@ -1,5 +1,5 @@
 import type { Playlist as PlaylistType } from '@/types'
-import { Play } from 'lucide-react'
+import { Headphones } from 'lucide-react'
 
 interface PlaylistProps {
   playlist: PlaylistType
@@ -32,8 +32,8 @@ export function Playlist({ playlist, className = '' }: PlaylistProps) {
           className="aspect-square w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <span className="absolute bottom-1.5 right-1.5 flex items-center gap-1 rounded-md bg-black/45 px-1.5 py-0.5 text-xs font-medium text-white backdrop-blur-sm">
-          <Play size={12} fill="currentColor" />
+        <span className="absolute left-1.5 top-1.5 flex items-center gap-1 text-xs font-medium text-white">
+          <Headphones size={12} />
           <span>{formatCount(playlist.playCount)}</span>
         </span>
       </div>
