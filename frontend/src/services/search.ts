@@ -1,47 +1,7 @@
 import { Search, SearchComplex } from '../../wailsjs/go/search/SearchService'
+import type { Song, Playlist, Album, Artist, Mv } from '@/types'
 
 type ApiRecord = Record<string, unknown>
-
-export interface ComplexSearchSong {
-  id: string
-  title: string
-  artist: string
-  coverUrl: string
-  quality?: string
-  isOriginal: boolean
-  tags: string[]
-}
-
-export interface ComplexSearchPlaylist {
-  id: string
-  name: string
-  coverUrl: string
-  description: string
-  playCount: number
-}
-
-export interface ComplexSearchAlbum {
-  id: string
-  name: string
-  artist: string
-  coverUrl: string
-  date: string
-}
-
-export interface ComplexSearchArtist {
-  id: string
-  name: string
-  avatarUrl: string
-  songCount: number
-  fans: number
-}
-
-export interface ComplexSearchMv {
-  id: string
-  name: string
-  artist: string
-  coverUrl: string
-}
 
 export interface SearchLyric {
   id: string
@@ -51,11 +11,11 @@ export interface SearchLyric {
 }
 
 export interface SearchResult {
-  songs: ComplexSearchSong[]
-  playlists: ComplexSearchPlaylist[]
-  albums: ComplexSearchAlbum[]
-  artists: ComplexSearchArtist[]
-  mvs: ComplexSearchMv[]
+  songs: Song[]
+  playlists: Playlist[]
+  albums: Album[]
+  artists: Artist[]
+  mvs: Mv[]
   lyrics: SearchLyric[]
 }
 
@@ -98,10 +58,6 @@ function asNumber(value: unknown): number {
   return Number.isFinite(number) ? number : 0
 }
 
-function imageUrl(value: unknown): string {
-  return asString(value).replaceAll('{size}', '240')
-}
-
 function firstValue(item: ApiRecord, ...keys: string[]): unknown {
   return keys.map((key) => item[key]).find((value) => value != null && value !== '')
 }
@@ -122,7 +78,7 @@ function normalSearchItems(data: unknown): ApiRecord[] {
   return []
 }
 
-function mapSong(item: ApiRecord): ComplexSearchSong {
+function mapSong(item: ApiRecord): Song {
   const tagContent = asString(firstValue(item, 'TagContent', 'tag_content'))
   const sqBitrate = asNumber(firstValue(item, 'SQBitrate', 'sq_bitrate'))
   const hqBitrate = asNumber(firstValue(item, 'HQBitrate', 'hq_bitrate'))
@@ -130,49 +86,50 @@ function mapSong(item: ApiRecord): ComplexSearchSong {
     id: asString(firstValue(item, 'ID', 'MixSongID', 'FileHash', 'hash', 'audio_id')),
     title: asString(firstValue(item, 'SongName', 'FileName', 'songname', 'filename')),
     artist: asString(firstValue(item, 'SingerName', 'singername', 'singer')),
-    coverUrl: imageUrl(firstValue(item, 'Image', 'img', 'imgurl', 'cover')),
+    coverUrl: asString(firstValue(item, 'Image', 'img', 'imgurl', 'cover')),
     quality: sqBitrate > 0 ? 'SQ' : hqBitrate >= 320 ? 'HQ' : undefined,
     isOriginal: asNumber(item.IsOriginal) === 1,
     tags: tagContent ? tagContent.split(/[|,]/).filter(Boolean) : [],
   }
 }
 
-function mapPlaylist(item: ApiRecord): ComplexSearchPlaylist {
+function mapPlaylist(item: ApiRecord): Playlist {
   return {
     id: asString(firstValue(item, 'specialid', 'special_id', 'gid', 'id')),
     name: asString(firstValue(item, 'specialname', 'special_name', 'name')),
-    coverUrl: imageUrl(firstValue(item, 'img', 'imgurl', 'cover')),
-    description: asString(firstValue(item, 'intro', 'nickname', 'description')),
+    coverUrl: asString(firstValue(item, 'img', 'imgurl', 'cover')),
+    description: asString(firstValue(item, 'intro', 'specialname', 'description')),
     playCount: asNumber(firstValue(item, 'total_play_count', 'play_count')),
   }
 }
 
-function mapAlbum(item: ApiRecord): ComplexSearchAlbum {
+function mapAlbum(item: ApiRecord): Album {
   return {
     id: asString(firstValue(item, 'albumid', 'album_id', 'id')),
     name: asString(firstValue(item, 'albumname', 'album_name', 'title', 'name')),
     artist: asString(firstValue(item, 'singer', 'SingerName', 'singername')),
-    coverUrl: imageUrl(firstValue(item, 'img', 'imgurl', 'cover')),
+    coverUrl: asString(firstValue(item, 'img', 'imgurl', 'cover')),
     date: asString(firstValue(item, 'publish_time', 'publishtime', 'publish_date')).slice(0, 10),
   }
 }
 
-function mapArtist(item: ApiRecord): ComplexSearchArtist {
+function mapArtist(item: ApiRecord): Artist {
   return {
     id: asString(firstValue(item, 'AuthorId', 'UserId', 'author_id', 'singerid', 'id')),
     name: asString(firstValue(item, 'AuthorName', 'author_name', 'singername', 'singer', 'name')),
-    avatarUrl: imageUrl(firstValue(item, 'Avatar', 'img', 'imgurl', 'pic')),
+    avatarUrl: asString(firstValue(item, 'Avatar', 'img', 'imgurl', 'pic')),
     songCount: asNumber(firstValue(item, 'AudioCount', 'audio_count', 'song_count')),
     fans: asNumber(firstValue(item, 'FansNum', 'fans_num', 'fans')),
+    genre: asString(firstValue(item, 'Genre', 'genre', 'genre')),
   }
 }
 
-function mapMv(item: ApiRecord): ComplexSearchMv {
+function mapMv(item: ApiRecord): Mv {
   return {
     id: asString(firstValue(item, 'MvID', 'MvHash', 'mv_id', 'hash', 'id')),
     name: asString(firstValue(item, 'MvName', 'mvname', 'songname', 'filename', 'name')),
     artist: asString(firstValue(item, 'SingerName', 'singername', 'singer')),
-    coverUrl: imageUrl(firstValue(item, 'Pic', 'ErectPic', 'img', 'imgurl', 'cover')),
+    coverUrl: asString(firstValue(item, 'Pic', 'ErectPic', 'img', 'imgurl', 'cover')),
   }
 }
 

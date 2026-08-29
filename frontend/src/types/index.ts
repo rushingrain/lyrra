@@ -2,10 +2,13 @@ export interface Song {
   id: string
   title: string
   artist: string
-  album: string
+  /** 专辑名；搜索等接口不返回，消费端按需做空值守卫 */
+  album?: string
   coverUrl: string
-  duration: number
-  hash: string
+  /** 时长(ms)；部分数据源（如搜索）不返回，播放器已做 ?? 0 兜底 */
+  duration?: number
+  /** 文件 hash；部分数据源不返回 */
+  hash?: string
   /** 最高音质标签，如 "Hi-Res"、"无损" */
   quality?: string
   /** 是否为原唱 */
@@ -23,6 +26,37 @@ export interface Playlist {
   songCount?: number
 }
 
+export interface Album {
+  id: string
+  name: string
+  artist: string
+  coverUrl: string
+  date: string
+}
+
+export interface Artist {
+  id: string
+  name: string
+  songCount: number
+  avatarUrl: string
+  genre: string
+  fans: number
+}
+
+export interface Mv {
+  id: string
+  name: string
+  artist: string
+  coverUrl: string
+}
+
+export interface Banner {
+  id: string
+  imageUrl: string
+  title: string
+  linkUrl: string
+}
+
 /** 用户歌单（侧边栏展示，来自 /v7/get_all_list） */
 export interface UserPlaylist {
   id: string
@@ -33,21 +67,6 @@ export interface UserPlaylist {
   isDefault: number
   /** 0=创建的歌单，1=收藏的歌单 */
   type: number
-}
-
-export interface Artist {
-  id: string
-  name: string
-  avatarUrl: string
-  genre: string
-  followerCount: number
-}
-
-export interface Banner {
-  id: string
-  imageUrl: string
-  title: string
-  linkUrl: string
 }
 
 export interface PlayHistory {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BannerCarousel } from '@/components/common/BannerCarousel'
-import { PlayListGrid } from '@/components/common/PlaylistGrid'
+import { PlaylistList } from '@/components/common/PlaylistList'
 import { ChevronRight } from 'lucide-react'
 import { SongList } from '@/components/common/SongList'
 import type { Banner, Playlist, Song } from '@/types'
@@ -83,7 +83,7 @@ export default function Home() {
   return (
     <div>
       {renderSection('精选活动', <BannerCarousel banners={banners} />, false)}
-      {renderSection('官方歌单', <PlayListGrid playlists={playlists} />)}
+      {renderSection('官方歌单', <PlaylistList playlists={playlists} />)}
       {renderSection('最新音乐', <SongList songs={newSongs} />)}
       {renderSection('热门音乐', <SongList songs={hotSongs} />)}
     </div>
