@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+
+	"kuwave/internal/imageurl"
 )
 
 // ApiRecord 是 SDK 动态 JSON 响应中的对象。
@@ -55,7 +57,7 @@ func mapNormalSearch(searchType string, data map[string]any) *SearchResult {
 	case "author":
 		result.Artists = mapArtists(items)
 	case "mv":
-		result.MVs = mapMVs(items)
+		result.MVs = mapNormalMVs(items)
 	case "lyric":
 		result.Lyrics = mapLyrics(items)
 	}
@@ -188,6 +190,41 @@ func mapMVs(items []ApiRecord) []MV {
 		})
 	}
 	return mvs
+}
+
+// mapNormalMVs 处理普通搜索 MV 封面的特殊返回格式。
+// 该接口的 Pic 可能只返回 "20240118194600124028.jpg" 这类文件名，
+// 需要转换为酷狗 MV 图床的完整地址；综合搜索返回的已是完整 URL，不受影响。
+func mapNormalMVs(items []ApiRecord) []MV {
+	mvs := mapMVs(items)
+	for i := range mvs {
+		mvs[i].CoverURL = normalizeMVPicFilename(mvs[i].CoverURL)
+	}
+	return mvs
+}
+
+func normalizeMVPicFilename(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" ||
+		strings.HasPrefix(value, "http://") ||
+		strings.HasPrefix(value, "https://") {
+		return value
+	}
+
+	filename := strings.TrimPrefix(value, "/")
+	if len(filename) < 8 {
+		return value
+	}
+	date := filename[:8]
+	for _, r := range date {
+		if r < '0' || r > '9' {
+			return value
+		}
+	}
+
+	return imageurl.Normalize(
+		fmt.Sprintf("http://imge.kugou.com/mvhdpic/400/%s/%s", date, filename),
+	)
 }
 
 func mapLyrics(items []ApiRecord) []Lyric {

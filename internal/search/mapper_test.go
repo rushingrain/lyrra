@@ -121,3 +121,23 @@ func TestMapNormalSearch(t *testing.T) {
 		t.Fatalf("unexpected song fields: %+v", song)
 	}
 }
+
+func TestMapNormalSearchMVCover(t *testing.T) {
+	result := mapNormalSearch("mv", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MvID":       67468,
+				"MvName":     "是时候",
+				"SingerName": "孙燕姿",
+				"Pic":        "20240118194600124028.jpg",
+			},
+		},
+	})
+
+	if len(result.MVs) != 1 {
+		t.Fatalf("mv count = %d, want 1", len(result.MVs))
+	}
+	if got, want := result.MVs[0].CoverURL, "https://imge.kugou.com/mvhdpic/400/20240118/20240118194600124028.jpg"; got != want {
+		t.Fatalf("MV cover URL = %q, want %q", got, want)
+	}
+}
