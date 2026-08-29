@@ -166,7 +166,7 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
   const offset = visual + 1
 
   return (
-    <div className="mb-10">
+    <div>
       <div ref={containerRef} className="group relative overflow-hidden rounded-xl">
         {/* 轨道：transform 过渡由 GPU 合成，切换流畅 */}
         <div
