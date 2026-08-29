@@ -40,7 +40,7 @@ function ArtistSummary({ artist }: { artist: Artist }) {
       <img src={artist.avatarUrl ? artist.avatarUrl : 'src/assets/images/default_cover.jpg'} alt={artist.name} className="h-20 w-20 shrink-0 rounded-full object-cover" loading="lazy" />
       <div className="min-w-0">
         <div className="truncate font-bold text-[var(--color-text-primary)]">歌手：{artist.name}</div>
-        <div className="mt-1 grid grid-cols-2 gap-4 truncate text-sm text-[var(--color-text-secondary)]">
+        <div className="mt-1 grid w-fit grid-cols-[auto_auto] gap-4 truncate text-sm text-[var(--color-text-secondary)]">
           <div>单曲：{artist.songCount}</div>
           <div>粉丝：{formatCount(artist.fans)}</div>
         </div>
@@ -60,7 +60,7 @@ function AlbumSummary({ album }: { album: Album }) {
       />
       <div className="min-w-0">
         <div className="truncate font-bold text-[var(--color-text-primary)]">专辑：{album.name}</div>
-        <div className="mt-1 grid grid-cols-2 gap-4 truncate text-sm text-[var(--color-text-secondary)]">
+        <div className="mt-1 grid w-fit grid-cols-[auto_auto] gap-4 truncate text-sm text-[var(--color-text-secondary)]">
           <div>{album.artist}</div>
           <div>{album.date}</div>
         </div>
@@ -205,7 +205,7 @@ export default function Search() {
           )}
 
           {result.mvs.length > 0 && (
-            <Section title="MV" children={<MvList mvs={result.mvs} />} />
+            <Section title="MV" children={<MvList minWidth={156} maxWidth={200} mvs={result.mvs} />} />
           )}
         </div>
       )}

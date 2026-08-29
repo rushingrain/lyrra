@@ -1,17 +1,18 @@
 import type { Album as AlbumType } from '@/types'
 import { SingleRowList } from '@/components/common/SingleRowList'
+import type { SingleRowListLayout } from '@/components/common/SingleRowList'
 
-interface AlbumListProps {
+interface AlbumListProps extends SingleRowListLayout {
   albums: AlbumType[]
 }
 
 /**
  * 专辑列表:负责专辑业务语义,单行响应式布局由 SingleRowList 复用。
  */
-export function AlbumList({ albums }: AlbumListProps) {
+export function AlbumList({ albums, ...layout }: AlbumListProps) {
   return (
     <SingleRowList
-      className="mb-10"
+      {...layout}
       items={albums}
       getItemKey={(album) => album.id}
       renderItem={(album, { className, style }) => (

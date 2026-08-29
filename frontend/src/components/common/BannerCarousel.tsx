@@ -234,11 +234,10 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           {Array.from({ length: numPages }).map((_, i) => (
             <button
               key={i}
-              className={`cursor-pointer rounded-full transition-all ${
-                i === page
-                  ? 'h-2 w-2 bg-[var(--color-accent)]'
-                  : 'h-1.5 w-1.5 bg-gray-300'
-              }`}
+              className={`cursor-pointer rounded-full transition-all ${i === page
+                ? 'h-2 w-2 bg-[var(--color-accent)]'
+                : 'h-1.5 w-1.5 bg-gray-300'
+                }`}
               onClick={() => {
                 setVisual(i)
                 setAutoplayKey((k) => k + 1)

@@ -83,7 +83,7 @@ export default function Home() {
   return (
     <div>
       {renderSection('精选活动', <BannerCarousel banners={banners} />, false)}
-      {renderSection('官方歌单', <PlaylistList playlists={playlists} />)}
+      {renderSection('官方歌单', <PlaylistList minWidth={104} playlists={playlists} />)}
       {renderSection('最新音乐', <SongList songs={newSongs} />)}
       {renderSection('热门音乐', <SongList songs={hotSongs} />)}
     </div>

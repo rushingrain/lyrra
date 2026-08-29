@@ -1,17 +1,18 @@
 import type { Artist as ArtistType } from '@/types'
 import { SingleRowList } from '@/components/common/SingleRowList'
+import type { SingleRowListLayout } from '@/components/common/SingleRowList'
 
-interface ArtistListProps {
+interface ArtistListProps extends SingleRowListLayout {
   artists: ArtistType[]
 }
 
 /**
  * 歌手列表:负责歌手业务语义, 单行响应式布局由 SingleRowList 复用。
  */
-export function ArtistList({ artists }: ArtistListProps) {
+export function ArtistList({ artists, ...layout }: ArtistListProps) {
   return (
     <SingleRowList
-      className="mb-10"
+      {...layout}
       items={artists}
       getItemKey={(artist) => artist.id}
       renderItem={(artist, { className, style }) => (

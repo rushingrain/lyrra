@@ -28,7 +28,7 @@ export function SongList({ songs, columns = 'auto' }: SongListProps) {
   const gridTemplateColumns = `repeat(${repeatCount}, minmax(clamp(160px, 20vw, 220px), 1fr))`
 
   return (
-    <div className="mb-10">
+    <div>
       <div className="grid gap-8" style={{ gridTemplateColumns }}>
         {songs.map((song) => (
           <div key={song.id} className="flex min-w-0 items-center gap-4 rounded-lg">
