@@ -48,7 +48,7 @@ func NewSearchService(log *slog.Logger) (*SearchService, error) {
 
 // Search 执行普通搜索。
 // searchType 支持 song、album、author、mv、lyric、special，值会原样透传给 SDK。
-func (s *SearchService) Search(keyword string, pageNum int, pageSize int, searchType string) (*SearchResponse, error) {
+func (s *SearchService) Search(keyword string, pageNum int, pageSize int, searchType string) (*SearchResult, error) {
 	if _, ok := supportedSearchTypes[searchType]; !ok {
 		return nil, fmt.Errorf("不支持的搜索类型: %s", searchType)
 	}
@@ -76,11 +76,11 @@ func (s *SearchService) Search(keyword string, pageNum int, pageSize int, search
 		return nil, err
 	}
 
-	return newSearchResponse(resp.Body), nil
+	return mapNormalSearch(searchType, searchData(resp.Body)), nil
 }
 
 // SearchComplex 执行综合搜索，不向 SDK 传递 type 参数。
-func (s *SearchService) SearchComplex(keyword string, pageNum int, pageSize int) (*SearchComplexResponse, error) {
+func (s *SearchService) SearchComplex(keyword string, pageNum int, pageSize int) (*SearchResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -106,7 +106,7 @@ func (s *SearchService) SearchComplex(keyword string, pageNum int, pageSize int)
 		return nil, err
 	}
 
-	return newSearchComplexResponse(resp.Body), nil
+	return mapComplexSearch(searchData(resp.Body)), nil
 }
 
 // loadSearchCookie 读取最新登录态，并同步到搜索 client。
@@ -147,24 +147,10 @@ func validateResponse(body map[string]any) error {
 	return nil
 }
 
-func newSearchResponse(body map[string]any) *SearchResponse {
+func searchData(body map[string]any) map[string]any {
 	data, _ := body["data"].(map[string]any)
 	normalizeImageFields(data)
-	return &SearchResponse{
-		Status:    fmt.Sprintf("%v", body["status"]),
-		ErrorCode: body["error_code"],
-		Data:      data,
-	}
-}
-
-func newSearchComplexResponse(body map[string]any) *SearchComplexResponse {
-	data, _ := body["data"].(map[string]any)
-	normalizeImageFields(data)
-	return &SearchComplexResponse{
-		Status:    fmt.Sprintf("%v", body["status"]),
-		ErrorCode: body["error_code"],
-		Data:      data,
-	}
+	return data
 }
 
 // normalizeImageFields 规范化搜索结果中的酷狗图片地址。

@@ -11,7 +11,7 @@ import "strings"
 // 统一替换后各启动方式行为一致。
 // 不含 {size} 的地址（如用户头像、banner 图）替换为 no-op，可安全复用。
 func Normalize(raw string) string {
-	raw = strings.ReplaceAll(raw, "{size}", "")
+	raw = strings.ReplaceAll(raw, "{size}", "400")
 	if strings.HasPrefix(raw, "http://") {
 		return "https://" + strings.TrimPrefix(raw, "http://")
 	}
