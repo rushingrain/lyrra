@@ -15,12 +15,12 @@ const DEFAULT_MIN_WIDTH = 120
 const DEFAULT_MAX_WIDTH = 156
 const DEFAULT_RATIO = 0.12
 
-export interface SingleRowCardItemLayout {
+export interface SummaryItemLayout {
   className: string
   style?: CSSProperties
 }
 
-export interface SingleRowListLayout {
+export interface SummaryLayout {
   /** 卡片间距，单位 px */
   gap?: number
   /** 卡片目标宽度下限，单位 px */
@@ -31,14 +31,14 @@ export interface SingleRowListLayout {
   ratio?: number
 }
 
-interface SingleRowCardListProps<T> extends SingleRowListLayout {
+interface SummaryProps<T> extends SummaryLayout {
   items: T[]
   className?: string
   getItemKey: (item: T) => Key
-  renderItem: (item: T, layout: SingleRowCardItemLayout) => ReactNode
+  renderItem: (item: T, layout: SummaryItemLayout) => ReactNode
 }
 
-export function SingleRowList<T>({
+export function Summary<T>({
   items,
   className,
   gap = DEFAULT_GAP,
@@ -47,7 +47,7 @@ export function SingleRowList<T>({
   ratio: cardRatio = DEFAULT_RATIO,
   getItemKey,
   renderItem,
-}: SingleRowCardListProps<T>) {
+}: SummaryProps<T>) {
   const [container, setContainer] = useState<HTMLDivElement | null>(null)
   const [layout, setLayout] = useState({
     containerWidth: 0,
@@ -105,7 +105,7 @@ export function SingleRowList<T>({
       : minCardWidth
 
   // 数据充足时用 flex-1 均分，数据不足时用固定宽度（留空白）
-  const itemLayout: SingleRowCardItemLayout = canFillRow
+  const itemLayout: SummaryItemLayout = canFillRow
     ? { className: 'flex-1' }
     : {
       className: 'flex-none',

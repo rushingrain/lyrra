@@ -1,17 +1,17 @@
 import type { Artist as ArtistType } from '@/types'
-import { SingleRowList } from '@/components/common/SingleRowList'
-import type { SingleRowListLayout } from '@/components/common/SingleRowList'
+import { Summary } from '@/components/common/Summary'
+import type { SummaryLayout } from '@/components/common/Summary'
 
-interface ArtistListProps extends SingleRowListLayout {
+interface ArtistListProps extends SummaryLayout {
   artists: ArtistType[]
 }
 
 /**
- * 歌手列表:负责歌手业务语义, 单行响应式布局由 SingleRowList 复用。
+ * 歌手列表:负责歌手业务语义, 单行响应式布局由 Summary 复用。
  */
 export function ArtistList({ artists, ...layout }: ArtistListProps) {
   return (
-    <SingleRowList
+    <Summary
       {...layout}
       items={artists}
       getItemKey={(artist) => artist.id}

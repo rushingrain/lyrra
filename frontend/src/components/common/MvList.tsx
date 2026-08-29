@@ -1,17 +1,17 @@
 import type { Mv as MvType } from '@/types'
-import { SingleRowList } from '@/components/common/SingleRowList'
-import type { SingleRowListLayout } from '@/components/common/SingleRowList'
+import { Summary } from '@/components/common/Summary'
+import type { SummaryLayout } from '@/components/common/Summary'
 
-interface MvListProps extends SingleRowListLayout {
+interface MvListProps extends SummaryLayout {
   mvs: MvType[]
 }
 
 /**
- * MV 列表:负责 MV 业务语义, 单行响应式布局由 SingleRowList 复用。
+ * MV 列表:负责 MV 业务语义, 单行响应式布局由 Summary 复用。
  */
 export function MvList({ mvs, ...layout }: MvListProps) {
   return (
-    <SingleRowList
+    <Summary
       {...layout}
       items={mvs}
       getItemKey={(mv) => mv.id}

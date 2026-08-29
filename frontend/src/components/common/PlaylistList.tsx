@@ -1,9 +1,9 @@
 import type { Playlist as PlaylistType } from '@/types'
-import { SingleRowList } from '@/components/common/SingleRowList'
-import type { SingleRowListLayout } from '@/components/common/SingleRowList'
+import { Summary } from '@/components/common/Summary'
+import type { SummaryLayout } from '@/components/common/Summary'
 import { Headphones } from 'lucide-react'
 
-interface PlaylistListProps extends SingleRowListLayout {
+interface PlaylistListProps extends SummaryLayout {
   playlists: PlaylistType[]
 }
 
@@ -18,11 +18,11 @@ function formatCount(count: number): string {
 }
 
 /**
- * 歌单列表:负责歌单业务语义,单行响应式布局由 SingleRowList 复用。
+ * 歌单列表:负责歌单业务语义,单行响应式布局由 Summary 复用。
  */
 export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
   return (
-    <SingleRowList
+    <Summary
       {...layout}
       items={playlists}
       getItemKey={(playlist) => playlist.id}
