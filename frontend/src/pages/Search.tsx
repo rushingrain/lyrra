@@ -7,6 +7,11 @@ import { PlaylistList } from '@/components/common/PlaylistList'
 import { AlbumList } from '@/components/common/AlbumList'
 import { ArtistList } from '@/components/common/ArtistList'
 import { MvList } from '@/components/common/MvList'
+import { ResultTable } from '@/components/common/ResultTable'
+import { songColumns } from '@/components/search/songColumns'
+import { playlistColumns } from '@/components/search/playlistColumns'
+import { albumColumns } from '@/components/search/albumColumns'
+import { lyricColumns } from '@/components/search/lyricColumns'
 import {
   EMPTY_RESULT,
   getSearch,
@@ -76,26 +81,22 @@ function hasResults(result: SearchResult): boolean {
 function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>; result: SearchResult }) {
   switch (tab) {
     case 'song':
-      return <SongList songs={result.songs} />
+      return <ResultTable columns={songColumns} rows={result.songs} rowKey={(song) => song.id} />
     case 'special':
-      return <PlaylistList playlists={result.playlists} />
+      return <ResultTable columns={playlistColumns} rows={result.playlists} rowKey={(playlist) => playlist.id} />
     case 'album':
-      return <AlbumList albums={result.albums} />
+      return <ResultTable columns={albumColumns} rows={result.albums} rowKey={(album) => album.id} />
     case 'author':
       return <ArtistList artists={result.artists} />
     case 'mv':
       return <MvList mvs={result.mvs} />
     case 'lyric':
       return (
-        <div className="divide-y divide-[var(--color-border)]">
-          {result.lyrics.map((lyric) => (
-            <div key={lyric.id || `${lyric.title}-${lyric.artist}`} className="flex min-w-0 items-center gap-4 py-3">
-              <p className="min-w-0 flex-1 truncate text-sm font-medium text-[var(--color-text-primary)]">{lyric.title}</p>
-              <p className="w-1/4 truncate text-sm text-[var(--color-text-secondary)]">{lyric.artist}</p>
-              <p className="w-1/4 truncate text-sm text-[var(--color-text-secondary)]">{lyric.album}</p>
-            </div>
-          ))}
-        </div>
+        <ResultTable
+          columns={lyricColumns}
+          rows={result.lyrics}
+          rowKey={(lyric, index) => lyric.id || `${lyric.title}-${lyric.artist}-${index}`}
+        />
       )
   }
 }

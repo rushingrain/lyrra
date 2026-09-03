@@ -28,6 +28,7 @@ func TestMapComplexSearch(t *testing.T) {
 					map[string]any{
 						"specialid":        "7215278",
 						"specialname":      "是时候",
+						"nickname":         "孙燕姿",
 						"img":              "https://example.com/playlist.jpg",
 						"intro":            "简介",
 						"total_play_count": "1994007",
@@ -79,7 +80,11 @@ func TestMapComplexSearch(t *testing.T) {
 	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "SQ" {
 		t.Fatalf("unexpected song fields: %+v", result.Songs[0])
 	}
-	if len(result.Playlists) != 1 || result.Playlists[0].PlayCount != 1994007 || result.Playlists[0].SongCount != 40 {
+	if len(result.Playlists) != 1 {
+		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
+	}
+	playlist := result.Playlists[0]
+	if playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
 		t.Fatalf("unexpected playlists: %+v", result.Playlists)
 	}
 	if len(result.Albums) != 1 || result.Albums[0].Date != "2011-03-08" {

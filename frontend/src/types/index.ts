@@ -22,6 +22,7 @@ export interface Playlist {
   name: string
   coverUrl: string
   description: string
+  creator: string
   playCount: number
   songCount?: number
 }

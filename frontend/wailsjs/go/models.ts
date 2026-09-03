@@ -86,31 +86,6 @@ export namespace banner {
 
 }
 
-export namespace playlist {
-	
-	export class HomePlaylist {
-	    id: string;
-	    name: string;
-	    coverUrl: string;
-	    description: string;
-	    playCount: number;
-	
-	    static createFrom(source: any = {}) {
-	        return new HomePlaylist(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.coverUrl = source["coverUrl"];
-	        this.description = source["description"];
-	        this.playCount = source["playCount"];
-	    }
-	}
-
-}
-
 export namespace search {
 	
 	export class Album {
@@ -196,6 +171,7 @@ export namespace search {
 	    name: string;
 	    coverUrl: string;
 	    description: string;
+	    creator: string;
 	    playCount: number;
 	    songCount?: number;
 	
@@ -209,6 +185,7 @@ export namespace search {
 	        this.name = source["name"];
 	        this.coverUrl = source["coverUrl"];
 	        this.description = source["description"];
+	        this.creator = source["creator"];
 	        this.playCount = source["playCount"];
 	        this.songCount = source["songCount"];
 	    }

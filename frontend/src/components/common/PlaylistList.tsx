@@ -46,10 +46,10 @@ export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
               <span>{formatCount(playlist.playCount)}</span>
             </span>
           </div>
-          <p className="min-w-0 truncate text-sm font-medium text-[var(--color-text-primary)]">
+          <p className="min-w-0 truncate text-[15px] font-medium text-[var(--color-text-primary)]">
             {playlist.name}
           </p>
-          <p className="mt-1 min-w-0 truncate text-xs leading-relaxed text-[var(--color-text-secondary)]">
+          <p className="mt-1 min-w-0 truncate text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
             {playlist.description}
           </p>
         </div>

@@ -106,6 +106,7 @@ func mapSongs(items []ApiRecord) []Song {
 		sqBitrate := firstNumber(item, "SQBitrate", "sq_bitrate")
 		hqBitrate := firstNumber(item, "HQBitrate", "hq_bitrate")
 		quality := ""
+		// TODO 调整解析音质的逻辑
 		switch {
 		case sqBitrate > 0:
 			quality = "SQ"
@@ -121,7 +122,7 @@ func mapSongs(items []ApiRecord) []Song {
 
 		songs = append(songs, Song{
 			ID:         firstString(item, "ID", "MixSongID", "FileHash", "hash", "audio_id", "Audioid"),
-			Title:      firstString(item, "SongName", "FileName", "songname", "filename", "name"),
+			Title:      firstString(item, "OriSongName", "SongName", "FileName", "songname", "filename", "name"),
 			Artist:     firstArtistName(item, "SingerName", "singername", "singer"),
 			Album:      firstString(item, "AlbumName", "albumname", "album"),
 			CoverURL:   firstString(item, "Image", "img", "imgurl", "cover"),
@@ -141,6 +142,7 @@ func mapPlaylists(items []ApiRecord) []Playlist {
 		playlists = append(playlists, Playlist{
 			ID:          firstString(item, "specialid", "special_id", "gid", "id"),
 			Name:        firstString(item, "specialname", "special_name", "name"),
+			Creator:     firstString(item, "nickname"),
 			CoverURL:    firstString(item, "img", "imgurl", "cover"),
 			Description: firstString(item, "intro", "description", "special_name", "specialname"),
 			PlayCount:   int64(firstNumber(item, "total_play_count", "play_count")),

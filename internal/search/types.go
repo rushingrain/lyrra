@@ -21,6 +21,7 @@ type Playlist struct {
 	Name        string `json:"name"`
 	CoverURL    string `json:"coverUrl"`
 	Description string `json:"description"`
+	Creator     string `json:"creator"`
 	PlayCount   int64  `json:"playCount"`
 	SongCount   int64  `json:"songCount,omitempty"`
 }

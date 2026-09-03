@@ -12,6 +12,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"kuwave/internal/imageurl"
+	"kuwave/internal/search"
 )
 
 // PlaylistService 首页官方歌单服务。
@@ -38,7 +39,7 @@ func NewPlaylistService(log *slog.Logger) (*PlaylistService, error) {
 // GetHomePlaylists 拉取首页官方歌单（/top/playlist）。
 // pageSize 为期望返回条数（<=0 时回退默认 15）；withSong 为是否携带歌曲
 // （0 不携带 / 1 携带），两个参数都会透传给上游请求。
-func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]HomePlaylist, error) {
+func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]search.Playlist, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -60,20 +61,22 @@ func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]HomePl
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["special_list"].([]any)
-	playlists := make([]HomePlaylist, 0, len(items))
+	playlists := make([]search.Playlist, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		playlists = append(playlists, HomePlaylist{
+		playlists = append(playlists, search.Playlist{
 			// specialid 是大数，直接 fmt.Sprintf("%v") 会把 float64 输出成科学计数法（如 4.44554e+06），
 			// 必须先转整数再格式化。
 			ID:          strconv.FormatInt(int64(pickInt(m, "specialid")), 10),
 			Name:        pickString(m, "specialname"),
+			Creator:     pickString(m, "nickname"),
 			CoverURL:    imageurl.Normalize(pickString(m, "imgurl")),
 			Description: pickString(m, "intro"),
-			PlayCount:   pickInt(m, "play_count"),
+			PlayCount:   int64(pickInt(m, "play_count")),
+			SongCount:   int64(pickInt(m, "song_count")),
 		})
 	}
 	return playlists, nil
