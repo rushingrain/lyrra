@@ -15,6 +15,8 @@ func TestMapComplexSearch(t *testing.T) {
 						"AlbumName":  "史上最伤感的网络情歌",
 						"Image":      "https://imge.kugou.com/stdmusic/400/cover.jpg",
 						"Duration":   238,
+						"SQFileHash": "sq-hash",
+						"SQExtName":  "flac",
 						"FileHash":   "song-hash",
 						"SQBitrate":  702,
 						"IsOriginal": 0,
@@ -77,7 +79,7 @@ func TestMapComplexSearch(t *testing.T) {
 	if len(result.Songs) != 1 || result.Songs[0].ID != "33138036" {
 		t.Fatalf("unexpected songs: %+v", result.Songs)
 	}
-	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "SQ" {
+	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "无损" {
 		t.Fatalf("unexpected song fields: %+v", result.Songs[0])
 	}
 	if len(result.Playlists) != 1 {
@@ -107,8 +109,9 @@ func TestMapNormalSearch(t *testing.T) {
 				"SingerName": "孙燕姿",
 				"Image":      "https://example.com/cover.jpg",
 				"Duration":   238,
+				"HQFileHash": "hq-hash",
 				"FileHash":   "song-hash",
-				"HQBitrate":  320,
+				"HQBitrate":  float64(320),
 				"IsOriginal": 1,
 				"TagContent": "热门",
 			},
@@ -124,6 +127,63 @@ func TestMapNormalSearch(t *testing.T) {
 	}
 	if song.Duration != 238000 || song.Quality != "HQ" || !song.IsOriginal {
 		t.Fatalf("unexpected song fields: %+v", song)
+	}
+}
+
+func TestResolveSongQuality(t *testing.T) {
+	tests := []struct {
+		name string
+		item ApiRecord
+		want string
+	}{
+		{
+			name: "hi res",
+			item: ApiRecord{
+				"Res":         map[string]any{},
+				"ResDuration": float64(1),
+			},
+			want: "Hi-Res",
+		},
+		{
+			name: "lossless",
+			item: ApiRecord{
+				"SQFileHash": "sq-hash",
+				"SQExtName":  "flac",
+			},
+			want: "无损",
+		},
+		{
+			name: "high quality",
+			item: ApiRecord{
+				"HQFileHash": "hq-hash",
+				"HQBitrate":  float64(320),
+			},
+			want: "HQ",
+		},
+		{
+			name: "standard has no quality badge",
+			item: ApiRecord{
+				"FileHash": "file-hash",
+				"Bitrate":  128,
+			},
+			want: "",
+		},
+		{
+			name: "missing required fields",
+			item: ApiRecord{
+				"SQBitrate": 702,
+				"HQBitrate": 320,
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := resolveSongQuality(tt.item); got != tt.want {
+				t.Fatalf("quality = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 

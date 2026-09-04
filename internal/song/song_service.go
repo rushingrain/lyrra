@@ -20,7 +20,7 @@ const topSongRankID = 21608
 // 默认每页条数：前端未传 pagesize 时使用。卡片网格下约两行，不多不少。
 const defaultPageSize = 15
 
-// SongService 首页最新音乐服务。
+// SongService 音乐服务。
 //
 // 结构体实例常驻进程，持有独立的 *kg.Client；前端通过 Wails 绑定调用
 // 其导出方法（window.go.song.SongService.xxx）。
@@ -41,10 +41,10 @@ func NewSongService(log *slog.Logger) (*SongService, error) {
 	return &SongService{client: client, log: log}, nil
 }
 
-// GetHomeSongs 拉取首页最新音乐（TopSong 新歌首发榜）。
+// GetLatestSongs 拉取首页最新音乐（TopSong 新歌首发榜）。
 // page / pagesize 由前端可选传入：page<=0 回退 1，pagesize<=0 回退 15，
 // 两个参数都会透传给上游请求。
-func (s *SongService) GetHomeSongs(page int, pagesize int) ([]HomeSong, error) {
+func (s *SongService) GetLatestSongs(page int, pagesize int) ([]HomeSong, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -85,7 +85,7 @@ func (s *SongService) GetHomeSongs(page int, pagesize int) ([]HomeSong, error) {
 	return songs, nil
 }
 
-// GetHotSongs 拉取首页热门音乐（TopCard 单曲卡片推荐）。
+// GetHotSongs 获取热门音乐
 // TopCard 返回固定条数（song_list_size），无需分页参数；card_id 使用 SDK 默认 1。
 func (s *SongService) GetHotSongs() ([]HomeSong, error) {
 	s.mu.Lock()
@@ -181,16 +181,15 @@ func songCover(m map[string]any) string {
 	return ""
 }
 
-// songQuality 按可用音质哈希推导最高音质标签：
-// flac→无损，high→Hi-Res，320→高品（TopSong 有 flac/high，TopCard 有 flac/320）。
+// songQuality 按可用音质哈希推导最高音质标签
 func songQuality(m map[string]any) string {
 	switch {
-	case pickString(m, "hash_flac") != "":
-		return "无损"
 	case pickString(m, "hash_high") != "":
 		return "Hi-Res"
+	case pickString(m, "hash_flac") != "":
+		return "无损"
 	case pickString(m, "hash_320") != "":
-		return "高品"
+		return "HQ"
 	default:
 		return ""
 	}

@@ -103,16 +103,7 @@ func emptySearchResult() SearchResult {
 func mapSongs(items []ApiRecord) []Song {
 	songs := make([]Song, 0, len(items))
 	for _, item := range items {
-		sqBitrate := firstNumber(item, "SQBitrate", "sq_bitrate")
-		hqBitrate := firstNumber(item, "HQBitrate", "hq_bitrate")
-		quality := ""
-		// TODO 调整解析音质的逻辑
-		switch {
-		case sqBitrate > 0:
-			quality = "SQ"
-		case hqBitrate >= 320:
-			quality = "HQ"
-		}
+		quality := resolveSongQuality(item)
 
 		duration := firstNumber(item, "Duration", "duration")
 		if duration > 0 {
@@ -134,6 +125,56 @@ func mapSongs(items []ApiRecord) []Song {
 		})
 	}
 	return songs
+}
+
+// resolveSongQuality 按最高可用音质返回前端展示标签。
+// 标准音质不作为品质标签展示，因此命中标准分支时仍返回空。
+func resolveSongQuality(item ApiRecord) string {
+	// 1. 检查 Res（新版：嵌套对象）
+	if res, ok := item["Res"].(map[string]interface{}); ok {
+		if hash, ok := res["Hash"].(string); ok && hash != "" {
+			return "Hi-Res"
+		}
+	}
+	// 兼容旧版：Res 字段平铺
+	if hash, ok := item["ResFileHash"].(string); ok && hash != "" {
+		if duration, ok := item["ResDuration"].(float64); ok && duration > 0 {
+			return "Hi-Res"
+		}
+	}
+
+	// 2. SQ 无损（新版：嵌套对象）
+	if sq, ok := item["SQ"].(map[string]interface{}); ok {
+		if hash, ok := sq["Hash"].(string); ok && hash != "" {
+			return "无损"
+		}
+	}
+	// 兼容旧版：SQ 字段平铺
+	if hash, ok := item["SQFileHash"].(string); ok && hash != "" {
+		if ext, ok := item["SQExtName"].(string); ok && ext == "flac" {
+			return "无损"
+		}
+	}
+
+	// 3. HQ（新版：嵌套对象）
+	if hq, ok := item["HQ"].(map[string]interface{}); ok {
+		if hash, ok := hq["Hash"].(string); ok && hash != "" {
+			return "HQ"
+		}
+	}
+	// 兼容旧版：HQ 字段平铺
+	if hash, ok := item["HQFileHash"].(string); ok && hash != "" {
+		if bitrate, ok := item["HQBitrate"].(float64); ok && bitrate == 320 {
+			return "HQ"
+		}
+	}
+
+	// 4. 标准品质（新旧版一致，都在根层级）
+	if hash, ok := item["FileHash"].(string); ok && hash != "" {
+		return "" // 标准品质不展示标签
+	}
+
+	return ""
 }
 
 func mapPlaylists(items []ApiRecord) []Playlist {

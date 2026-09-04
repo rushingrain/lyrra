@@ -1,7 +1,7 @@
 import type { Song } from '@/types'
 import { mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetHomeSongs, GetHotSongs } from '../../wailsjs/go/song/SongService'
+import { GetLatestSongs, GetHotSongs } from '../../wailsjs/go/song/SongService'
 
 /**
  * 首页最新音乐接口
@@ -89,7 +89,7 @@ export function getNewSongs(
     return Promise.resolve(mockSongs)
   }
   return cachedRequest(`${page}:${pagesize}`, '最新音乐加载失败，请稍后重试', () =>
-    GetHomeSongs(page, pagesize),
+    GetLatestSongs(page, pagesize),
   )
 }
 
