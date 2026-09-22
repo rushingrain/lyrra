@@ -234,16 +234,21 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           {Array.from({ length: numPages }).map((_, i) => (
             <button
               key={i}
-              className={`cursor-pointer rounded-full transition-all ${i === page
-                ? 'h-2 w-2 bg-[var(--color-accent)]'
-                : 'h-1.5 w-1.5 bg-gray-300'
-                }`}
+              className="flex h-2 w-2 cursor-pointer items-center justify-center"
               onClick={() => {
                 setVisual(i)
                 setAutoplayKey((k) => k + 1)
               }}
               aria-label={`第 ${i + 1} 组`}
-            />
+            >
+              {/* 按钮固定占位，避免选中点尺寸动画导致路由区内容轻微跳动 */}
+              <span
+                className={`rounded-full transition-all ${i === page
+                  ? 'h-2 w-2 bg-[var(--color-accent)]'
+                  : 'h-1.5 w-1.5 bg-gray-300'
+                  }`}
+              />
+            </button>
           ))}
         </div>
       )}
