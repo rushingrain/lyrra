@@ -207,7 +207,7 @@ export default function Search() {
           )}
 
           {result.mvs.length > 0 && (
-            <Section title="MV" children={<MvList minWidth={156} maxWidth={200} mvs={result.mvs} />} />
+            <Section title="MV" children={<MvList mvs={result.mvs} />} />
           )}
         </div>
       )}

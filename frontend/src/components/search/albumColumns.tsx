@@ -6,8 +6,8 @@ export const albumColumns: ResultColumn<Album>[] = [
   {
     key: 'index',
     title: '#',
-    className: 'w-[6%] shrink-0 text-sm text-[var(--color-text-secondary)]',
-    render: (_album, index) => index + 1,
+    className: 'w-[2%] shrink-0 text-sm text-[var(--color-text-secondary)]',
+    render: (_album, index) => String(index + 1).padStart(2, '0'),
   },
   {
     key: 'title',
