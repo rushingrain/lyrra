@@ -157,9 +157,10 @@ export default function Search() {
           <button
             key={tab.key}
             type="button"
-            className={`cursor-pointer text-base transition-[color] ${activeTab === tab.key
-              ? 'border-b-3 border-b-[color:var(--color-accent)] font-bold text-[var(--color-text-primary)]'
-              : 'font-normal text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
+            className={`cursor-pointer border-b-3 text-base transition-[color,border-color] ${activeTab === tab.key
+                ? 'border-b-(--color-accent) font-bold text-(--color-text-primary)'
+                : 'border-b-transparent font-normal text-(--color-text-secondary) hover:text-(--color-text-primary)'
+              }`}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
