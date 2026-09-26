@@ -1,6 +1,6 @@
 export interface Song {
   id: number
-  title: string
+  name: string
   artist: string
   /** 专辑名；搜索等接口不返回，消费端按需做空值守卫 */
   album?: string

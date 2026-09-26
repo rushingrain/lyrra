@@ -122,7 +122,7 @@ func TestMapNormalSearch(t *testing.T) {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
 	}
 	song := result.Songs[0]
-	if song.ID != 33138036 || song.Title != "是时候" || song.Artist != "孙燕姿" {
+	if song.ID != 33138036 || song.Name != "是时候" || song.Artist != "孙燕姿" {
 		t.Fatalf("unexpected song: %+v", song)
 	}
 	if song.Duration != 238000 || song.Quality != "HQ" || !song.IsOriginal {

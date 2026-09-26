@@ -16,7 +16,7 @@ import {
   MoveRight
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { mockPlayHistory } from '../../data/mock'
+import { mockPlayHistory } from '@/data/mock'
 
 type PlayMode = 'list-loop' | 'order' | 'single' | 'shuffle'
 
@@ -195,13 +195,13 @@ export function MiniPlayer() {
           <div className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2.5 transition-transform hover:scale-105">
             <img
               src={currentSong.coverUrl}
-              alt={currentSong.title}
+              alt={currentSong.name}
               className="h-10 w-10 rounded-full object-cover"
             />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-              {currentSong.title}
+              {currentSong.name}
             </p>
             <p className="truncate text-xs text-[var(--color-text-secondary)]">
               {currentSong.artist}

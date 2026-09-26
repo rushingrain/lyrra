@@ -12,6 +12,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"kuwave/internal/imageurl"
+	"kuwave/internal/model"
 )
 
 // BannerService 首页 banner 服务。
@@ -40,7 +41,7 @@ func NewBannerService(log *slog.Logger) (*BannerService, error) {
 //
 // 该接口返回广告与内容混合列表，全部透传返回：广告项（直播/HiFi 等）与
 // 内容项共用 code（图片地址）、url（跳转链接）字段。
-func (s *BannerService) GetHomeBanners() ([]HomeBanner, error) {
+func (s *BannerService) GetHomeBanners() ([]model.Banner, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -69,13 +70,13 @@ func (s *BannerService) GetHomeBanners() ([]HomeBanner, error) {
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["data"].([]any)
-	banners := make([]HomeBanner, 0, len(items))
+	banners := make([]model.Banner, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		banners = append(banners, HomeBanner{
+		banners = append(banners, model.Banner{
 			ID:       fmt.Sprintf("%v", m["id"]),
 			ImageURL: bannerImageURL(pickString(m, "code")),
 			Title:    pickString(m, "title"),

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"kuwave/internal/imageurl"
+	"kuwave/internal/model"
 )
 
 // ApiRecord 是 SDK 动态 JSON 响应中的对象。
@@ -91,17 +92,17 @@ func mapComplexSearch(data map[string]any) *SearchResult {
 
 func emptySearchResult() SearchResult {
 	return SearchResult{
-		Songs:     []Song{},
-		Playlists: []Playlist{},
-		Albums:    []Album{},
-		Artists:   []Artist{},
-		MVs:       []MV{},
+		Songs:     []model.Song{},
+		Playlists: []model.Playlist{},
+		Albums:    []model.Album{},
+		Artists:   []model.Artist{},
+		MVs:       []model.MV{},
 		Lyrics:    []Lyric{},
 	}
 }
 
-func mapSongs(items []ApiRecord) []Song {
-	songs := make([]Song, 0, len(items))
+func mapSongs(items []ApiRecord) []model.Song {
+	songs := make([]model.Song, 0, len(items))
 	for _, item := range items {
 		quality := resolveSongQuality(item)
 		duration := numberValue(item["Duration"])
@@ -110,9 +111,9 @@ func mapSongs(items []ApiRecord) []Song {
 			duration *= 1000
 		}
 
-		songs = append(songs, Song{
+		songs = append(songs, model.Song{
 			ID:         numberValue(item["MixSongID"]),
-			Title:      songName(item, "SongName", "OriSongName"),
+			Name:       songName(item, "SongName", "OriSongName"),
 			Artist:     artistName(item, "SingerName", "Singers"),
 			Album:      textValue(item["AlbumName"]),
 			CoverURL:   textValue(item["Image"]),
@@ -146,17 +147,14 @@ func songName(item ApiRecord, nameKey string, oriNameKey string) string {
 // resolveSongQuality 按最高可用音质返回前端展示标签。
 // 标准音质不作为品质标签展示，因此命中标准分支时仍返回空。
 func resolveSongQuality(item ApiRecord) string {
-	// 1. 检查 Res（新版：嵌套对象）
-	if res, ok := item["Res"].(map[string]interface{}); ok {
-		if hash, ok := res["Hash"].(string); ok && hash != "" {
-			return "Hi-Res"
-		}
+	// 1. Res 是新版嵌套对象；上游同时会在根级返回 ResDuration。
+	_, hasRes := item["Res"].(map[string]interface{})
+	if hasRes && numberValue(item["ResDuration"]) > 0 {
+		return "Hi-Res"
 	}
 	// 兼容旧版：Res 字段平铺
 	if hash, ok := item["ResFileHash"].(string); ok && hash != "" {
-		if duration, ok := item["ResDuration"].(float64); ok && duration > 0 {
-			return "Hi-Res"
-		}
+		return "Hi-Res"
 	}
 
 	// 2. SQ 无损（新版：嵌套对象）
@@ -193,10 +191,10 @@ func resolveSongQuality(item ApiRecord) string {
 	return ""
 }
 
-func mapPlaylists(items []ApiRecord) []Playlist {
-	playlists := make([]Playlist, 0, len(items))
+func mapPlaylists(items []ApiRecord) []model.Playlist {
+	playlists := make([]model.Playlist, 0, len(items))
 	for _, item := range items {
-		playlists = append(playlists, Playlist{
+		playlists = append(playlists, model.Playlist{
 			ID:          numberValue(item["specialid"]),
 			Name:        textValue(item["specialname"]),
 			Creator:     textValue(item["nickname"]),
@@ -209,10 +207,10 @@ func mapPlaylists(items []ApiRecord) []Playlist {
 	return playlists
 }
 
-func mapAlbums(items []ApiRecord) []Album {
-	albums := make([]Album, 0, len(items))
+func mapAlbums(items []ApiRecord) []model.Album {
+	albums := make([]model.Album, 0, len(items))
 	for _, item := range items {
-		albums = append(albums, Album{
+		albums = append(albums, model.Album{
 			ID:       numberValue(item["albumid"]),
 			Name:     textValue(item["albumname"]),
 			Artist:   artistName(item, "singer", "singers"),
@@ -223,10 +221,10 @@ func mapAlbums(items []ApiRecord) []Album {
 	return albums
 }
 
-func mapArtists(items []ApiRecord) []Artist {
-	artists := make([]Artist, 0, len(items))
+func mapArtists(items []ApiRecord) []model.Artist {
+	artists := make([]model.Artist, 0, len(items))
 	for _, item := range items {
-		artists = append(artists, Artist{
+		artists = append(artists, model.Artist{
 			ID:        numberValue(item["AuthorId"]),
 			Name:      textValue(item["AuthorName"]),
 			AvatarURL: textValue(item["Avatar"]),
@@ -238,10 +236,10 @@ func mapArtists(items []ApiRecord) []Artist {
 	return artists
 }
 
-func mapMVs(items []ApiRecord) []MV {
-	mvs := make([]MV, 0, len(items))
+func mapMVs(items []ApiRecord) []model.MV {
+	mvs := make([]model.MV, 0, len(items))
 	for _, item := range items {
-		mvs = append(mvs, MV{
+		mvs = append(mvs, model.MV{
 			ID:       numberValue(item["MvID"]),
 			Name:     textValue(item["MvName"]),
 			Artist:   artistName(item, "SingerName", "Singers"),
@@ -254,7 +252,7 @@ func mapMVs(items []ApiRecord) []MV {
 // mapNormalMVs 处理普通搜索 MV 封面的特殊返回格式。
 // 该接口的 Pic 可能只返回 "20240118194600124028.jpg" 这类文件名，
 // 需要转换为酷狗 MV 图床的完整地址；综合搜索返回的已是完整 URL，不受影响。
-func mapNormalMVs(items []ApiRecord) []MV {
+func mapNormalMVs(items []ApiRecord) []model.MV {
 	mvs := mapMVs(items)
 	for i := range mvs {
 		mvs[i].CoverURL = normalizeMVPicFilename(mvs[i].CoverURL)

@@ -63,30 +63,7 @@ export namespace auth {
 
 }
 
-export namespace banner {
-	
-	export class HomeBanner {
-	    id: string;
-	    imageUrl: string;
-	    title: string;
-	    linkUrl: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new HomeBanner(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.imageUrl = source["imageUrl"];
-	        this.title = source["title"];
-	        this.linkUrl = source["linkUrl"];
-	    }
-	}
-
-}
-
-export namespace search {
+export namespace model {
 	
 	export class Album {
 	    id: number;
@@ -130,22 +107,22 @@ export namespace search {
 	        this.fans = source["fans"];
 	    }
 	}
-	export class Lyric {
-	    id: number;
+	export class Banner {
+	    id: string;
+	    imageUrl: string;
 	    title: string;
-	    artist: string;
-	    album: string;
+	    linkUrl: string;
 	
 	    static createFrom(source: any = {}) {
-	        return new Lyric(source);
+	        return new Banner(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
+	        this.imageUrl = source["imageUrl"];
 	        this.title = source["title"];
-	        this.artist = source["artist"];
-	        this.album = source["album"];
+	        this.linkUrl = source["linkUrl"];
 	    }
 	}
 	export class MV {
@@ -192,7 +169,7 @@ export namespace search {
 	}
 	export class Song {
 	    id: number;
-	    title: string;
+	    name: string;
 	    artist: string;
 	    album?: string;
 	    coverUrl: string;
@@ -209,7 +186,7 @@ export namespace search {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.id = source["id"];
-	        this.title = source["title"];
+	        this.name = source["name"];
 	        this.artist = source["artist"];
 	        this.album = source["album"];
 	        this.coverUrl = source["coverUrl"];
@@ -220,12 +197,35 @@ export namespace search {
 	        this.tags = source["tags"];
 	    }
 	}
+
+}
+
+export namespace search {
+	
+	export class Lyric {
+	    id: number;
+	    title: string;
+	    artist: string;
+	    album: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Lyric(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.title = source["title"];
+	        this.artist = source["artist"];
+	        this.album = source["album"];
+	    }
+	}
 	export class SearchResult {
-	    songs: Song[];
-	    playlists: Playlist[];
-	    albums: Album[];
-	    artists: Artist[];
-	    mvs: MV[];
+	    songs: model.Song[];
+	    playlists: model.Playlist[];
+	    albums: model.Album[];
+	    artists: model.Artist[];
+	    mvs: model.MV[];
 	    lyrics: Lyric[];
 	
 	    static createFrom(source: any = {}) {
@@ -234,11 +234,11 @@ export namespace search {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.songs = this.convertValues(source["songs"], Song);
-	        this.playlists = this.convertValues(source["playlists"], Playlist);
-	        this.albums = this.convertValues(source["albums"], Album);
-	        this.artists = this.convertValues(source["artists"], Artist);
-	        this.mvs = this.convertValues(source["mvs"], MV);
+	        this.songs = this.convertValues(source["songs"], model.Song);
+	        this.playlists = this.convertValues(source["playlists"], model.Playlist);
+	        this.albums = this.convertValues(source["albums"], model.Album);
+	        this.artists = this.convertValues(source["artists"], model.Artist);
+	        this.mvs = this.convertValues(source["mvs"], model.MV);
 	        this.lyrics = this.convertValues(source["lyrics"], Lyric);
 	    }
 	
@@ -259,39 +259,6 @@ export namespace search {
 		    }
 		    return a;
 		}
-	}
-
-}
-
-export namespace song {
-	
-	export class HomeSong {
-	    id: number;
-	    title: string;
-	    artist: string;
-	    album: string;
-	    coverUrl: string;
-	    duration: number;
-	    hash: string;
-	    quality: string;
-	    isOriginal: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new HomeSong(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.title = source["title"];
-	        this.artist = source["artist"];
-	        this.album = source["album"];
-	        this.coverUrl = source["coverUrl"];
-	        this.duration = source["duration"];
-	        this.hash = source["hash"];
-	        this.quality = source["quality"];
-	        this.isOriginal = source["isOriginal"];
-	    }
 	}
 
 }

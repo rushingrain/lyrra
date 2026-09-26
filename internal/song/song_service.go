@@ -12,6 +12,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"kuwave/internal/imageurl"
+	"kuwave/internal/model"
 )
 
 // 新歌首发榜 rank_id：与 SDK TopSong 默认值一致。
@@ -44,7 +45,7 @@ func NewSongService(log *slog.Logger) (*SongService, error) {
 // GetLatestSongs 拉取首页最新音乐（TopSong 新歌首发榜）。
 // page / pagesize 由前端可选传入：page<=0 回退 1，pagesize<=0 回退 15，
 // 两个参数都会透传给上游请求。
-func (s *SongService) GetLatestSongs(page int, pagesize int) ([]HomeSong, error) {
+func (s *SongService) GetLatestSongs(page int, pagesize int) ([]model.Song, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -70,7 +71,7 @@ func (s *SongService) GetLatestSongs(page int, pagesize int) ([]HomeSong, error)
 	}
 
 	items, _ := resp.Body["data"].([]any)
-	songs := make([]HomeSong, 0, len(items))
+	songs := make([]model.Song, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -87,7 +88,7 @@ func (s *SongService) GetLatestSongs(page int, pagesize int) ([]HomeSong, error)
 
 // GetHotSongs 获取热门音乐
 // TopCard 返回固定条数（song_list_size），无需分页参数；card_id 使用 SDK 默认 1。
-func (s *SongService) GetHotSongs() ([]HomeSong, error) {
+func (s *SongService) GetHotSongs() ([]model.Song, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -103,7 +104,7 @@ func (s *SongService) GetHotSongs() ([]HomeSong, error) {
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["song_list"].([]any)
-	songs := make([]HomeSong, 0, len(items))
+	songs := make([]model.Song, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -114,12 +115,12 @@ func (s *SongService) GetHotSongs() ([]HomeSong, error) {
 	return songs, nil
 }
 
-// parseSong 把上游单曲条目统一解析为 HomeSong。
+// parseSong 把上游单曲条目统一解析为 model.Song。
 // TopSong（新歌首发榜）与 TopCard（热门推荐）字段略有差异，这里做兼容处理。
-func parseSong(m map[string]any) HomeSong {
-	return HomeSong{
+func parseSong(m map[string]any) model.Song {
+	return model.Song{
 		ID:         songID(m),
-		Title:      pickString(m, "songname"),
+		Name:       pickString(m, "songname"),
 		Artist:     songArtist(m),
 		Album:      pickString(m, "album_name"),
 		CoverURL:   songCover(m),

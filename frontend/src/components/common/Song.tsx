@@ -19,9 +19,9 @@ export function Song({ song, size = 'sm', className = '' }: SongProps) {
   const preset = PRESETS[size]
   return (
     <div className={`flex min-w-0 items-center ${preset.root} ${className}`}>
-      <Cover src={song.coverUrl || ''} alt={song.title} className={preset.cover} />
+      <Cover src={song.coverUrl || ''} alt={song.name} className={preset.cover} />
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-[15px] text-[var(--color-text-primary)]">{song.title}</p>
+        <p className="truncate text-sm text-[15px] text-[var(--color-text-primary)]">{song.name}</p>
         <div className={`${preset.meta} flex min-w-0 items-center gap-1.5 text-[13px] text-[var(--color-text-secondary)]`}>
           {song.quality && <Tag variant="outline">{song.quality}</Tag>}
           {song.isOriginal && <Tag variant="solid">原唱</Tag>}

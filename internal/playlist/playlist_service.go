@@ -12,7 +12,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"kuwave/internal/imageurl"
-	"kuwave/internal/search"
+	"kuwave/internal/model"
 )
 
 // PlaylistService 首页官方歌单服务。
@@ -39,7 +39,7 @@ func NewPlaylistService(log *slog.Logger) (*PlaylistService, error) {
 // GetHomePlaylists 拉取首页官方歌单（/top/playlist）。
 // pageSize 为期望返回条数（<=0 时回退默认 15）；withSong 为是否携带歌曲
 // （0 不携带 / 1 携带），两个参数都会透传给上游请求。
-func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]search.Playlist, error) {
+func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]model.Playlist, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -61,13 +61,13 @@ func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]search
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["special_list"].([]any)
-	playlists := make([]search.Playlist, 0, len(items))
+	playlists := make([]model.Playlist, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		playlists = append(playlists, search.Playlist{
+		playlists = append(playlists, model.Playlist{
 			ID:          int64(pickInt(m, "specialid")),
 			Name:        pickString(m, "specialname"),
 			Creator:     pickString(m, "nickname"),

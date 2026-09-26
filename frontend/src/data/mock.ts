@@ -168,7 +168,7 @@ export const mockPlaylists: Playlist[] = [
 export const mockSongs: Song[] = [
   {
     id: 1,
-    title: '晴天',
+    name: '晴天',
     artist: '周杰伦',
     album: '叶惠美',
     coverUrl: 'https://picsum.photos/seed/song1/72/72',
@@ -179,7 +179,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 2,
-    title: '七里香',
+    name: '七里香',
     artist: '周杰伦',
     album: '七里香',
     coverUrl: 'https://picsum.photos/seed/song2/72/72',
@@ -190,7 +190,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 3,
-    title: '起风了',
+    name: '起风了',
     artist: '买辣椒也用券',
     album: '起风了',
     coverUrl: 'https://picsum.photos/seed/song3/72/72',
@@ -200,7 +200,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 4,
-    title: '平凡之路',
+    name: '平凡之路',
     artist: '朴树',
     album: '平凡之路',
     coverUrl: 'https://picsum.photos/seed/song4/72/72',
@@ -210,7 +210,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 5,
-    title: '孤勇者',
+    name: '孤勇者',
     artist: '陈奕迅',
     album: '孤勇者',
     coverUrl: 'https://picsum.photos/seed/song5/72/72',
@@ -220,7 +220,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 6,
-    title: '光年之外',
+    name: '光年之外',
     artist: '邓紫棋',
     album: '光年之外',
     coverUrl: 'https://picsum.photos/seed/song6/72/72',
@@ -231,7 +231,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 7,
-    title: '江南',
+    name: '江南',
     artist: '林俊杰',
     album: '第二天堂',
     coverUrl: 'https://picsum.photos/seed/song7/72/72',
@@ -241,7 +241,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 8,
-    title: '演员',
+    name: '演员',
     artist: '薛之谦',
     album: '演员',
     coverUrl: 'https://picsum.photos/seed/song8/72/72',
@@ -250,7 +250,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 9,
-    title: '告白气球',
+    name: '告白气球',
     artist: '周杰伦',
     album: '周杰伦的床边故事',
     coverUrl: 'https://picsum.photos/seed/song9/72/72',
@@ -261,7 +261,7 @@ export const mockSongs: Song[] = [
   },
   {
     id: 10,
-    title: '夜曲',
+    name: '夜曲',
     artist: '周杰伦',
     album: '十一月的萧邦',
     coverUrl: 'https://picsum.photos/seed/song10/72/72',
