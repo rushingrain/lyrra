@@ -11,37 +11,37 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
+	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
-	"kuwave/internal/model"
 )
 
-// BannerService 首页 banner 服务。
+// Service 首页 banner 服务。
 //
 // 结构体实例常驻进程，持有独立的 *kg.Client（banner 接口无需登录态，
 // 不复用 auth 的 client，避免跨服务耦合）；前端通过 Wails 绑定调用
-// 其导出方法（window.go.main.BannerService.xxx）。
-type BannerService struct {
+// 其导出方法（window.go.banner.Service.xxx）。
+type Service struct {
 	client *kg.Client
 	log    *slog.Logger
 	// kg.Client 非并发安全，用互斥锁串行化所有 client 调用（同 auth 包）。
 	mu sync.Mutex
 }
 
-// NewBannerService 创建 banner 服务。
+// New 创建 banner 服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
-func NewBannerService(log *slog.Logger) (*BannerService, error) {
+func New(log *slog.Logger) (*Service, error) {
 	client, err := kg.New(kg.WithAutoRefresh(false))
 	if err != nil {
 		return nil, err
 	}
-	return &BannerService{client: client, log: log}, nil
+	return &Service{client: client, log: log}, nil
 }
 
 // GetHomeBanners 拉取首页轮播 banner（/pc/diantai 电台 banner 接口）。
 //
 // 该接口返回广告与内容混合列表，全部透传返回：广告项（直播/HiFi 等）与
 // 内容项共用 code（图片地址）、url（跳转链接）字段。
-func (s *BannerService) GetHomeBanners() ([]model.Banner, error) {
+func (s *Service) GetHomeBanners() ([]dto.Banner, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -70,13 +70,13 @@ func (s *BannerService) GetHomeBanners() ([]model.Banner, error) {
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["data"].([]any)
-	banners := make([]model.Banner, 0, len(items))
+	banners := make([]dto.Banner, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		banners = append(banners, model.Banner{
+		banners = append(banners, dto.Banner{
 			ID:       fmt.Sprintf("%v", m["id"]),
 			ImageURL: bannerImageURL(pickString(m, "code")),
 			Title:    pickString(m, "title"),

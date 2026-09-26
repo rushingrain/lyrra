@@ -25,30 +25,30 @@ var supportedSearchTypes = map[string]struct{}{
 	"special": {},
 }
 
-// SearchService 搜索服务。
+// Service 搜索服务。
 //
 // 普通搜索与综合搜索分别对应 SDK 的 Search 和 SearchComplex 接口；
 // 前端通过 Wails 绑定调用其导出方法。
-type SearchService struct {
+type Service struct {
 	client *kg.Client
 	log    *slog.Logger
 	// kg.Client 非并发安全，用互斥锁串行化 client 调用。
 	mu sync.Mutex
 }
 
-// NewSearchService 创建搜索服务。
+// New 创建搜索服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
-func NewSearchService(log *slog.Logger) (*SearchService, error) {
+func New(log *slog.Logger) (*Service, error) {
 	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithCookie(auth.LoadSession()))
 	if err != nil {
 		return nil, err
 	}
-	return &SearchService{client: client, log: log}, nil
+	return &Service{client: client, log: log}, nil
 }
 
 // Search 执行普通搜索。
 // searchType 支持 song、album、author、mv、lyric、special，值会原样透传给 SDK。
-func (s *SearchService) Search(keyword string, pageNum int, pageSize int, searchType string) (*SearchResult, error) {
+func (s *Service) Search(keyword string, pageNum int, pageSize int, searchType string) (*Result, error) {
 	if _, ok := supportedSearchTypes[searchType]; !ok {
 		return nil, fmt.Errorf("不支持的搜索类型: %s", searchType)
 	}
@@ -80,7 +80,7 @@ func (s *SearchService) Search(keyword string, pageNum int, pageSize int, search
 }
 
 // SearchComplex 执行综合搜索，不向 SDK 传递 type 参数。
-func (s *SearchService) SearchComplex(keyword string, pageNum int, pageSize int) (*SearchResult, error) {
+func (s *Service) SearchComplex(keyword string, pageNum int, pageSize int) (*Result, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -110,8 +110,8 @@ func (s *SearchService) SearchComplex(keyword string, pageNum int, pageSize int)
 }
 
 // loadSearchCookie 读取最新登录态，并同步到搜索 client。
-// SearchService 与 AuthService 持有不同 SDK client，因此不能只在创建时读取一次。
-func (s *SearchService) loadSearchCookie() (map[string]string, error) {
+// search.Service 与 auth.Service 持有不同 SDK client，因此不能只在创建时读取一次。
+func (s *Service) loadSearchCookie() (map[string]string, error) {
 	cookie := auth.LoadSession()
 	for _, key := range []string{"token", "userid", "dfid"} {
 		if cookie[key] == "" {

@@ -1,12 +1,12 @@
 import type { Banner } from '@/types'
 import { mockBanners } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetHomeBanners } from '../../wailsjs/go/banner/BannerService'
+import { GetHomeBanners } from '../../wailsjs/go/banner/Service'
 
 /**
  * 首页 banner 相关接口
  *
- * 已接入后端（Wails 绑定 window.go.banner.BannerService.*），
+ * 已接入后端（Wails 绑定 window.go.banner.Service.*），
  * 后端调酷狗 /pc/diantai 接口并过滤第三方广告后返回。
  *
  * 关于「只跑前端 npm run dev」：
@@ -17,7 +17,7 @@ import { GetHomeBanners } from '../../wailsjs/go/banner/BannerService'
 
 /** Wails 运行时是否可用（真实后端是否存在） */
 function isBackendAvailable(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).go?.banner?.BannerService)
+  return typeof window !== 'undefined' && Boolean((window as any).go?.banner?.Service)
 }
 
 /**

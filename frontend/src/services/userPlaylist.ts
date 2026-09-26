@@ -1,5 +1,5 @@
 import type { UserPlaylist } from '@/types'
-import { GetUserPlaylists } from '../../wailsjs/go/auth/AuthService'
+import { GetUserPlaylists } from '../../wailsjs/go/auth/Service'
 
 /** 前端请求用户歌单的默认参数 */
 export const DEFAULT_USER_PLAYLIST_PAGE = 1

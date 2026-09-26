@@ -20,7 +20,7 @@ var assets embed.FS
 
 func main() {
 	// 日志最先初始化：slog 写入 logs/kuwave.log（lumberjack 轮转清理），
-	// 并注入 App / AuthService，供关键业务事件记录。
+	// 并注入 App / auth.Service，供关键业务事件记录。
 	logService := log.New()
 	logger := logService.Logger()
 	defer func() {
@@ -33,35 +33,35 @@ func main() {
 	app := NewApp(logger)
 
 	// Create the auth service instance
-	authService, err := auth.NewAuthService(logger)
+	authService, err := auth.New(logger)
 	if err != nil {
 		logger.Error("failed to init auth service", "err", err.Error())
 		return
 	}
 
 	// Create the banner service instance
-	bannerService, err := banner.NewBannerService(logger)
+	bannerService, err := banner.New(logger)
 	if err != nil {
 		logger.Error("failed to init banner service", "err", err.Error())
 		return
 	}
 
 	// Create the playlist service instance
-	playlistService, err := playlist.NewPlaylistService(logger)
+	playlistService, err := playlist.New(logger)
 	if err != nil {
 		logger.Error("failed to init playlist service", "err", err.Error())
 		return
 	}
 
 	// Create the song service instance
-	songService, err := song.NewSongService(logger)
+	songService, err := song.New(logger)
 	if err != nil {
 		logger.Error("failed to init song service", "err", err.Error())
 		return
 	}
 
 	// Create the search service instance
-	searchService, err := search.NewSearchService(logger)
+	searchService, err := search.New(logger)
 	if err != nil {
 		logger.Error("failed to init search service", "err", err.Error())
 		return

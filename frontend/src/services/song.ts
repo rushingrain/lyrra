@@ -1,12 +1,12 @@
 import type { Song } from '@/types'
 import { mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetLatestSongs, GetHotSongs } from '../../wailsjs/go/song/SongService'
+import { GetLatestSongs, GetHotSongs } from '../../wailsjs/go/song/Service'
 
 /**
  * 首页最新音乐接口
  *
- * 已接入后端（Wails 绑定 window.go.song.SongService.*），
+ * 已接入后端（Wails 绑定 window.go.song.Service.*），
  * 后端调酷狗 TopSong（新歌首发榜）接口返回最新单曲。
  *
  * 关于「只跑前端 npm run dev」：
@@ -17,7 +17,7 @@ import { GetLatestSongs, GetHotSongs } from '../../wailsjs/go/song/SongService'
 
 /** Wails 运行时是否可用（真实后端是否存在） */
 function isBackendAvailable(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).go?.song?.SongService)
+  return typeof window !== 'undefined' && Boolean((window as any).go?.song?.Service)
 }
 
 /**

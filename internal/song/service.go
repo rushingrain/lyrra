@@ -11,8 +11,8 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
+	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
-	"kuwave/internal/model"
 )
 
 // 新歌首发榜 rank_id：与 SDK TopSong 默认值一致。
@@ -21,31 +21,31 @@ const topSongRankID = 21608
 // 默认每页条数：前端未传 pagesize 时使用。卡片网格下约两行，不多不少。
 const defaultPageSize = 15
 
-// SongService 音乐服务。
+// Service 音乐服务。
 //
 // 结构体实例常驻进程，持有独立的 *kg.Client；前端通过 Wails 绑定调用
-// 其导出方法（window.go.song.SongService.xxx）。
-type SongService struct {
+// 其导出方法（window.go.song.Service.xxx）。
+type Service struct {
 	client *kg.Client
 	log    *slog.Logger
 	// kg.Client 非并发安全，用互斥锁串行化所有 client 调用（同 auth/banner/playlist 包）。
 	mu sync.Mutex
 }
 
-// NewSongService 创建最新音乐服务。
+// New 创建最新音乐服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
-func NewSongService(log *slog.Logger) (*SongService, error) {
+func New(log *slog.Logger) (*Service, error) {
 	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithLite(false))
 	if err != nil {
 		return nil, err
 	}
-	return &SongService{client: client, log: log}, nil
+	return &Service{client: client, log: log}, nil
 }
 
 // GetLatestSongs 拉取首页最新音乐（TopSong 新歌首发榜）。
 // page / pagesize 由前端可选传入：page<=0 回退 1，pagesize<=0 回退 15，
 // 两个参数都会透传给上游请求。
-func (s *SongService) GetLatestSongs(page int, pagesize int) ([]model.Song, error) {
+func (s *Service) GetLatestSongs(page int, pagesize int) ([]dto.Song, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -71,7 +71,7 @@ func (s *SongService) GetLatestSongs(page int, pagesize int) ([]model.Song, erro
 	}
 
 	items, _ := resp.Body["data"].([]any)
-	songs := make([]model.Song, 0, len(items))
+	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -88,7 +88,7 @@ func (s *SongService) GetLatestSongs(page int, pagesize int) ([]model.Song, erro
 
 // GetHotSongs 获取热门音乐
 // TopCard 返回固定条数（song_list_size），无需分页参数；card_id 使用 SDK 默认 1。
-func (s *SongService) GetHotSongs() ([]model.Song, error) {
+func (s *Service) GetHotSongs() ([]dto.Song, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -104,7 +104,7 @@ func (s *SongService) GetHotSongs() ([]model.Song, error) {
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["song_list"].([]any)
-	songs := make([]model.Song, 0, len(items))
+	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -115,10 +115,10 @@ func (s *SongService) GetHotSongs() ([]model.Song, error) {
 	return songs, nil
 }
 
-// parseSong 把上游单曲条目统一解析为 model.Song。
+// parseSong 把上游单曲条目统一解析为 dto.Song。
 // TopSong（新歌首发榜）与 TopCard（热门推荐）字段略有差异，这里做兼容处理。
-func parseSong(m map[string]any) model.Song {
-	return model.Song{
+func parseSong(m map[string]any) dto.Song {
+	return dto.Song{
 		ID:         songID(m),
 		Name:       pickString(m, "songname"),
 		Artist:     songArtist(m),

@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
+	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
-	"kuwave/internal/model"
 )
 
 // ApiRecord 是 SDK 动态 JSON 响应中的对象。
@@ -44,7 +44,7 @@ func normalSearchItems(data map[string]any) []ApiRecord {
 }
 
 // mapNormalSearch 将普通搜索的动态 SDK 数据转换为稳定 DTO。
-func mapNormalSearch(searchType string, data map[string]any) *SearchResult {
+func mapNormalSearch(searchType string, data map[string]any) *Result {
 	result := emptySearchResult()
 	items := normalSearchItems(data)
 
@@ -68,7 +68,7 @@ func mapNormalSearch(searchType string, data map[string]any) *SearchResult {
 
 // mapComplexSearch 将综合搜索的分组数据转换为稳定 DTO。
 // 上游未展示的分组（program、othersearch 等）会按需逐步补充。
-func mapComplexSearch(data map[string]any) *SearchResult {
+func mapComplexSearch(data map[string]any) *Result {
 	result := emptySearchResult()
 
 	for _, group := range asRecords(data["lists"]) {
@@ -90,19 +90,19 @@ func mapComplexSearch(data map[string]any) *SearchResult {
 	return &result
 }
 
-func emptySearchResult() SearchResult {
-	return SearchResult{
-		Songs:     []model.Song{},
-		Playlists: []model.Playlist{},
-		Albums:    []model.Album{},
-		Artists:   []model.Artist{},
-		MVs:       []model.MV{},
+func emptySearchResult() Result {
+	return Result{
+		Songs:     []dto.Song{},
+		Playlists: []dto.Playlist{},
+		Albums:    []dto.Album{},
+		Artists:   []dto.Artist{},
+		MVs:       []dto.MV{},
 		Lyrics:    []Lyric{},
 	}
 }
 
-func mapSongs(items []ApiRecord) []model.Song {
-	songs := make([]model.Song, 0, len(items))
+func mapSongs(items []ApiRecord) []dto.Song {
+	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
 		quality := resolveSongQuality(item)
 		duration := numberValue(item["Duration"])
@@ -111,7 +111,7 @@ func mapSongs(items []ApiRecord) []model.Song {
 			duration *= 1000
 		}
 
-		songs = append(songs, model.Song{
+		songs = append(songs, dto.Song{
 			ID:         numberValue(item["MixSongID"]),
 			Name:       songName(item, "SongName", "OriSongName"),
 			Artist:     artistName(item, "SingerName", "Singers"),
@@ -191,10 +191,10 @@ func resolveSongQuality(item ApiRecord) string {
 	return ""
 }
 
-func mapPlaylists(items []ApiRecord) []model.Playlist {
-	playlists := make([]model.Playlist, 0, len(items))
+func mapPlaylists(items []ApiRecord) []dto.Playlist {
+	playlists := make([]dto.Playlist, 0, len(items))
 	for _, item := range items {
-		playlists = append(playlists, model.Playlist{
+		playlists = append(playlists, dto.Playlist{
 			ID:          numberValue(item["specialid"]),
 			Name:        textValue(item["specialname"]),
 			Creator:     textValue(item["nickname"]),
@@ -207,10 +207,10 @@ func mapPlaylists(items []ApiRecord) []model.Playlist {
 	return playlists
 }
 
-func mapAlbums(items []ApiRecord) []model.Album {
-	albums := make([]model.Album, 0, len(items))
+func mapAlbums(items []ApiRecord) []dto.Album {
+	albums := make([]dto.Album, 0, len(items))
 	for _, item := range items {
-		albums = append(albums, model.Album{
+		albums = append(albums, dto.Album{
 			ID:       numberValue(item["albumid"]),
 			Name:     textValue(item["albumname"]),
 			Artist:   artistName(item, "singer", "singers"),
@@ -221,10 +221,10 @@ func mapAlbums(items []ApiRecord) []model.Album {
 	return albums
 }
 
-func mapArtists(items []ApiRecord) []model.Artist {
-	artists := make([]model.Artist, 0, len(items))
+func mapArtists(items []ApiRecord) []dto.Artist {
+	artists := make([]dto.Artist, 0, len(items))
 	for _, item := range items {
-		artists = append(artists, model.Artist{
+		artists = append(artists, dto.Artist{
 			ID:        numberValue(item["AuthorId"]),
 			Name:      textValue(item["AuthorName"]),
 			AvatarURL: textValue(item["Avatar"]),
@@ -236,10 +236,10 @@ func mapArtists(items []ApiRecord) []model.Artist {
 	return artists
 }
 
-func mapMVs(items []ApiRecord) []model.MV {
-	mvs := make([]model.MV, 0, len(items))
+func mapMVs(items []ApiRecord) []dto.MV {
+	mvs := make([]dto.MV, 0, len(items))
 	for _, item := range items {
-		mvs = append(mvs, model.MV{
+		mvs = append(mvs, dto.MV{
 			ID:       numberValue(item["MvID"]),
 			Name:     textValue(item["MvName"]),
 			Artist:   artistName(item, "SingerName", "Singers"),
@@ -252,7 +252,7 @@ func mapMVs(items []ApiRecord) []model.MV {
 // mapNormalMVs 处理普通搜索 MV 封面的特殊返回格式。
 // 该接口的 Pic 可能只返回 "20240118194600124028.jpg" 这类文件名，
 // 需要转换为酷狗 MV 图床的完整地址；综合搜索返回的已是完整 URL，不受影响。
-func mapNormalMVs(items []ApiRecord) []model.MV {
+func mapNormalMVs(items []ApiRecord) []dto.MV {
 	mvs := mapMVs(items)
 	for i := range mvs {
 		mvs[i].CoverURL = normalizeMVPicFilename(mvs[i].CoverURL)

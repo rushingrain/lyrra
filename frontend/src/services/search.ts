@@ -1,13 +1,13 @@
-import { Search, SearchComplex } from '../../wailsjs/go/search/SearchService'
+import { Search, SearchComplex } from '../../wailsjs/go/search/Service'
 import { search } from '../../wailsjs/go/models'
 
 export type SearchLyric = search.Lyric
-export type SearchResult = search.SearchResult
+export type SearchResult = search.Result
 
 export type NormalSearchType = 'song' | 'special' | 'album' | 'author' | 'mv' | 'lyric'
 export type SearchTabType = 'complex' | NormalSearchType
 
-const EMPTY_RESULT = new search.SearchResult({
+const EMPTY_RESULT = new search.Result({
   songs: [],
   playlists: [],
   albums: [],
@@ -20,7 +20,7 @@ const CACHE_LIMIT = 20
 const cache = new Map<string, Promise<SearchResult>>()
 
 function isBackendAvailable(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).go?.search?.SearchService)
+  return typeof window !== 'undefined' && Boolean((window as any).go?.search?.Service)
 }
 
 /** 获取综合搜索结果，后端已返回稳定 DTO。 */

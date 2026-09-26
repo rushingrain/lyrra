@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -20,11 +21,11 @@ import (
 // ErrNotLoggedIn 未登录或会话已过期
 var ErrNotLoggedIn = errors.New("未登录")
 
-// AuthService 登录服务。
+// Service 登录服务。
 //
 // 结构体实例常驻进程，持有 *kg.Client 作为全局登录态；
-// 前端通过 Wails 绑定调用其导出方法（window.go.main.AuthService.xxx）。
-type AuthService struct {
+// 前端通过 Wails 绑定调用其导出方法（window.go.auth.Service.xxx）。
+type Service struct {
 	client *kg.Client
 	log    *slog.Logger
 	// kg.Client 内部维护 cookie 与登录态，非并发安全，
@@ -32,11 +33,11 @@ type AuthService struct {
 	mu sync.Mutex
 }
 
-// NewAuthService 创建登录服务。
+// New 创建登录服务。
 // 只做本地初始化（加载已保存的会话 cookie 注入 client），
 // 不发起网络请求，因此不会阻塞应用启动。
 // 会话有效性校验延迟到首次 GetCurrentUser 调用。
-func NewAuthService(log *slog.Logger) (*AuthService, error) {
+func New(log *slog.Logger) (*Service, error) {
 	client, err := kg.New(
 		kg.WithCookie(LoadSession()),
 		// TODO: token 续期功能暂未启用；后续接入续期时改为 kg.WithAutoRefresh(true)，
@@ -46,12 +47,12 @@ func NewAuthService(log *slog.Logger) (*AuthService, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &AuthService{client: client, log: log}, nil
+	return &Service{client: client, log: log}, nil
 }
 
 // GetLoginQrCode 获取扫码登录二维码。
 // 对应 SDK 三步流程的 Step1 + Step2：LoginQrKey → LoginQrCreate。
-func (s *AuthService) GetLoginQrCode() (*QrLoginResponse, error) {
+func (s *Service) GetLoginQrCode() (*QrLoginResponse, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -85,7 +86,7 @@ func (s *AuthService) GetLoginQrCode() (*QrLoginResponse, error) {
 // 单次请求失败时返回 pending，交由前端下一个轮询 tick 重试。
 // 返回 string 而非 QrLoginStatus：Wails 的 TS 绑定生成器不产出命名 string 类型的声明，
 // 返回 string 可避免生成的 .d.ts 引用不存在的 main.QrLoginStatus 导致前端类型检查失败。
-func (s *AuthService) CheckQrLoginStatus(qrKey string) (string, error) {
+func (s *Service) CheckQrLoginStatus(qrKey string) (string, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -120,7 +121,7 @@ func (s *AuthService) CheckQrLoginStatus(qrKey string) (string, error) {
 }
 
 // registerDevice 将 SDK 的异常响应转换为普通错误，防止 panic 穿透到 Wails 回调。
-func (s *AuthService) registerDevice() (err error) {
+func (s *Service) registerDevice() (err error) {
 	defer func() {
 		if recovered := recover(); recovered != nil {
 			s.log.Error("RegisterDev panicked", "panic", recovered, "stack", string(debug.Stack()))
@@ -139,7 +140,7 @@ func (s *AuthService) registerDevice() (err error) {
 
 // GetCurrentUser 获取当前登录用户信息。
 // 未登录或会话已过期时返回 ErrNotLoggedIn。
-func (s *AuthService) GetCurrentUser() (*UserInfo, error) {
+func (s *Service) GetCurrentUser() (*UserInfo, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -202,7 +203,7 @@ func isConceptVip(vipResp *kg.UserVipDetailResponse) bool {
 }
 
 // Logout 登出：清空登录态 cookie 并删除本地会话文件。
-func (s *AuthService) Logout() error {
+func (s *Service) Logout() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -222,7 +223,7 @@ func (s *AuthService) Logout() error {
 // 兼容说明：历史登录流程可能把 userid 存成科学计数法字符串（如 "8.63006722e+08"），
 // 直接放入 Cookie 会导致接口返回 20010 未登录。这里规整为十进制整数后
 // 通过请求参数 + 请求 Cookie 覆盖两种方式显式传入，与手动排查时验证有效的请求一致。
-func (s *AuthService) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, error) {
+func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

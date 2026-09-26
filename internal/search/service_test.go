@@ -27,7 +27,7 @@ func TestSerializeSearchCookie(t *testing.T) {
 // 该测试需要网络和有效登录态，因此仅在 KUGOU_LIVE_TEST=1 时执行。
 func TestSearchComplexLive(t *testing.T) {
 
-	service, err := NewSearchService(slog.New(slog.NewTextHandler(io.Discard, nil)))
+	service, err := New(slog.New(slog.NewTextHandler(io.Discard, nil)))
 	cookie, err := service.loadSearchCookie()
 	t.Log(cookie)
 	if os.Getenv("KUGOU_LIVE_TEST") != "1" {

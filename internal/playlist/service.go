@@ -11,35 +11,35 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
+	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
-	"kuwave/internal/model"
 )
 
-// PlaylistService 首页官方歌单服务。
+// Service 首页官方歌单服务。
 //
 // 结构体实例常驻进程，持有独立的 *kg.Client（无需登录态）；前端通过 Wails
-// 绑定调用其导出方法（window.go.main.PlaylistService.xxx）。
-type PlaylistService struct {
+// 绑定调用其导出方法（window.go.playlist.Service.xxx）。
+type Service struct {
 	client *kg.Client
 	log    *slog.Logger
 	// kg.Client 非并发安全，用互斥锁串行化所有 client 调用（同 auth/banner 包）。
 	mu sync.Mutex
 }
 
-// NewPlaylistService 创建官方歌单服务。
+// New 创建官方歌单服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
-func NewPlaylistService(log *slog.Logger) (*PlaylistService, error) {
+func New(log *slog.Logger) (*Service, error) {
 	client, err := kg.New(kg.WithAutoRefresh(false))
 	if err != nil {
 		return nil, err
 	}
-	return &PlaylistService{client: client, log: log}, nil
+	return &Service{client: client, log: log}, nil
 }
 
-// GetHomePlaylists 拉取首页官方歌单（/top/playlist）。
+// GetHotPlaylists 拉取首页官方歌单（/top/playlist）。
 // pageSize 为期望返回条数（<=0 时回退默认 15）；withSong 为是否携带歌曲
 // （0 不携带 / 1 携带），两个参数都会透传给上游请求。
-func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]model.Playlist, error) {
+func (s *Service) GetHotPlaylists(pageSize int, withSong int) ([]dto.Playlist, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -61,13 +61,13 @@ func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]model.
 
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["special_list"].([]any)
-	playlists := make([]model.Playlist, 0, len(items))
+	playlists := make([]dto.Playlist, 0, len(items))
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		playlists = append(playlists, model.Playlist{
+		playlists = append(playlists, dto.Playlist{
 			ID:          int64(pickInt(m, "specialid")),
 			Name:        pickString(m, "specialname"),
 			Creator:     pickString(m, "nickname"),

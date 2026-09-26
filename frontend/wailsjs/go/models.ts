@@ -63,7 +63,7 @@ export namespace auth {
 
 }
 
-export namespace model {
+export namespace dto {
 	
 	export class Album {
 	    id: number;
@@ -220,25 +220,25 @@ export namespace search {
 	        this.album = source["album"];
 	    }
 	}
-	export class SearchResult {
-	    songs: model.Song[];
-	    playlists: model.Playlist[];
-	    albums: model.Album[];
-	    artists: model.Artist[];
-	    mvs: model.MV[];
+	export class Result {
+	    songs: dto.Song[];
+	    playlists: dto.Playlist[];
+	    albums: dto.Album[];
+	    artists: dto.Artist[];
+	    mvs: dto.MV[];
 	    lyrics: Lyric[];
 	
 	    static createFrom(source: any = {}) {
-	        return new SearchResult(source);
+	        return new Result(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.songs = this.convertValues(source["songs"], model.Song);
-	        this.playlists = this.convertValues(source["playlists"], model.Playlist);
-	        this.albums = this.convertValues(source["albums"], model.Album);
-	        this.artists = this.convertValues(source["artists"], model.Artist);
-	        this.mvs = this.convertValues(source["mvs"], model.MV);
+	        this.songs = this.convertValues(source["songs"], dto.Song);
+	        this.playlists = this.convertValues(source["playlists"], dto.Playlist);
+	        this.albums = this.convertValues(source["albums"], dto.Album);
+	        this.artists = this.convertValues(source["artists"], dto.Artist);
+	        this.mvs = this.convertValues(source["mvs"], dto.MV);
 	        this.lyrics = this.convertValues(source["lyrics"], Lyric);
 	    }
 	

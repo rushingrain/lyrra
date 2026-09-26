@@ -1,12 +1,12 @@
 import type { Playlist } from '@/types'
 import { mockPlaylists } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetHomePlaylists } from '../../wailsjs/go/playlist/PlaylistService'
+import { GetHotPlaylists as GetHotPlaylistsAPI } from '../../wailsjs/go/playlist/Service'
 
 /**
  * 首页官方歌单接口
  *
- * 已接入后端（Wails 绑定 window.go.playlist.PlaylistService.*），
+ * 已接入后端（Wails 绑定 window.go.playlist.Service.*），
  * 后端调酷狗 /top/playlist 接口返回官方推荐歌单。
  *
  * 关于「只跑前端 npm run dev」：
@@ -17,7 +17,7 @@ import { GetHomePlaylists } from '../../wailsjs/go/playlist/PlaylistService'
 
 /** Wails 运行时是否可用（真实后端是否存在） */
 function isBackendAvailable(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).go?.playlist?.PlaylistService)
+  return typeof window !== 'undefined' && Boolean((window as any).go?.playlist?.Service)
 }
 
 /**
@@ -47,7 +47,7 @@ const playlistCache = new Map<string, PlaylistCacheEntry>()
  * 缓存有效期内多次调用直接返回缓存。
  * @returns 纯浏览器开发回退 mock；Wails 下后端请求失败回退空数组（板块自动隐藏）
  */
-export async function getHomePlaylists(
+export async function GetHotPlaylists(
   pageSize = DEFAULT_PLAYLIST_PAGE_SIZE,
   withSong = DEFAULT_PLAYLIST_WITH_SONG,
 ): Promise<Playlist[]> {
@@ -64,7 +64,7 @@ export async function getHomePlaylists(
     playlistCache.set(key, entry)
   }
   if (!entry.inflight) {
-    entry.inflight = GetHomePlaylists(pageSize, withSong)
+    entry.inflight = GetHotPlaylistsAPI(pageSize, withSong)
       .then((data) => {
         entry!.data = data
         entry!.at = Date.now()

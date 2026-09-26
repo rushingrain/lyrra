@@ -50,7 +50,7 @@ func newService(filename string) *Service {
 	}
 }
 
-// Logger 返回底层 slog.Logger，供 App / AuthService 等注入使用。
+// Logger 返回底层 slog.Logger，供 App / auth.Service 等注入使用。
 func (s *Service) Logger() *slog.Logger {
 	return s.logger
 }

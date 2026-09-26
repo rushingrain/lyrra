@@ -1,5 +1,5 @@
-// Package model 存放跨服务复用的音乐实体 DTO。
-package model
+// Package dto 存放跨服务复用的音乐实体 DTO。
+package dto
 
 // Song 是音乐单曲 DTO，JSON 字段与前端 types/index.ts 的 Song 类型对齐。
 type Song struct {

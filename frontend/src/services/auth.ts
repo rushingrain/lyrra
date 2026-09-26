@@ -6,12 +6,12 @@ import {
   GetCurrentUser,
   GetLoginQrCode,
   Logout,
-} from '../../wailsjs/go/auth/AuthService'
+} from '../../wailsjs/go/auth/Service'
 
 /**
  * 登录相关接口
  *
- * 二维码登录已接入后端（Wails 绑定 window.go.auth.AuthService.*）。
+ * 二维码登录已接入后端（Wails 绑定 window.go.auth.Service.*）。
  * 手机号登录（sendSmsCode / loginWithSmsCode）暂未接入后端，保持 mock 实现。
  *
  * 关于「只跑前端 npm run dev」：
@@ -26,7 +26,7 @@ const QR_EXPIRES_MS = 5 * 60 * 1000
 
 /** Wails 运行时是否可用（真实后端是否存在） */
 function isBackendAvailable(): boolean {
-  return typeof window !== 'undefined' && Boolean((window as any).go?.auth?.AuthService)
+  return typeof window !== 'undefined' && Boolean((window as any).go?.auth?.Service)
 }
 
 /**

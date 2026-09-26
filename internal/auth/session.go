@@ -43,7 +43,7 @@ func saveSession(cookie map[string]string) {
 }
 
 // LoadSession 恢复会话。无会话时返回 nil。
-// 除 AuthService 外，需使用当前登录态的服务也通过该方法读取会话。
+// 除 Service 外，需使用当前登录态的服务也通过该方法读取会话。
 func LoadSession() map[string]string {
 	data, err := os.ReadFile(sessionPath())
 	if err != nil {

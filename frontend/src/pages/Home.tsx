@@ -8,7 +8,7 @@ import { getHomeBanners } from '@/services/banner'
 import {
   DEFAULT_PLAYLIST_PAGE_SIZE,
   DEFAULT_PLAYLIST_WITH_SONG,
-  getHomePlaylists,
+  GetHotPlaylists,
 } from '@/services/playlist'
 import {
   DEFAULT_SONG_PAGE,
@@ -35,7 +35,7 @@ export default function Home() {
     getHomeBanners().then((data) => {
       if (!cancelled) setBanners(data)
     })
-    getHomePlaylists(DEFAULT_PLAYLIST_PAGE_SIZE, DEFAULT_PLAYLIST_WITH_SONG).then((data) => {
+    GetHotPlaylists(DEFAULT_PLAYLIST_PAGE_SIZE, DEFAULT_PLAYLIST_WITH_SONG).then((data) => {
       if (!cancelled) setPlaylists(data.slice(0, MAX_PLAYLISTS))
     })
     // 显式携带 page=1、pagesize=15 请求最新音乐
