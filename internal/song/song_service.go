@@ -158,13 +158,13 @@ func collectNames(m map[string]any, field string, key string) []string {
 
 // songID 依次尝试 audio_id / songid / mixsongid / album_audio_id，
 // 大数先转 int 再格式化避免科学计数法；全缺失时回退 hash。
-func songID(m map[string]any) string {
+func songID(m map[string]any) int64 {
 	for _, key := range []string{"audio_id", "songid", "mixsongid", "album_audio_id"} {
-		if v := strconv.FormatInt(int64(pickInt(m, key)), 10); v != "0" {
-			return v
+		if v := pickInt(m, key); v != 0 {
+			return int64(v)
 		}
 	}
-	return pickString(m, "hash")
+	return 0
 }
 
 // songCover 优先取专辑封面（TopSong 用 album_sizable_cover，TopCard 用 sizable_cover），

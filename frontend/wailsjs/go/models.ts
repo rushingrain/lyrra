@@ -89,7 +89,7 @@ export namespace banner {
 export namespace search {
 	
 	export class Album {
-	    id: string;
+	    id: number;
 	    name: string;
 	    artist: string;
 	    coverUrl: string;
@@ -109,7 +109,7 @@ export namespace search {
 	    }
 	}
 	export class Artist {
-	    id: string;
+	    id: number;
 	    name: string;
 	    avatarUrl: string;
 	    songCount: number;
@@ -131,7 +131,7 @@ export namespace search {
 	    }
 	}
 	export class Lyric {
-	    id: string;
+	    id: number;
 	    title: string;
 	    artist: string;
 	    album: string;
@@ -149,7 +149,7 @@ export namespace search {
 	    }
 	}
 	export class MV {
-	    id: string;
+	    id: number;
 	    name: string;
 	    artist: string;
 	    coverUrl: string;
@@ -167,7 +167,7 @@ export namespace search {
 	    }
 	}
 	export class Playlist {
-	    id: string;
+	    id: number;
 	    name: string;
 	    coverUrl: string;
 	    description: string;
@@ -191,7 +191,7 @@ export namespace search {
 	    }
 	}
 	export class Song {
-	    id: string;
+	    id: number;
 	    title: string;
 	    artist: string;
 	    album?: string;
@@ -266,7 +266,7 @@ export namespace search {
 export namespace song {
 	
 	export class HomeSong {
-	    id: string;
+	    id: number;
 	    title: string;
 	    artist: string;
 	    album: string;

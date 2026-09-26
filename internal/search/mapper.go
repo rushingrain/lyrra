@@ -72,7 +72,7 @@ func mapComplexSearch(data map[string]any) *SearchResult {
 
 	for _, group := range asRecords(data["lists"]) {
 		items := asRecords(group["lists"])
-		switch stringValue(group["type"]) {
+		switch textValue(group["type"]) {
 		case "song":
 			result.Songs = append(result.Songs, mapSongs(items)...)
 		case "collect":
@@ -104,27 +104,43 @@ func mapSongs(items []ApiRecord) []Song {
 	songs := make([]Song, 0, len(items))
 	for _, item := range items {
 		quality := resolveSongQuality(item)
-
-		duration := firstNumber(item, "Duration", "duration")
+		duration := numberValue(item["Duration"])
 		if duration > 0 {
 			// 搜索接口返回秒；前端 Song.duration 使用毫秒。
 			duration *= 1000
 		}
 
 		songs = append(songs, Song{
-			ID:         firstString(item, "ID", "MixSongID", "FileHash", "hash", "audio_id", "Audioid"),
-			Title:      firstString(item, "OriSongName", "SongName", "FileName", "songname", "filename", "name"),
-			Artist:     firstArtistName(item, "SingerName", "singername", "singer"),
-			Album:      firstString(item, "AlbumName", "albumname", "album"),
-			CoverURL:   firstString(item, "Image", "img", "imgurl", "cover"),
-			Duration:   int64(duration),
-			Hash:       firstString(item, "FileHash", "hash"),
+			ID:         numberValue(item["MixSongID"]),
+			Title:      songName(item, "SongName", "OriSongName"),
+			Artist:     artistName(item, "SingerName", "Singers"),
+			Album:      textValue(item["AlbumName"]),
+			CoverURL:   textValue(item["Image"]),
+			Duration:   duration,
+			Hash:       textValue(item["FileHash"]),
 			Quality:    quality,
-			IsOriginal: firstNumber(item, "IsOriginal", "is_original") == 1,
-			Tags:       splitTags(firstString(item, "TagContent", "tag_content")),
+			IsOriginal: numberValue(item["IsOriginal"]) == 1,
+			Tags:       splitTags(textValue(item["TagContent"])),
 		})
 	}
 	return songs
+}
+
+func songName(item ApiRecord, nameKey string, oriNameKey string) string {
+	if name := textValue(item[nameKey]); name != "" {
+		return name
+	}
+
+	oriName := textValue(item[oriNameKey])
+	suffix := textValue(item["Suffix"])
+
+	if oriName == "" {
+		return ""
+	}
+	if suffix == "" {
+		return oriName
+	}
+	return oriName + " " + suffix
 }
 
 // resolveSongQuality 按最高可用音质返回前端展示标签。
@@ -181,13 +197,13 @@ func mapPlaylists(items []ApiRecord) []Playlist {
 	playlists := make([]Playlist, 0, len(items))
 	for _, item := range items {
 		playlists = append(playlists, Playlist{
-			ID:          firstString(item, "specialid", "special_id", "gid", "id"),
-			Name:        firstString(item, "specialname", "special_name", "name"),
-			Creator:     firstString(item, "nickname"),
-			CoverURL:    firstString(item, "img", "imgurl", "cover"),
-			Description: firstString(item, "intro", "description", "special_name", "specialname"),
-			PlayCount:   int64(firstNumber(item, "total_play_count", "play_count")),
-			SongCount:   int64(firstNumber(item, "song_count", "songCount")),
+			ID:          numberValue(item["specialid"]),
+			Name:        textValue(item["specialname"]),
+			Creator:     textValue(item["nickname"]),
+			CoverURL:    textValue(item["img"]),
+			Description: textValue(item["intro"]),
+			PlayCount:   numberValue(item["total_play_count"]),
+			SongCount:   numberValue(item["song_count"]),
 		})
 	}
 	return playlists
@@ -197,11 +213,11 @@ func mapAlbums(items []ApiRecord) []Album {
 	albums := make([]Album, 0, len(items))
 	for _, item := range items {
 		albums = append(albums, Album{
-			ID:       firstString(item, "albumid", "album_id", "id"),
-			Name:     firstString(item, "albumname", "album_name", "title", "name"),
-			Artist:   firstArtistName(item, "singer", "SingerName", "singername"),
-			CoverURL: firstString(item, "img", "imgurl", "cover"),
-			Date:     strings.SplitN(firstString(item, "publish_time", "publishtime", "publish_date"), " ", 2)[0],
+			ID:       numberValue(item["albumid"]),
+			Name:     textValue(item["albumname"]),
+			Artist:   artistName(item, "singer", "singers"),
+			CoverURL: textValue(item["img"]),
+			Date:     strings.SplitN(textValue(item["publish_time"]), " ", 2)[0],
 		})
 	}
 	return albums
@@ -211,12 +227,12 @@ func mapArtists(items []ApiRecord) []Artist {
 	artists := make([]Artist, 0, len(items))
 	for _, item := range items {
 		artists = append(artists, Artist{
-			ID:        firstString(item, "AuthorId", "UserId", "author_id", "singerid", "id"),
-			Name:      firstString(item, "AuthorName", "authorname", "singer", "name"),
-			AvatarURL: firstString(item, "Avatar", "img", "imgurl", "pic"),
-			SongCount: int64(firstNumber(item, "AudioCount", "audio_count", "songCount", "song_count")),
-			Genre:     firstString(item, "genre", "Genre"),
-			Fans:      int64(firstNumber(item, "FansNum", "fans", "fans_num")),
+			ID:        numberValue(item["AuthorId"]),
+			Name:      textValue(item["AuthorName"]),
+			AvatarURL: textValue(item["Avatar"]),
+			SongCount: numberValue(item["AudioCount"]),
+			Genre:     textValue(item["Genre"]),
+			Fans:      numberValue(item["FansNum"]),
 		})
 	}
 	return artists
@@ -226,10 +242,10 @@ func mapMVs(items []ApiRecord) []MV {
 	mvs := make([]MV, 0, len(items))
 	for _, item := range items {
 		mvs = append(mvs, MV{
-			ID:       firstString(item, "MvID", "MvHash", "mv_id", "hash", "id"),
-			Name:     firstString(item, "MvName", "mvname", "songname", "filename", "name"),
-			Artist:   firstArtistName(item, "SingerName", "singername", "singer"),
-			CoverURL: firstString(item, "Pic", "ErectPic", "img", "imgurl", "cover"),
+			ID:       numberValue(item["MvID"]),
+			Name:     textValue(item["MvName"]),
+			Artist:   artistName(item, "SingerName", "Singers"),
+			CoverURL: textValue(item["Pic"]),
 		})
 	}
 	return mvs
@@ -274,10 +290,10 @@ func mapLyrics(items []ApiRecord) []Lyric {
 	lyrics := make([]Lyric, 0, len(items))
 	for _, item := range items {
 		lyrics = append(lyrics, Lyric{
-			ID:     firstString(item, "id", "ID", "hash", "FileHash"),
-			Title:  firstString(item, "songname", "SongName", "filename", "FileName", "name"),
-			Artist: firstArtistName(item, "singername", "SingerName", "singer"),
-			Album:  firstString(item, "album_name", "albumname", "album"),
+			ID:     numberValue(item["LyricID"]),
+			Title:  textValue(item["SongName"]),
+			Artist: artistName(item, "SingerName", "Singers"),
+			Album:  "",
 		})
 	}
 	return lyrics
@@ -299,56 +315,41 @@ func splitTags(value string) []string {
 	return tags
 }
 
-func firstArtistName(item ApiRecord, keys ...string) string {
-	if value := firstString(item, keys...); value != "" {
-		return value
+func artistName(item ApiRecord, nameKey string, singersKey string) string {
+	if name := textValue(item[nameKey]); name != "" {
+		return name
 	}
-	for _, key := range []string{"Singers", "singers"} {
-		if singer := firstRecord(asRecords(item[key])); singer != nil {
-			if name := stringValue(singer["name"]); name != "" {
-				return name
-			}
-		}
-	}
-	return ""
-}
 
-func firstRecord(items []ApiRecord) ApiRecord {
-	if len(items) == 0 {
-		return nil
-	}
-	return items[0]
-}
-
-func firstString(item ApiRecord, keys ...string) string {
-	for _, key := range keys {
-		if value := item[key]; value != nil && value != "" {
-			return stringValue(value)
-		}
-	}
-	return ""
-}
-
-func firstNumber(item ApiRecord, keys ...string) float64 {
-	for _, key := range keys {
-		if value, ok := item[key]; ok && value != nil && value != "" {
-			if number, err := strconv.ParseFloat(strings.TrimSpace(fmt.Sprint(value)), 64); err == nil {
-				return number
-			}
-		}
-	}
-	return 0
-}
-
-func stringValue(value any) string {
-	switch typed := value.(type) {
-	case nil:
+	singers, _ := item[singersKey].([]any)
+	if len(singers) == 0 {
 		return ""
-	case string:
+	}
+	singer, _ := singers[0].(map[string]any)
+	return textValue(singer["name"])
+}
+
+func textValue(value any) string {
+	if text, ok := value.(string); ok {
+		return strings.TrimSpace(text)
+	}
+	return ""
+}
+
+func numberValue(value any) int64 {
+	switch typed := value.(type) {
+	case float64:
+		return int64(typed)
+	case int:
+		return int64(typed)
+	case int64:
 		return typed
-	case fmt.Stringer:
-		return typed.String()
+	case string:
+		number, err := strconv.ParseInt(strings.TrimSpace(typed), 10, 64)
+		if err != nil {
+			return 0
+		}
+		return number
 	default:
-		return fmt.Sprint(typed)
+		return 0
 	}
 }

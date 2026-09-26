@@ -68,9 +68,7 @@ func (s *PlaylistService) GetHomePlaylists(pageSize int, withSong int) ([]search
 			continue
 		}
 		playlists = append(playlists, search.Playlist{
-			// specialid 是大数，直接 fmt.Sprintf("%v") 会把 float64 输出成科学计数法（如 4.44554e+06），
-			// 必须先转整数再格式化。
-			ID:          strconv.FormatInt(int64(pickInt(m, "specialid")), 10),
+			ID:          int64(pickInt(m, "specialid")),
 			Name:        pickString(m, "specialname"),
 			Creator:     pickString(m, "nickname"),
 			CoverURL:    imageurl.Normalize(pickString(m, "imgurl")),

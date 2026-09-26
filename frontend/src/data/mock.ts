@@ -29,7 +29,7 @@ export const mockBanners: Banner[] = [
 
 export const mockPlaylists: Playlist[] = [
   {
-    id: '1',
+    id: 1,
     name: '心动rap：借夏天的名义，暗恋变成了热恋',
     coverUrl: 'https://picsum.photos/seed/playlist1/200/200',
     description: '收录了华语乐坛最经典的百首金曲，从邓丽君到周杰伦，跨越时代的音乐记忆',
@@ -38,7 +38,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 100,
   },
   {
-    id: '2',
+    id: 2,
     name: '抖音热门BGM',
     coverUrl: 'https://picsum.photos/seed/playlist2/200/200',
     description: '全网最火的短视频背景音乐合集，时刻更新',
@@ -47,7 +47,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 50,
   },
   {
-    id: '3',
+    id: 3,
     name: '睡前轻音乐',
     coverUrl: 'https://picsum.photos/seed/playlist3/200/200',
     description: '舒缓的钢琴与自然白噪音，伴你入眠',
@@ -56,7 +56,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 60,
   },
   {
-    id: '4',
+    id: 4,
     name: '电子音乐精选',
     coverUrl: 'https://picsum.photos/seed/playlist4/200/200',
     description: '最燃的电子音乐，适合运动和驾驶',
@@ -65,7 +65,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 80,
   },
   {
-    id: '5',
+    id: 5,
     name: '民谣在路上',
     coverUrl: 'https://picsum.photos/seed/playlist5/200/200',
     description: '诗和远方都在民谣里，一路走一路听',
@@ -74,7 +74,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 45,
   },
   {
-    id: '6',
+    id: 6,
     name: '新歌推荐',
     coverUrl: 'https://picsum.photos/seed/playlist6/200/200',
     description: '每周最新上架的热门单曲',
@@ -83,7 +83,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 30,
   },
   {
-    id: '7',
+    id: 7,
     name: '说唱集结号',
     coverUrl: 'https://picsum.photos/seed/playlist7/200/200',
     description: '中文说唱最强阵容，态度与节奏并存',
@@ -92,7 +92,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 55,
   },
   {
-    id: '8',
+    id: 8,
     name: '爵士咖啡馆',
     coverUrl: 'https://picsum.photos/seed/playlist8/200/200',
     description: '慵懒午后，一杯咖啡配爵士，刚刚好',
@@ -101,7 +101,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 40,
   },
   {
-    id: '9',
+    id: 9,
     name: '摇滚经典永流传',
     coverUrl: 'https://picsum.photos/seed/playlist9/200/200',
     description: 'Beyond、黑豹、唐朝…中国摇滚的黄金年代',
@@ -110,7 +110,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 70,
   },
   {
-    id: '10',
+    id: 10,
     name: '古风雅韵',
     coverUrl: 'https://picsum.photos/seed/playlist10/200/200',
     description: '琴瑟和鸣，诗词入曲，品味千年国风之美',
@@ -119,7 +119,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 38,
   },
   {
-    id: '11',
+    id: 11,
     name: '欧美流行前线',
     coverUrl: 'https://picsum.photos/seed/playlist11/200/200',
     description: 'Billboard热单全收录，国际流行风向标',
@@ -128,7 +128,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 65,
   },
   {
-    id: '12',
+    id: 12,
     name: '治愈系纯音乐',
     coverUrl: 'https://picsum.photos/seed/playlist12/200/200',
     description: '用旋律治愈疲惫的心灵，找回内心的平静',
@@ -137,7 +137,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 42,
   },
   {
-    id: '13',
+    id: 13,
     name: 'KPOP热力全开',
     coverUrl: 'https://picsum.photos/seed/playlist13/200/200',
     description: 'BTS、BLACKPINK、NewJeans…韩流最前线',
@@ -146,7 +146,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 55,
   },
   {
-    id: '14',
+    id: 14,
     name: '经典粤语金曲',
     coverUrl: 'https://picsum.photos/seed/playlist14/200/200',
     description: '张国荣、梅艳芳、陈奕迅…港乐传奇永不褪色',
@@ -155,7 +155,7 @@ export const mockPlaylists: Playlist[] = [
     songCount: 48,
   },
   {
-    id: '15',
+    id: 15,
     name: '运动健身燃脂歌单',
     coverUrl: 'https://picsum.photos/seed/playlist15/200/200',
     description: '高BPM节奏引爆运动潜力，汗水与音乐一起燃烧',
@@ -167,7 +167,7 @@ export const mockPlaylists: Playlist[] = [
 
 export const mockSongs: Song[] = [
   {
-    id: '1',
+    id: 1,
     title: '晴天',
     artist: '周杰伦',
     album: '叶惠美',
@@ -178,7 +178,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '2',
+    id: 2,
     title: '七里香',
     artist: '周杰伦',
     album: '七里香',
@@ -189,7 +189,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '3',
+    id: 3,
     title: '起风了',
     artist: '买辣椒也用券',
     album: '起风了',
@@ -199,7 +199,7 @@ export const mockSongs: Song[] = [
     quality: 'Hi-Res',
   },
   {
-    id: '4',
+    id: 4,
     title: '平凡之路',
     artist: '朴树',
     album: '平凡之路',
@@ -209,7 +209,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '5',
+    id: 5,
     title: '孤勇者',
     artist: '陈奕迅',
     album: '孤勇者',
@@ -219,7 +219,7 @@ export const mockSongs: Song[] = [
     quality: '无损',
   },
   {
-    id: '6',
+    id: 6,
     title: '光年之外',
     artist: '邓紫棋',
     album: '光年之外',
@@ -230,7 +230,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '7',
+    id: 7,
     title: '江南',
     artist: '林俊杰',
     album: '第二天堂',
@@ -240,7 +240,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '8',
+    id: 8,
     title: '演员',
     artist: '薛之谦',
     album: '演员',
@@ -249,7 +249,7 @@ export const mockSongs: Song[] = [
     hash: 'a1b2c3d4e5f6a1b2c3d4e5f600000008',
   },
   {
-    id: '9',
+    id: 9,
     title: '告白气球',
     artist: '周杰伦',
     album: '周杰伦的床边故事',
@@ -260,7 +260,7 @@ export const mockSongs: Song[] = [
     isOriginal: true,
   },
   {
-    id: '10',
+    id: 10,
     title: '夜曲',
     artist: '周杰伦',
     album: '十一月的萧邦',
@@ -273,7 +273,7 @@ export const mockSongs: Song[] = [
 
 export const mockArtists: Artist[] = [
   {
-    id: '1',
+    id: 1,
     name: '周杰伦',
     songCount: 820,
     avatarUrl: 'https://picsum.photos/seed/artist1/160/160',
@@ -281,7 +281,7 @@ export const mockArtists: Artist[] = [
     fans: 58000000,
   },
   {
-    id: '2',
+    id: 2,
     name: '林俊杰',
     songCount: 412,
     avatarUrl: 'https://picsum.photos/seed/artist2/160/160',
@@ -289,7 +289,7 @@ export const mockArtists: Artist[] = [
     fans: 42000000,
   },
   {
-    id: '3',
+    id: 3,
     name: '陈奕迅',
     songCount: 389,
     avatarUrl: 'https://picsum.photos/seed/artist3/160/160',
@@ -297,7 +297,7 @@ export const mockArtists: Artist[] = [
     fans: 35000000,
   },
   {
-    id: '4',
+    id: 4,
     name: '邓紫棋',
     songCount: 256,
     avatarUrl: 'https://picsum.photos/seed/artist4/160/160',
@@ -305,7 +305,7 @@ export const mockArtists: Artist[] = [
     fans: 31000000,
   },
   {
-    id: '5',
+    id: 5,
     name: '薛之谦',
     songCount: 298,
     avatarUrl: 'https://picsum.photos/seed/artist5/160/160',
@@ -313,7 +313,7 @@ export const mockArtists: Artist[] = [
     fans: 28000000,
   },
   {
-    id: '6',
+    id: 6,
     name: '朴树',
     songCount: 120,
     avatarUrl: 'https://picsum.photos/seed/artist6/160/160',
@@ -321,7 +321,7 @@ export const mockArtists: Artist[] = [
     fans: 15000000,
   },
   {
-    id: '7',
+    id: 7,
     name: '蔡徐坤',
     songCount: 145,
     avatarUrl: 'https://picsum.photos/seed/artist7/160/160',
@@ -329,7 +329,7 @@ export const mockArtists: Artist[] = [
     fans: 22000000,
   },
   {
-    id: '8',
+    id: 8,
     name: '汪苏泷',
     songCount: 210,
     avatarUrl: 'https://picsum.photos/seed/artist8/160/160',

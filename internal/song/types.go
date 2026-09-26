@@ -3,7 +3,7 @@ package song
 // HomeSong 首页最新音乐（TopSong 新歌首发榜）单曲 DTO。
 // json tag 与前端 frontend/src/types/index.ts 的 Song 类型对齐。
 type HomeSong struct {
-	ID       string `json:"id"`
+	ID       int64  `json:"id"`
 	Title    string `json:"title"`
 	Artist   string `json:"artist"`
 	Album    string `json:"album"`

@@ -1,5 +1,5 @@
 export interface Song {
-  id: string
+  id: number
   title: string
   artist: string
   /** 专辑名；搜索等接口不返回，消费端按需做空值守卫 */
@@ -18,7 +18,7 @@ export interface Song {
 }
 
 export interface Playlist {
-  id: string
+  id: number
   name: string
   coverUrl: string
   description: string
@@ -28,7 +28,7 @@ export interface Playlist {
 }
 
 export interface Album {
-  id: string
+  id: number
   name: string
   artist: string
   coverUrl: string
@@ -36,7 +36,7 @@ export interface Album {
 }
 
 export interface Artist {
-  id: string
+  id: number
   name: string
   songCount: number
   avatarUrl: string
@@ -45,7 +45,7 @@ export interface Artist {
 }
 
 export interface Mv {
-  id: string
+  id: number
   name: string
   artist: string
   coverUrl: string

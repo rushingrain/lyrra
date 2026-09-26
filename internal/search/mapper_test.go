@@ -9,7 +9,7 @@ func TestMapComplexSearch(t *testing.T) {
 				"type": "song",
 				"lists": []any{
 					map[string]any{
-						"ID":         "33138036",
+						"MixSongID":  "33138036",
 						"SongName":   "是时候",
 						"SingerName": "孙燕姿",
 						"AlbumName":  "史上最伤感的网络情歌",
@@ -28,7 +28,7 @@ func TestMapComplexSearch(t *testing.T) {
 				"type": "collect",
 				"lists": []any{
 					map[string]any{
-						"specialid":        "7215278",
+						"specialid":        7215278,
 						"specialname":      "是时候",
 						"nickname":         "孙燕姿",
 						"img":              "https://example.com/playlist.jpg",
@@ -42,7 +42,7 @@ func TestMapComplexSearch(t *testing.T) {
 				"type": "album",
 				"lists": []any{
 					map[string]any{
-						"albumid":      "2997292",
+						"albumid":      2997292,
 						"albumname":    "是时候",
 						"singer":       "孙燕姿",
 						"img":          "https://example.com/album.jpg",
@@ -76,7 +76,7 @@ func TestMapComplexSearch(t *testing.T) {
 		},
 	})
 
-	if len(result.Songs) != 1 || result.Songs[0].ID != "33138036" {
+	if len(result.Songs) != 1 || result.Songs[0].ID != 33138036 {
 		t.Fatalf("unexpected songs: %+v", result.Songs)
 	}
 	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "无损" {
@@ -86,16 +86,16 @@ func TestMapComplexSearch(t *testing.T) {
 		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
 	}
 	playlist := result.Playlists[0]
-	if playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
-		t.Fatalf("unexpected playlists: %+v", result.Playlists)
+	if playlist.ID != 7215278 || playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
+		t.Fatalf("unexpected playlist: %+v", playlist)
 	}
-	if len(result.Albums) != 1 || result.Albums[0].Date != "2011-03-08" {
+	if result.Albums[0].ID != 2997292 || result.Albums[0].Date != "2011-03-08" {
 		t.Fatalf("unexpected albums: %+v", result.Albums)
 	}
-	if len(result.Artists) != 1 || result.Artists[0].ID != "1090689" {
+	if len(result.Artists) != 1 || result.Artists[0].ID != 1090689 {
 		t.Fatalf("unexpected artists: %+v", result.Artists)
 	}
-	if len(result.MVs) != 1 || result.MVs[0].ID != "67468" {
+	if len(result.MVs) != 1 || result.MVs[0].ID != 67468 {
 		t.Fatalf("unexpected mvs: %+v", result.MVs)
 	}
 }
@@ -104,16 +104,16 @@ func TestMapNormalSearch(t *testing.T) {
 	result := mapNormalSearch("song", map[string]any{
 		"lists": []any{
 			map[string]any{
-				"MixSongID":  "33138036",
-				"SongName":   "是时候",
-				"SingerName": "孙燕姿",
-				"Image":      "https://example.com/cover.jpg",
-				"Duration":   238,
-				"HQFileHash": "hq-hash",
-				"FileHash":   "song-hash",
-				"HQBitrate":  float64(320),
-				"IsOriginal": 1,
-				"TagContent": "热门",
+				"MixSongID":   "33138036",
+				"OriSongName": "是时候",
+				"SingerName":  "孙燕姿",
+				"Image":       "https://example.com/cover.jpg",
+				"Duration":    238,
+				"HQFileHash":  "hq-hash",
+				"FileHash":    "song-hash",
+				"HQBitrate":   float64(320),
+				"IsOriginal":  1,
+				"TagContent":  "热门",
 			},
 		},
 	})
@@ -122,7 +122,7 @@ func TestMapNormalSearch(t *testing.T) {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
 	}
 	song := result.Songs[0]
-	if song.ID != "33138036" || song.Title != "是时候" || song.Artist != "孙燕姿" {
+	if song.ID != 33138036 || song.Title != "是时候" || song.Artist != "孙燕姿" {
 		t.Fatalf("unexpected song: %+v", song)
 	}
 	if song.Duration != 238000 || song.Quality != "HQ" || !song.IsOriginal {
@@ -204,5 +204,26 @@ func TestMapNormalSearchMVCover(t *testing.T) {
 	}
 	if got, want := result.MVs[0].CoverURL, "https://imge.kugou.com/mvhdpic/400/20240118/20240118194600124028.jpg"; got != want {
 		t.Fatalf("MV cover URL = %q, want %q", got, want)
+	}
+}
+
+func TestMapNormalSearchLyric(t *testing.T) {
+	result := mapNormalSearch("lyric", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"LyricID":    float64(40099279),
+				"SongName":   "凄美地",
+				"SingerName": "郭顶",
+				"FileHash":   "lyric-hash",
+			},
+		},
+	})
+
+	if len(result.Lyrics) != 1 {
+		t.Fatalf("lyric count = %d, want 1", len(result.Lyrics))
+	}
+	lyric := result.Lyrics[0]
+	if lyric.ID != 40099279 || lyric.Title != "凄美地" || lyric.Artist != "郭顶" || lyric.Album != "" {
+		t.Fatalf("unexpected lyric: %+v", lyric)
 	}
 }

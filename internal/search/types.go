@@ -3,7 +3,7 @@ package search
 // Song 是搜索结果中的单曲 DTO。
 // JSON 字段与前端 frontend/src/types/index.ts 的 Song 类型对齐。
 type Song struct {
-	ID         string   `json:"id"`
+	ID         int64    `json:"id"`
 	Title      string   `json:"title"`
 	Artist     string   `json:"artist"`
 	Album      string   `json:"album,omitempty"`
@@ -17,7 +17,7 @@ type Song struct {
 
 // Playlist 是搜索结果中的歌单 DTO。
 type Playlist struct {
-	ID          string `json:"id"`
+	ID          int64  `json:"id"`
 	Name        string `json:"name"`
 	CoverURL    string `json:"coverUrl"`
 	Description string `json:"description"`
@@ -28,7 +28,7 @@ type Playlist struct {
 
 // Album 是搜索结果中的专辑 DTO。
 type Album struct {
-	ID       string `json:"id"`
+	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	Artist   string `json:"artist"`
 	CoverURL string `json:"coverUrl"`
@@ -37,7 +37,7 @@ type Album struct {
 
 // Artist 是搜索结果中的歌手 DTO。
 type Artist struct {
-	ID        string `json:"id"`
+	ID        int64  `json:"id"`
 	Name      string `json:"name"`
 	AvatarURL string `json:"avatarUrl"`
 	SongCount int64  `json:"songCount"`
@@ -47,7 +47,7 @@ type Artist struct {
 
 // MV 是搜索结果中的 MV DTO。
 type MV struct {
-	ID       string `json:"id"`
+	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	Artist   string `json:"artist"`
 	CoverURL string `json:"coverUrl"`
@@ -55,7 +55,7 @@ type MV struct {
 
 // Lyric 是搜索结果中的歌词条目 DTO。
 type Lyric struct {
-	ID     string `json:"id"`
+	ID     int64  `json:"id"`
 	Title  string `json:"title"`
 	Artist string `json:"artist"`
 	Album  string `json:"album"`
