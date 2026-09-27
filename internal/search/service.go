@@ -111,19 +111,23 @@ func (s *Service) SearchComplex(keyword string, pageNum int, pageSize int) (*Res
 
 // loadSearchCookie 读取最新登录态，并同步到搜索 client。
 // search.Service 与 auth.Service 持有不同 SDK client，因此不能只在创建时读取一次。
+// dfid 不是必需项：服务端可能不下发（见 auth 的 ensureDfid 兜底），缺失时交给 SDK 用默认值。
 func (s *Service) loadSearchCookie() (map[string]string, error) {
 	cookie := auth.LoadSession()
-	for _, key := range []string{"token", "userid", "dfid"} {
+	for _, key := range []string{"token", "userid"} {
 		if cookie[key] == "" {
 			return nil, errors.New("缺少搜索所需的登录身份信息")
 		}
-		s.client.SetCookie(key, cookie[key])
 	}
-	return map[string]string{
-		"token":  cookie["token"],
-		"userid": cookie["userid"],
-		"dfid":   cookie["dfid"],
-	}, nil
+
+	effective := make(map[string]string, 3)
+	for _, key := range []string{"token", "userid", "dfid"} {
+		if value := cookie[key]; value != "" {
+			s.client.SetCookie(key, value)
+			effective[key] = value
+		}
+	}
+	return effective, nil
 }
 
 func serializeSearchCookie(cookie map[string]string) string {

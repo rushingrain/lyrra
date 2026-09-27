@@ -105,13 +105,15 @@ func (s *Service) CheckQrLoginStatus(qrKey string) (string, error) {
 		s.log.Info("QR code scanned, awaiting confirmation")
 		return string(QrLoginScanned), nil
 	case 4:
-		// SDK 的 RegisterDev 遇到异常响应时可能 panic。registerDevice 会将其转为
-		// 普通错误，确保 Wails 能向前端返回失败原因而不是中断回调。
+		// 设备注册只为了拿 dfid，且服务端可能"业务成功但不下发"（返回空 data），
+		// 因此这里降级为尽力而为：失败不阻塞登录，缺的 dfid 由 ensureDfid 兜底。
+		// registerDevice 会把 SDK 的 panic 转成普通错误，确保 Wails 回调不中断。
+		s.client.SetCookie("userid", normalizeUserIDString(s.client.Cookie()["userid"]))
 		s.client.SetCookie("dfid", "")
 		if err := s.registerDevice(); err != nil {
 			s.log.Warn("failed to register device after QR login", "err", err.Error())
-			return "", fmt.Errorf("登录已确认，但设备注册失败: %w", err)
 		}
+		s.ensureDfid()
 		saveSession(s.client.Cookie())
 		s.log.Info("QR login succeeded")
 		return string(QrLoginConfirmed), nil
