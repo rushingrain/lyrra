@@ -15,6 +15,8 @@ export interface Song {
   isOriginal?: boolean
   /** 歌曲标签，如 "昨日超万人播放"、"上周播放top1W"；首页数据源可能不返回，消费端需做空值守卫 */
   tags?: string[]
+  /** 歌词搜索命中的歌词片段；仅歌词搜索返回 */
+  matchedLyric?: string
 }
 
 export interface Playlist {

@@ -13,6 +13,8 @@ type Song struct {
 	Quality    string   `json:"quality,omitempty"`
 	IsOriginal bool     `json:"isOriginal"`
 	Tags       []string `json:"tags,omitempty"`
+	// MatchedLyric 歌词搜索时命中的歌词片段，其它来源不返回
+	MatchedLyric string `json:"matchedLyric,omitempty"`
 }
 
 // Playlist 是歌单 DTO。

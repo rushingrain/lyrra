@@ -91,13 +91,7 @@ function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>;
     case 'mv':
       return <MvList mvs={result.mvs} />
     case 'lyric':
-      return (
-        <ResultTable
-          columns={lyricColumns}
-          rows={result.lyrics}
-          rowKey={(lyric, index) => lyric.id || `${lyric.title}-${lyric.artist}-${index}`}
-        />
-      )
+      return <ResultTable columns={lyricColumns} rows={result.songs} rowKey={(song) => song.id} />
   }
 }
 

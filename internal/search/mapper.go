@@ -60,7 +60,8 @@ func mapNormalSearch(searchType string, data map[string]any) *Result {
 	case "mv":
 		result.MVs = mapNormalMVs(items)
 	case "lyric":
-		result.Lyrics = mapLyrics(items)
+		// 歌词搜索接口实际返回的是歌曲列表，因此填充 Songs。
+		result.Songs = mapSongsByLyric(items)
 	}
 
 	return &result
@@ -97,7 +98,6 @@ func emptySearchResult() Result {
 		Albums:    []dto.Album{},
 		Artists:   []dto.Artist{},
 		MVs:       []dto.MV{},
-		Lyrics:    []Lyric{},
 	}
 }
 
@@ -127,21 +127,28 @@ func mapSongs(items []ApiRecord) []dto.Song {
 	return songs
 }
 
+// joinSongNameSuffix 用空格拼接歌名与后缀（如 "(说唱版)"），后缀为空时返回原名。
+// 单曲搜索的后缀在根级 Suffix，歌词搜索的在 trans_param.songname_suffix，
+// 取值位置不同但拼接规则一致，因此两者共用本函数。
+func joinSongNameSuffix(name string, suffix string) string {
+	if name == "" || suffix == "" {
+		return name
+	}
+	return name + " " + suffix
+}
+
+// songName 取单曲搜索的歌名：优先 SongName，缺失时回退 OriSongName 拼根级 Suffix。
 func songName(item ApiRecord, nameKey string, oriNameKey string) string {
 	if name := textValue(item[nameKey]); name != "" {
 		return name
 	}
+	return joinSongNameSuffix(textValue(item[oriNameKey]), textValue(item["Suffix"]))
+}
 
-	oriName := textValue(item[oriNameKey])
-	suffix := textValue(item["Suffix"])
-
-	if oriName == "" {
-		return ""
-	}
-	if suffix == "" {
-		return oriName
-	}
-	return oriName + " " + suffix
+// songNameByLyric 取歌词命中歌曲的歌名：SongName 拼接 trans_param.songname_suffix。
+func songNameByLyric(item ApiRecord) string {
+	trans := asRecord(item["trans_param"])
+	return joinSongNameSuffix(textValue(item["SongName"]), textValue(trans["songname_suffix"]))
 }
 
 // resolveSongQuality 按最高可用音质返回前端展示标签。
@@ -284,17 +291,57 @@ func normalizeMVPicFilename(value string) string {
 	)
 }
 
-func mapLyrics(items []ApiRecord) []Lyric {
-	lyrics := make([]Lyric, 0, len(items))
+// mapSongsByLyric 映射歌词命中的歌曲。
+//
+// 该接口实际返回的是歌曲列表，Lyric 字段只是命中的歌词片段，因此统一映射为
+// Song（由调用方填充 Result.Songs），命中片段放入 Song.MatchedLyric。
+// 音质与时长的来源也和单曲搜索不同（见 resolveQualityByNestedHash、TimeLength）。
+func mapSongsByLyric(items []ApiRecord) []dto.Song {
+	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
-		lyrics = append(lyrics, Lyric{
-			ID:     numberValue(item["LyricID"]),
-			Title:  textValue(item["SongName"]),
-			Artist: artistName(item, "SingerName", "Singers"),
-			Album:  "",
+		var duration int64
+		// TimeLength 单位为秒；前端 Song.duration 使用毫秒。
+		if seconds := numberValue(item["TimeLength"]); seconds > 0 {
+			duration = seconds * 1000
+		}
+
+		songs = append(songs, dto.Song{
+			ID:           numberValue(item["MixSongID"]),
+			Name:         songNameByLyric(item),
+			Artist:       artistName(item, "SingerName", "Singers"),
+			CoverURL:     imageurl.Normalize(textValue(item["Image"])),
+			Duration:     duration,
+			Hash:         textValue(item["FileHash"]),
+			Quality:      resolveQualityByNestedHash(item),
+			MatchedLyric: textValue(item["Lyric"]),
 		})
 	}
-	return lyrics
+	return songs
+}
+
+// resolveQualityByNestedHash 按最高可用音质返回展示标签。
+//
+// 歌词命中歌曲的音质只体现在嵌套对象 HQ/SQ/Res 的 Hash 上，没有 ResDuration
+// 等辅助字段，因此只判断 Hash 是否存在（Hash 非空即代表该品质存在）；
+// 优先级 Res > SQ > HQ，标准音质（根级 FileHash）不展示标签。
+// 与 resolveSongQuality 的区别仅在判定依据，业务规则一致。
+func resolveQualityByNestedHash(item ApiRecord) string {
+	levels := []struct {
+		key   string
+		label string
+	}{
+		{"Res", "Hi-Res"},
+		{"SQ", "无损"},
+		{"HQ", "HQ"},
+	}
+
+	for _, level := range levels {
+		nested := asRecord(item[level.key])
+		if nested != nil && textValue(nested["Hash"]) != "" {
+			return level.label
+		}
+	}
+	return ""
 }
 
 func splitTags(value string) []string {

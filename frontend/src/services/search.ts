@@ -1,7 +1,6 @@
 import { Search, SearchComplex } from '../../wailsjs/go/search/Service'
 import { search } from '../../wailsjs/go/models'
 
-export type SearchLyric = search.Lyric
 export type SearchResult = search.Result
 
 export type NormalSearchType = 'song' | 'special' | 'album' | 'author' | 'mv' | 'lyric'
@@ -13,7 +12,6 @@ const EMPTY_RESULT = new search.Result({
   albums: [],
   artists: [],
   mvs: [],
-  lyrics: [],
 })
 
 const CACHE_LIMIT = 20

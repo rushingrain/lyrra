@@ -178,6 +178,7 @@ export namespace dto {
 	    quality?: string;
 	    isOriginal: boolean;
 	    tags?: string[];
+	    matchedLyric?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Song(source);
@@ -195,6 +196,7 @@ export namespace dto {
 	        this.quality = source["quality"];
 	        this.isOriginal = source["isOriginal"];
 	        this.tags = source["tags"];
+	        this.matchedLyric = source["matchedLyric"];
 	    }
 	}
 
@@ -202,31 +204,12 @@ export namespace dto {
 
 export namespace search {
 	
-	export class Lyric {
-	    id: number;
-	    title: string;
-	    artist: string;
-	    album: string;
-	
-	    static createFrom(source: any = {}) {
-	        return new Lyric(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.title = source["title"];
-	        this.artist = source["artist"];
-	        this.album = source["album"];
-	    }
-	}
 	export class Result {
 	    songs: dto.Song[];
 	    playlists: dto.Playlist[];
 	    albums: dto.Album[];
 	    artists: dto.Artist[];
 	    mvs: dto.MV[];
-	    lyrics: Lyric[];
 	
 	    static createFrom(source: any = {}) {
 	        return new Result(source);
@@ -239,7 +222,6 @@ export namespace search {
 	        this.albums = this.convertValues(source["albums"], dto.Album);
 	        this.artists = this.convertValues(source["artists"], dto.Artist);
 	        this.mvs = this.convertValues(source["mvs"], dto.MV);
-	        this.lyrics = this.convertValues(source["lyrics"], Lyric);
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {
