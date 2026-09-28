@@ -13,6 +13,7 @@ import (
 
 	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
+	"kuwave/internal/play"
 )
 
 // 新歌首发榜 rank_id：与 SDK TopSong 默认值一致。
@@ -32,10 +33,10 @@ type Service struct {
 	mu sync.Mutex
 }
 
-// New 创建最新音乐服务。
+// New 创建概念版歌曲服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
 func New(log *slog.Logger) (*Service, error) {
-	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithLite(false))
+	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithLite(true))
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +73,7 @@ func (s *Service) GetLatestSongs(page int, pagesize int) ([]dto.Song, error) {
 
 	items, _ := resp.Body["data"].([]any)
 	songs := make([]dto.Song, 0, len(items))
+	priority := play.Priority()
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -81,7 +83,7 @@ func (s *Service) GetLatestSongs(page int, pagesize int) ([]dto.Song, error) {
 		if fmt.Sprintf("%v", m["__status"]) != "1" {
 			continue
 		}
-		songs = append(songs, parseSong(m))
+		songs = append(songs, parseSong(m, priority))
 	}
 	return songs, nil
 }
@@ -105,19 +107,21 @@ func (s *Service) GetHotSongs() ([]dto.Song, error) {
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["song_list"].([]any)
 	songs := make([]dto.Song, 0, len(items))
+	priority := play.Priority()
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
 			continue
 		}
-		songs = append(songs, parseSong(m))
+		songs = append(songs, parseSong(m, priority))
 	}
 	return songs, nil
 }
 
 // parseSong 把上游单曲条目统一解析为 dto.Song。
 // TopSong（新歌首发榜）与 TopCard（热门推荐）字段略有差异，这里做兼容处理。
-func parseSong(m map[string]any) dto.Song {
+// priority 是播放品质档位顺序，决定 Hash 从哪一档开始解析（见 internal/play）。
+func parseSong(m map[string]any, priority []string) dto.Song {
 	return dto.Song{
 		ID:         songID(m),
 		Name:       pickString(m, "songname"),
@@ -125,7 +129,7 @@ func parseSong(m map[string]any) dto.Song {
 		Album:      pickString(m, "album_name"),
 		CoverURL:   songCover(m),
 		Duration:   songDuration(m),
-		Hash:       pickString(m, "hash"),
+		Hash:       play.Resolve(m, priority),
 		Quality:    songQuality(m),
 		IsOriginal: isOriginal(m),
 	}

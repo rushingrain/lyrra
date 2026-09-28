@@ -16,7 +16,9 @@ import {
   MoveRight
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { mockPlayHistory } from '@/data/mock'
+import { usePlayerStore } from '@/stores/playerStore'
+import { Cover } from '@/components/common/Cover'
+import { qualityLabel } from '@/services/play'
 
 type PlayMode = 'list-loop' | 'order' | 'single' | 'shuffle'
 
@@ -29,13 +31,22 @@ const PLAY_MODE_LABEL: Record<PlayMode, string> = {
 }
 
 export function MiniPlayer() {
-  const currentSong = mockPlayHistory[0]?.song
-  const duration = currentSong?.duration ?? 0
+  // 播放状态统一来自 playerStore（时间单位均为毫秒）
+  const currentSong = usePlayerStore((s) => s.song)
+  const status = usePlayerStore((s) => s.status)
+  const currentTime = usePlayerStore((s) => s.currentTime)
+  const duration = usePlayerStore((s) => s.duration)
+  const volume = usePlayerStore((s) => s.volume)
+  const quality = usePlayerStore((s) => s.quality)
+  const degraded = usePlayerStore((s) => s.degraded)
+  const toggle = usePlayerStore((s) => s.toggle)
+  const seek = usePlayerStore((s) => s.seek)
+  const setVolume = usePlayerStore((s) => s.setVolume)
 
-  const [isPlaying, setIsPlaying] = useState(false)
-  const [currentTime, setCurrentTime] = useState(Math.floor(duration * 0.3))
+  const isPlaying = status === 'playing'
+  const isLoading = status === 'loading'
+
   const [playMode, setPlayMode] = useState<PlayMode>('list-loop')
-  const [volume, setVolume] = useState(60)
   const [isLiked, setIsLiked] = useState(false)
   const [showLyrics, setShowLyrics] = useState(false)
 
@@ -45,15 +56,6 @@ export function MiniPlayer() {
   const [hoverTime, setHoverTime] = useState<number | null>(null)
   const [hoverX, setHoverX] = useState(0)
 
-  // 播放进度模拟：播放时每秒推进
-  useEffect(() => {
-    if (!isPlaying || duration === 0) return
-    const timer = setInterval(() => {
-      setCurrentTime((t) => (t >= duration ? 0 : t + 1))
-    }, 1000)
-    return () => clearInterval(timer)
-  }, [isPlaying, duration])
-
   // 拖拽时跟随鼠标更新进度
   useEffect(() => {
     if (!isDragging) return
@@ -62,7 +64,7 @@ export function MiniPlayer() {
       if (!track || duration === 0) return
       const rect = track.getBoundingClientRect()
       const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
-      setCurrentTime(ratio * duration)
+      seek(ratio * duration)
       setHoverTime(ratio * duration)
       setHoverX(Math.min(Math.max(e.clientX - rect.left, 24), rect.width - 24))
     }
@@ -76,7 +78,7 @@ export function MiniPlayer() {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
-  }, [isDragging, duration])
+  }, [isDragging, duration, seek])
 
   // 音量竖向滑块拖拽
   const volumeTrackRef = useRef<HTMLDivElement>(null)
@@ -99,16 +101,18 @@ export function MiniPlayer() {
       window.removeEventListener('mousemove', onMove)
       window.removeEventListener('mouseup', onUp)
     }
-  }, [isVolumeDragging])
+  }, [isVolumeDragging, setVolume])
 
-  if (!currentSong) return null
-
-  const formatDuration = (seconds: number) => {
-    const safe = Math.max(0, Math.floor(seconds))
+  // 时间格式化为 m:ss（入参为毫秒）
+  const formatDuration = (ms: number) => {
+    const safe = Math.max(0, Math.floor(ms / 1000))
     const m = Math.floor(safe / 60)
     const s = safe % 60
     return `${m}:${s.toString().padStart(2, '0')}`
   }
+
+  /** 没有播放内容时显示占位时间 */
+  const displayDuration = (ms: number) => (duration > 0 ? formatDuration(ms) : '--:--')
 
   const formatCount = (n: number) =>
     n >= 10000 ? `${(n / 10000).toFixed(1)}w` : `${n}`
@@ -132,7 +136,7 @@ export function MiniPlayer() {
     const rect = track.getBoundingClientRect()
     const ratio = Math.min(1, Math.max(0, (e.clientX - rect.left) / rect.width))
     setIsDragging(true)
-    setCurrentTime(ratio * duration)
+    seek(ratio * duration)
   }
 
   const handleVolumeMouseDown = (e: React.MouseEvent) => {
@@ -182,7 +186,7 @@ export function MiniPlayer() {
             className="pointer-events-none absolute -top-7 -translate-x-1/2 whitespace-nowrap rounded bg-black/75 px-1.5 py-0.5 text-[10px] text-white"
             style={{ left: hoverX }}
           >
-            {formatDuration(hoverTime)} / {formatDuration(duration)}
+            {displayDuration(hoverTime)} / {displayDuration(duration)}
           </div>
         )}
       </div>
@@ -193,18 +197,14 @@ export function MiniPlayer() {
         <div className="flex w-[340px] items-center gap-3">
           {/* 唱片样式：黑圈包裹圆形图片 */}
           <div className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2.5 transition-transform hover:scale-105">
-            <img
-              src={currentSong.coverUrl}
-              alt={currentSong.name}
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <Cover src={currentSong?.coverUrl} alt={currentSong?.name ?? '未播放'} className="h-10 w-10" variant="circle" />
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
-              {currentSong.name}
+              {currentSong?.name ?? '未播放'}
             </p>
             <p className="truncate text-xs text-[var(--color-text-secondary)]">
-              {currentSong.artist}
+              {currentSong?.artist ?? '点击歌曲封面开始播放'}
             </p>
           </div>
           <button
@@ -264,8 +264,9 @@ export function MiniPlayer() {
             <SkipBack size={20} fill="currentColor" />
           </button>
           <button
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)]"
-            onClick={() => setIsPlaying((p) => !p)}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={toggle}
+            disabled={!currentSong || isLoading}
             aria-label={isPlaying ? '暂停' : '播放'}
             title={isPlaying ? '暂停' : '播放'}
           >
@@ -292,9 +293,13 @@ export function MiniPlayer() {
         <div className="flex w-[340px] items-center justify-end gap-1">
           <button
             className="flex h-7 cursor-pointer items-center rounded px-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
-            title="音质选择"
+            title={
+              quality
+                ? `当前音质：${qualityLabel(quality, degraded)}${degraded ? '（上游把该档位降级成了其它文件）' : ''}`
+                : '尚未播放，音质选择待接入'
+            }
           >
-            无损
+            {qualityLabel(quality, degraded)}
           </button>
           <button
             className={`${iconBtn} ${isLiked ? 'text-red-400' : ''}`}
@@ -318,7 +323,7 @@ export function MiniPlayer() {
           <div className="group relative flex items-center">
             <button
               className={iconBtn}
-              onClick={() => setVolume((v) => (v === 0 ? 60 : 0))}
+              onClick={() => setVolume(volume === 0 ? 60 : 0)}
               aria-label="音量"
               title="音量"
             >

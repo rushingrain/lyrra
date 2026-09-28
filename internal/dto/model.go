@@ -3,12 +3,14 @@ package dto
 
 // Song 是音乐单曲 DTO，JSON 字段与前端 types/index.ts 的 Song 类型对齐。
 type Song struct {
-	ID         int64    `json:"id"`
-	Name       string   `json:"name"`
-	Artist     string   `json:"artist"`
-	Album      string   `json:"album,omitempty"`
-	CoverURL   string   `json:"coverUrl"`
-	Duration   int64    `json:"duration,omitempty"`
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Artist   string `json:"artist"`
+	Album    string `json:"album,omitempty"`
+	CoverURL string `json:"coverUrl"`
+	Duration int64  `json:"duration,omitempty"`
+	// Hash 播放用文件 hash：按播放品质偏好（默认标准）从高到低解析出的第一个可用值，
+	// 为空表示该条目没有任何可用音质，前端需给出提示
 	Hash       string   `json:"hash,omitempty"`
 	Quality    string   `json:"quality,omitempty"`
 	IsOriginal bool     `json:"isOriginal"`

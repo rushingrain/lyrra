@@ -1,6 +1,6 @@
 import type { Song as SongType } from '@/types'
 import type { ResultColumn } from '@/components/common/ResultTable'
-import { Song } from '@/components/common/Song'
+import { PlayableSong } from '@/components/business/PlayableSong'
 import { DurationCell, LikeCell } from './cells'
 
 /**
@@ -18,7 +18,7 @@ export const lyricColumns: ResultColumn<SongType>[] = [
     key: 'title',
     title: '标题',
     className: 'min-w-0 flex-1',
-    render: (song) => <Song song={song} />,
+    render: (song) => <PlayableSong song={song} />,
   },
   {
     key: 'like',

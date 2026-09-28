@@ -10,6 +10,8 @@ import (
 	"kuwave/internal/auth"
 	"kuwave/internal/banner"
 	"kuwave/internal/log"
+	"kuwave/internal/netguard"
+	"kuwave/internal/play"
 	"kuwave/internal/playlist"
 	"kuwave/internal/search"
 	"kuwave/internal/song"
@@ -28,6 +30,11 @@ func main() {
 			logger.Error("failed to close log service", "err", err.Error())
 		}
 	}()
+
+	// 明文网络护栏：拒绝所有非 loopback 的 http 请求，避免 SDK 内部（例如登录态校验
+	// 触发的 token 刷新）把账号凭证发到 http 上。只影响 Go 侧 HTTP 客户端，
+	// WebView 加载的音频流不受影响（那部分由 build/darwin/*.plist 的 ATS 白名单控制）。
+	netguard.Install(logger)
 
 	// Create an instance of the app structure
 	app := NewApp(logger)
@@ -67,6 +74,13 @@ func main() {
 		return
 	}
 
+	// Create the play service instance
+	playService, err := play.New(logger)
+	if err != nil {
+		logger.Error("failed to init play service", "err", err.Error())
+		return
+	}
+
 	// Create application with options
 	err = wails.Run(&options.App{
 		Title:  "kuwave",
@@ -85,6 +99,7 @@ func main() {
 			playlistService,
 			songService,
 			searchService,
+			playService,
 		},
 	})
 

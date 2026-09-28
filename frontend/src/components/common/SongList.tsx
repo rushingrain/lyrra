@@ -1,5 +1,5 @@
 import type { Song as SongType } from '@/types'
-import { Song } from '@/components/common/Song'
+import { PlayableSong } from '@/components/business/PlayableSong'
 
 interface SongListProps {
   songs: SongType[]
@@ -31,7 +31,7 @@ export function SongList({ songs, columns = 'auto' }: SongListProps) {
     <div>
       <div className="grid gap-8" style={{ gridTemplateColumns }}>
         {songs.map((song) => (
-          <Song key={song.id} song={song} size="md" className="rounded-lg" />
+          <PlayableSong key={song.id} song={song} size="md" className="rounded-lg" />
         ))}
       </div>
     </div>

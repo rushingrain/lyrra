@@ -63,8 +63,19 @@
         <dict>
             <key>NSAllowsLocalNetworking</key>
             <true/>
+            <!-- 酷狗 CDN 的播放地址是 http://，且实测 fs*.kugou.com 的 https 证书无效，
+                 无法改走 https，因此只对 kugou.com 及其子域放行 http（不用全局放行）。
+                 若将来出现 kugou.com 之外的媒体域名，播放会失败（audio error code 4），
+                 在这里补一条域名即可。 -->
             <key>NSExceptionDomains</key>
             <dict>
+                <key>kugou.com</key>
+                <dict>
+                    <key>NSExceptionAllowsInsecureHTTPLoads</key>
+                    <true/>
+                    <key>NSIncludesSubdomains</key>
+                    <true/>
+                </dict>
                 <key>adsfile.bssdlbig.kugou.com</key>
                 <dict>
                     <key>NSExceptionAllowsInsecureHTTPLoads</key>

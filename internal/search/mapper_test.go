@@ -1,6 +1,10 @@
 package search
 
-import "testing"
+import (
+	"testing"
+
+	"kuwave/internal/play"
+)
 
 func TestMapComplexSearch(t *testing.T) {
 	result := mapComplexSearch(map[string]any{
@@ -74,13 +78,17 @@ func TestMapComplexSearch(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, play.PriorityFor(play.DefaultPreferred))
 
 	if len(result.Songs) != 1 || result.Songs[0].ID != 33138036 {
 		t.Fatalf("unexpected songs: %+v", result.Songs)
 	}
 	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "无损" {
 		t.Fatalf("unexpected song fields: %+v", result.Songs[0])
+	}
+	// 默认档位是标准，取扁平字段 FileHash
+	if result.Songs[0].Hash != "song-hash" {
+		t.Fatalf("hash = %q, want song-hash", result.Songs[0].Hash)
 	}
 	if len(result.Playlists) != 1 {
 		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
@@ -116,7 +124,7 @@ func TestMapNormalSearch(t *testing.T) {
 				"TagContent":  "热门",
 			},
 		},
-	})
+	}, play.PriorityFor(play.DefaultPreferred))
 
 	if len(result.Songs) != 1 {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
@@ -127,6 +135,10 @@ func TestMapNormalSearch(t *testing.T) {
 	}
 	if song.Duration != 238000 || song.Quality != "HQ" || !song.IsOriginal {
 		t.Fatalf("unexpected song fields: %+v", song)
+	}
+	// 默认档位是标准
+	if song.Hash != "song-hash" {
+		t.Fatalf("hash = %q, want song-hash", song.Hash)
 	}
 }
 
@@ -197,7 +209,7 @@ func TestMapNormalSearchMVCover(t *testing.T) {
 				"Pic":        "20240118194600124028.jpg",
 			},
 		},
-	})
+	}, play.PriorityFor(play.DefaultPreferred))
 
 	if len(result.MVs) != 1 {
 		t.Fatalf("mv count = %d, want 1", len(result.MVs))
@@ -236,7 +248,7 @@ func TestMapNormalSearchLyricSongs(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, play.PriorityFor(play.DefaultPreferred))
 
 	if len(result.Songs) != 1 {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
@@ -255,8 +267,9 @@ func TestMapNormalSearchLyricSongs(t *testing.T) {
 	if song.Duration != 189000 {
 		t.Fatalf("duration = %d, want 189000", song.Duration)
 	}
+	// 默认档位是标准，取 FileHash
 	if song.Hash != "A4C9C11B5C6CD698FBA54D0AB3FE71CA" {
-		t.Fatalf("hash = %q", song.Hash)
+		t.Fatalf("hash = %q, want the standard hash", song.Hash)
 	}
 	if song.Quality != "Hi-Res" {
 		t.Fatalf("quality = %q, want Hi-Res", song.Quality)
@@ -327,6 +340,45 @@ func TestResolveQualityByNestedHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := resolveQualityByNestedHash(tt.item); got != tt.want {
 				t.Fatalf("resolveQualityByNestedHash() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
+// TestMapNormalSearchHashFollowsPlaybackQuality 验证播放品质偏好会影响搜索结果里的 Hash。
+func TestMapNormalSearchHashFollowsPlaybackQuality(t *testing.T) {
+	data := map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":   "1",
+				"SongName":    "给未来的自己",
+				"ResFileHash": "res-hash",
+				"SQFileHash":  "sq-hash",
+				"HQFileHash":  "hq-hash",
+				"FileHash":    "standard-hash",
+			},
+		},
+	}
+
+	tests := []struct {
+		level string
+		want  string
+	}{
+		{level: play.LevelRes, want: "res-hash"},
+		{level: play.LevelSQ, want: "sq-hash"},
+		{level: play.LevelHQ, want: "hq-hash"},
+		{level: play.LevelStandard, want: "standard-hash"},
+		{level: "", want: "standard-hash"}, // 默认档位是标准
+	}
+
+	for _, tt := range tests {
+		t.Run("preferred="+tt.level, func(t *testing.T) {
+			result := mapNormalSearch("song", data, play.PriorityFor(tt.level))
+			if len(result.Songs) != 1 {
+				t.Fatalf("song count = %d, want 1", len(result.Songs))
+			}
+			if got := result.Songs[0].Hash; got != tt.want {
+				t.Fatalf("hash = %q, want %q", got, tt.want)
 			}
 		})
 	}

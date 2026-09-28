@@ -12,6 +12,7 @@ import (
 
 	"kuwave/internal/auth"
 	"kuwave/internal/imageurl"
+	"kuwave/internal/play"
 )
 
 const defaultPageSize = 15
@@ -76,7 +77,7 @@ func (s *Service) Search(keyword string, pageNum int, pageSize int, searchType s
 		return nil, err
 	}
 
-	return mapNormalSearch(searchType, searchData(resp.Body)), nil
+	return mapNormalSearch(searchType, searchData(resp.Body), play.Priority()), nil
 }
 
 // SearchComplex 执行综合搜索，不向 SDK 传递 type 参数。
@@ -106,7 +107,7 @@ func (s *Service) SearchComplex(keyword string, pageNum int, pageSize int) (*Res
 		return nil, err
 	}
 
-	return mapComplexSearch(searchData(resp.Body)), nil
+	return mapComplexSearch(searchData(resp.Body), play.Priority()), nil
 }
 
 // loadSearchCookie 读取最新登录态，并同步到搜索 client。

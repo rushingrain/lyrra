@@ -202,6 +202,31 @@ export namespace dto {
 
 }
 
+export namespace play {
+	
+	export class PlayURL {
+	    url: string;
+	    quality: string;
+	    qualityParam: string;
+	    fileHash?: string;
+	    degraded: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new PlayURL(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.url = source["url"];
+	        this.quality = source["quality"];
+	        this.qualityParam = source["qualityParam"];
+	        this.fileHash = source["fileHash"];
+	        this.degraded = source["degraded"];
+	    }
+	}
+
+}
+
 export namespace search {
 	
 	export class Result {

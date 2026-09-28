@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"sync"
@@ -105,14 +103,13 @@ func (s *Service) CheckQrLoginStatus(qrKey string) (string, error) {
 		s.log.Info("QR code scanned, awaiting confirmation")
 		return string(QrLoginScanned), nil
 	case 4:
-		// 设备注册只为了拿 dfid，且服务端可能"业务成功但不下发"（返回空 data），
-		// 因此这里降级为尽力而为：失败不阻塞登录，缺的 dfid 由 ensureDfid 兜底。
-		// registerDevice 会把 SDK 的 panic 转成普通错误，确保 Wails 回调不中断。
+		// 这里不再调用 SDK 的 RegisterDev 注册设备：
+		// 它内部会在登录态校验失败时刷新 token，而刷新走的是明文 http
+		// （login.user.kugou.com，见 SDK 的 RouteLoginToken），会把 token 暴露在网上；
+		// 而设备注册本来就只是拿 dfid，服务端还可能"业务成功但不下发"（返回空 data）。
+		// 现在改为：复用会话里已有的 dfid，没有就本地生成一个（见 dfid.go），
+		// 搜索、用户歌单等依赖 dfid 的接口照常可用。
 		s.client.SetCookie("userid", normalizeUserIDString(s.client.Cookie()["userid"]))
-		s.client.SetCookie("dfid", "")
-		if err := s.registerDevice(); err != nil {
-			s.log.Warn("failed to register device after QR login", "err", err.Error())
-		}
 		s.ensureDfid()
 		saveSession(s.client.Cookie())
 		s.log.Info("QR login succeeded")
@@ -120,24 +117,6 @@ func (s *Service) CheckQrLoginStatus(qrKey string) (string, error) {
 	default:
 		return string(QrLoginPending), nil
 	}
-}
-
-// registerDevice 将 SDK 的异常响应转换为普通错误，防止 panic 穿透到 Wails 回调。
-func (s *Service) registerDevice() (err error) {
-	defer func() {
-		if recovered := recover(); recovered != nil {
-			s.log.Error("RegisterDev panicked", "panic", recovered, "stack", string(debug.Stack()))
-			err = fmt.Errorf("注册设备异常: %v", recovered)
-		}
-	}()
-
-	if _, err := s.client.RegisterDev(context.Background(), kg.RegisterDevRequest{}); err != nil {
-		return err
-	}
-	if strings.TrimSpace(s.client.Cookie()["dfid"]) == "" {
-		return errors.New("注册设备未返回 dfid")
-	}
-	return nil
 }
 
 // GetCurrentUser 获取当前登录用户信息。

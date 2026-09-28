@@ -7,6 +7,7 @@ import (
 
 	"kuwave/internal/dto"
 	"kuwave/internal/imageurl"
+	"kuwave/internal/play"
 )
 
 // ApiRecord 是 SDK 动态 JSON 响应中的对象。
@@ -44,13 +45,14 @@ func normalSearchItems(data map[string]any) []ApiRecord {
 }
 
 // mapNormalSearch 将普通搜索的动态 SDK 数据转换为稳定 DTO。
-func mapNormalSearch(searchType string, data map[string]any) *Result {
+// hashPriority 决定 Song.Hash 从哪个音质档位开始解析（见 internal/play）。
+func mapNormalSearch(searchType string, data map[string]any, hashPriority []string) *Result {
 	result := emptySearchResult()
 	items := normalSearchItems(data)
 
 	switch searchType {
 	case "song":
-		result.Songs = mapSongs(items)
+		result.Songs = mapSongs(items, hashPriority)
 	case "special":
 		result.Playlists = mapPlaylists(items)
 	case "album":
@@ -61,7 +63,7 @@ func mapNormalSearch(searchType string, data map[string]any) *Result {
 		result.MVs = mapNormalMVs(items)
 	case "lyric":
 		// 歌词搜索接口实际返回的是歌曲列表，因此填充 Songs。
-		result.Songs = mapSongsByLyric(items)
+		result.Songs = mapSongsByLyric(items, hashPriority)
 	}
 
 	return &result
@@ -69,14 +71,14 @@ func mapNormalSearch(searchType string, data map[string]any) *Result {
 
 // mapComplexSearch 将综合搜索的分组数据转换为稳定 DTO。
 // 上游未展示的分组（program、othersearch 等）会按需逐步补充。
-func mapComplexSearch(data map[string]any) *Result {
+func mapComplexSearch(data map[string]any, hashPriority []string) *Result {
 	result := emptySearchResult()
 
 	for _, group := range asRecords(data["lists"]) {
 		items := asRecords(group["lists"])
 		switch textValue(group["type"]) {
 		case "song":
-			result.Songs = append(result.Songs, mapSongs(items)...)
+			result.Songs = append(result.Songs, mapSongs(items, hashPriority)...)
 		case "collect":
 			result.Playlists = append(result.Playlists, mapPlaylists(items)...)
 		case "album":
@@ -101,7 +103,7 @@ func emptySearchResult() Result {
 	}
 }
 
-func mapSongs(items []ApiRecord) []dto.Song {
+func mapSongs(items []ApiRecord, hashPriority []string) []dto.Song {
 	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
 		quality := resolveSongQuality(item)
@@ -118,7 +120,7 @@ func mapSongs(items []ApiRecord) []dto.Song {
 			Album:      textValue(item["AlbumName"]),
 			CoverURL:   textValue(item["Image"]),
 			Duration:   duration,
-			Hash:       textValue(item["FileHash"]),
+			Hash:       play.Resolve(item, hashPriority),
 			Quality:    quality,
 			IsOriginal: numberValue(item["IsOriginal"]) == 1,
 			Tags:       splitTags(textValue(item["TagContent"])),
@@ -296,7 +298,7 @@ func normalizeMVPicFilename(value string) string {
 // 该接口实际返回的是歌曲列表，Lyric 字段只是命中的歌词片段，因此统一映射为
 // Song（由调用方填充 Result.Songs），命中片段放入 Song.MatchedLyric。
 // 音质与时长的来源也和单曲搜索不同（见 resolveQualityByNestedHash、TimeLength）。
-func mapSongsByLyric(items []ApiRecord) []dto.Song {
+func mapSongsByLyric(items []ApiRecord, hashPriority []string) []dto.Song {
 	songs := make([]dto.Song, 0, len(items))
 	for _, item := range items {
 		var duration int64
@@ -311,7 +313,7 @@ func mapSongsByLyric(items []ApiRecord) []dto.Song {
 			Artist:       artistName(item, "SingerName", "Singers"),
 			CoverURL:     imageurl.Normalize(textValue(item["Image"])),
 			Duration:     duration,
-			Hash:         textValue(item["FileHash"]),
+			Hash:         play.Resolve(item, hashPriority),
 			Quality:      resolveQualityByNestedHash(item),
 			MatchedLyric: textValue(item["Lyric"]),
 		})

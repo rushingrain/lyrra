@@ -7,7 +7,7 @@ export interface Song {
   coverUrl: string
   /** 时长(ms)；部分数据源（如搜索）不返回，播放器已做 ?? 0 兜底 */
   duration?: number
-  /** 文件 hash；部分数据源不返回 */
+  /** 播放用文件 hash，按播放品质偏好解析（默认标准，偏好更高档位时逐档降级）；为空表示该条目没有可用音质，需提示用户 */
   hash?: string
   /** 最高音质标签，如 "Hi-Res"、"无损" */
   quality?: string
