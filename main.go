@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -15,6 +16,7 @@ import (
 	"kuwave/internal/playlist"
 	"kuwave/internal/search"
 	"kuwave/internal/song"
+	"kuwave/internal/vip"
 )
 
 //go:embed all:frontend/dist
@@ -81,6 +83,13 @@ func main() {
 		return
 	}
 
+	// Create the daily vip service instance
+	vipService, err := vip.New(logger)
+	if err != nil {
+		logger.Error("failed to init vip service", "err", err.Error())
+		return
+	}
+
 	// Create application with options
 	err = wails.Run(&options.App{
 		Title:  "kuwave",
@@ -100,6 +109,18 @@ func main() {
 			songService,
 			searchService,
 			playService,
+			vipService,
+		},
+		// 单实例锁：桌面上多开时，第二个实例把启动参数交给第一个实例后自行退出。
+		// 它是 vip 风控的一部分：vip.json 的“一天只成功一次”依赖同一时刻只有一个
+		// 进程读写本地状态（vip 包里的互斥锁只能管住进程内并发）。
+		SingleInstanceLock: &options.SingleInstanceLock{
+			UniqueId: "kuwave",
+			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
+				logger.Info("second instance launched, focusing existing window",
+					"args", strings.Join(data.Args, " "), "workdir", data.WorkingDirectory)
+				app.focusWindow()
+			},
 		},
 	})
 

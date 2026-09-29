@@ -270,3 +270,54 @@ export namespace search {
 
 }
 
+export namespace vip {
+	
+	export class DailyVipResult {
+	    alreadyClaimed: boolean;
+	    claimed: boolean;
+	    claimedAt: number;
+	    days: number;
+	    message: string;
+	    errorCode: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new DailyVipResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.alreadyClaimed = source["alreadyClaimed"];
+	        this.claimed = source["claimed"];
+	        this.claimedAt = source["claimedAt"];
+	        this.days = source["days"];
+	        this.message = source["message"];
+	        this.errorCode = source["errorCode"];
+	    }
+	}
+	export class UpgradeVipResult {
+	    upgraded: boolean;
+	    requested: boolean;
+	    upgradedAt: number;
+	    rewardType: string;
+	    rechargeHours: number;
+	    message: string;
+	    errorCode: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new UpgradeVipResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.upgraded = source["upgraded"];
+	        this.requested = source["requested"];
+	        this.upgradedAt = source["upgradedAt"];
+	        this.rewardType = source["rewardType"];
+	        this.rechargeHours = source["rechargeHours"];
+	        this.message = source["message"];
+	        this.errorCode = source["errorCode"];
+	    }
+	}
+
+}
+

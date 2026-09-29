@@ -15,8 +15,14 @@ import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 import logo from '../../assets/images/logo-universal.png'
 import type { LoginResult, UserPlaylist } from '@/types'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useClickStreak } from '@/hooks/useClickStreak'
+import { useConfetti } from '@/hooks/useConfetti'
 import { getUserPlaylists } from '@/services/userPlaylist'
+import { claimDailyVip } from '@/services/vip'
+
+/** 隐藏入口：logo 区域连续点击多少次触发领 VIP */
+const LOGO_CLAIM_CLICK_TIMES = 7
 
 interface NavItemProps {
   icon: React.ReactNode
@@ -29,10 +35,9 @@ function NavItem({ icon, label, to }: NavItemProps) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center rounded-lg text-sm font-medium transition-all duration-200 gap-3 ml-3 mr-3 py-2 px-3 ${
-          isActive
-            ? 'text-white bg-[var(--color-accent)]'
-            : 'text-[var(--color-text-secondary)] bg-transparent hover:bg-gray-200'
+        `flex items-center rounded-lg text-sm font-medium transition-all duration-200 gap-3 ml-3 mr-3 py-2 px-3 ${isActive
+          ? 'text-white bg-[var(--color-accent)]'
+          : 'text-[var(--color-text-secondary)] bg-transparent hover:bg-gray-200'
         }`
       }
     >
@@ -124,6 +129,32 @@ export function Sidebar({ user }: SidebarProps) {
   const createdPlaylists = userPlaylists.filter((p) => p.type !== 1)
   const collectedPlaylists = userPlaylists.filter((p) => p.type === 1)
 
+  const { celebrate, cry } = useConfetti()
+  // 请求进行中时忽略后续触发：连点只会在第 7 次触发一次，避免并发请求
+  const claimingRef = useRef(false)
+
+  // 隐藏入口：在 logo 区域连续点 7 次领取当天 VIP。
+  // 成功（含“今天已领过”的后端缓存结果）撒花，失败撒 ❄️；接口本身在后端做了
+  // “一天只真正请求一次”的风控，所以这里重复触发也不会打到酷狗。
+  // 未登录时整条链路关闭：不计数、不请求、也不放动画。
+  const handleLogoClick = useClickStreak({
+    enabled: Boolean(user),
+    times: LOGO_CLAIM_CLICK_TIMES,
+    onTrigger: () => {
+      if (claimingRef.current) return
+      claimingRef.current = true
+      claimDailyVip()
+        .then(() => celebrate())
+        .catch((error: unknown) => {
+          console.error('[vip] 领取当日 VIP 失败', error)
+          cry()
+        })
+        .finally(() => {
+          claimingRef.current = false
+        })
+    },
+  })
+
   useEffect(() => {
     if (!user) {
       setUserPlaylists([])
@@ -146,7 +177,10 @@ export function Sidebar({ user }: SidebarProps) {
     <aside className="h-full w-[200px] min-w-[200px] bg-gray-50">
       <SimpleBar className="h-full scrollbar">
         {/* Logo */}
-        <div className="flex items-center h-[72px] min-h-[72px] gap-2.5 px-6">
+        <div
+          className="flex items-center h-[72px] min-h-[72px] gap-2.5 px-6 select-none"
+          onClick={handleLogoClick}
+        >
           <img src={logo} alt="kuwave" className="h-8 w-8 rounded-lg object-cover" />
           <span className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
             kuwave
