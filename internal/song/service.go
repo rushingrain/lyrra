@@ -73,7 +73,7 @@ func (s *Service) GetLatestSongs(page int, pagesize int) ([]dto.Song, error) {
 
 	items, _ := resp.Body["data"].([]any)
 	songs := make([]dto.Song, 0, len(items))
-	priority := play.Priority()
+	priority := play.PriorityForAny(play.DefaultQuality)
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -107,7 +107,7 @@ func (s *Service) GetHotSongs() ([]dto.Song, error) {
 	data, _ := resp.Body["data"].(map[string]any)
 	items, _ := data["song_list"].([]any)
 	songs := make([]dto.Song, 0, len(items))
-	priority := play.Priority()
+	priority := play.PriorityForAny(play.DefaultQuality)
 	for _, item := range items {
 		m, ok := item.(map[string]any)
 		if !ok {
@@ -120,7 +120,7 @@ func (s *Service) GetHotSongs() ([]dto.Song, error) {
 
 // parseSong 把上游单曲条目统一解析为 dto.Song。
 // TopSong（新歌首发榜）与 TopCard（热门推荐）字段略有差异，这里做兼容处理。
-// priority 是播放品质档位顺序，决定 Hash 从哪一档开始解析（见 internal/play）。
+// priority 是 Hash 的档位候选顺序，取其中第一个非空值（见 internal/play）。
 func parseSong(m map[string]any, priority []string) dto.Song {
 	return dto.Song{
 		ID:         songID(m),

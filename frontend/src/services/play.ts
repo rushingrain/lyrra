@@ -5,7 +5,7 @@ import type { play } from '../../wailsjs/go/models'
  * 播放相关接口
  *
  * 已接入后端（Wails 绑定 window.go.play.Service.*）：
- * 后端按当前播放品质偏好解析出播放地址，并校验返回的文件是否命中目标档位。
+ * 后端按本次请求传入的播放品质解析出播放地址，并校验返回的文件是否命中目标档位。
  * 目前只在 `wails dev` / 打包后的应用里使用（浏览器没有 window.go 运行时）。
  */
 
@@ -34,13 +34,15 @@ export function qualityLabel(level: string | null | undefined, degraded = false)
 }
 
 /**
- * 获取歌曲播放地址。
- * hash 传 Song.hash（后端按同一品质偏好解析出来的播放用文件 hash），
- * albumAudioID 传 Song.id（MixSongID / album_audio_id），可为 0。
+ * 获取歌曲播放地址。当前播放器传 standard；偏好设置接入后可传其它档位。
  *
  * 返回的 degraded 表示上游把该档位降级成了别的文件（例如歌曲没有 Hi-Res 时 high 降级），
  * 地址仍可用，本轮按"静默照播"处理。
  */
-export function getSongPlayURL(hash: string, albumAudioID: number): Promise<PlayURL> {
-  return GetSongPlayURL(hash, albumAudioID)
+export function getSongPlayURL(
+  hash: string,
+  albumAudioID: number,
+  quality: QualityLevel,
+): Promise<PlayURL> {
+  return GetSongPlayURL(hash, albumAudioID, quality)
 }

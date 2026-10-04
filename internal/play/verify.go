@@ -10,6 +10,7 @@ import (
 
 // playURLFileHash 匹配歌曲播放地址里的文件 hash 段：.../v3/<32位hash>/...
 var playURLFileHash = regexp.MustCompile(`/v3/([0-9a-fA-F]{32})/`)
+var playURLQuality = regexp.MustCompile(`(?:^|[/_])qu(128|320|flac|high)(?:_|\.)`)
 
 // buildSongPlayURL 校验并组装歌曲播放地址，独立成纯函数便于单测。
 func buildSongPlayURL(level string, qualityParam string, expectedHash string, primaryURL string) (*PlayURL, error) {
@@ -28,8 +29,32 @@ func buildSongPlayURL(level string, qualityParam string, expectedHash string, pr
 		Quality:      level,
 		QualityParam: qualityParam,
 		FileHash:     fileHash,
-		Degraded:     fileHash != "" && !strings.EqualFold(fileHash, expectedHash),
+		Degraded:     isDegradedQuality(level, fileHash, expectedHash, primaryURL),
 	}, nil
+}
+
+// isDegradedQuality 用于比较请求的音质与返回的 CDN 文件名中的音质标记
+// 哈希比较仅作为回退方案，因为播放 API 现在可以独立于歌曲哈希接收音质意图
+func isDegradedQuality(level, fileHash, expectedHash, rawURL string) bool {
+	match := playURLQuality.FindStringSubmatch(strings.ToLower(rawURL))
+	if len(match) == 2 {
+		actual := match[1]
+		parsed, _ := url.Parse(rawURL)
+		extension := strings.ToLower(path.Ext(parsed.Path))
+		switch level {
+		case LevelRes:
+			// The upstream keeps the quhigh marker when it cannot provide Hi-Res;
+			// a non-FLAC file is the observable degraded form.
+			return actual != "high" || extension != ".flac"
+		case LevelSQ:
+			return actual != "flac"
+		case LevelHQ:
+			return actual != "320"
+		case LevelStandard:
+			return actual != "128"
+		}
+	}
+	return fileHash != "" && expectedHash != "" && !strings.EqualFold(fileHash, expectedHash)
 }
 
 // fileHashFromPlayURL 取播放地址里的文件 hash，取不到时返回空串。

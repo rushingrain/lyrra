@@ -45,7 +45,7 @@ func normalSearchItems(data map[string]any) []ApiRecord {
 }
 
 // mapNormalSearch 将普通搜索的动态 SDK 数据转换为稳定 DTO。
-// hashPriority 决定 Song.Hash 从哪个音质档位开始解析（见 internal/play）。
+// hashPriority 是 Song.Hash 的档位候选顺序，取其中第一个非空 hash（见 internal/play）。
 func mapNormalSearch(searchType string, data map[string]any, hashPriority []string) *Result {
 	result := emptySearchResult()
 	items := normalSearchItems(data)

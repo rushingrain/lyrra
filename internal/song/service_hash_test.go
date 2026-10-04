@@ -6,10 +6,9 @@ import (
 	"kuwave/internal/play"
 )
 
-// TestParseSongHash 验证首页榜单（TopSong / TopCard）的 Hash 也按播放品质偏好解析。
+// TestParseSongHash 验证首页榜单（TopSong / TopCard）的 Hash 取值：
+// 默认候选顺序优先标准档，指定候选档位时按顺序取第一个非空值。
 func TestParseSongHash(t *testing.T) {
-	t.Cleanup(func() { play.SetPreferredQuality(play.DefaultPreferred) })
-
 	item := map[string]any{
 		"songname":    "给未来的自己",
 		"author_name": "梁静茹",
@@ -20,20 +19,19 @@ func TestParseSongHash(t *testing.T) {
 	}
 
 	tests := []struct {
-		quality string
-		want    string
+		name   string
+		levels []string
+		want   string
 	}{
-		{quality: play.LevelRes, want: "res-hash"},
-		{quality: play.LevelSQ, want: "sq-hash"},
-		{quality: "", want: "standard-hash"}, // 默认档位是标准
-		{quality: play.LevelHQ, want: "hq-hash"},
-		{quality: play.LevelStandard, want: "standard-hash"},
+		{name: "默认顺序优先标准档", levels: play.PriorityForAny(play.DefaultQuality), want: "standard-hash"},
+		{name: "只给无损档", levels: []string{play.LevelSQ}, want: "sq-hash"},
+		{name: "HQ 优先于无损", levels: []string{play.LevelHQ, play.LevelSQ}, want: "hq-hash"},
+		{name: "只给 Hi-Res 档", levels: []string{play.LevelRes}, want: "res-hash"},
 	}
 
 	for _, tt := range tests {
-		t.Run("preferred="+tt.quality, func(t *testing.T) {
-			play.SetPreferredQuality(tt.quality)
-			song := parseSong(item, play.Priority())
+		t.Run(tt.name, func(t *testing.T) {
+			song := parseSong(item, tt.levels)
 			if song.Hash != tt.want {
 				t.Fatalf("hash = %q, want %q", song.Hash, tt.want)
 			}
@@ -44,14 +42,13 @@ func TestParseSongHash(t *testing.T) {
 	}
 }
 
-// TestParseSongHashFallback 覆盖降级与"完全没有可用 hash"的情况。
+// TestParseSongHashFallback 覆盖缺标准档时向上兜底与"完全没有可用 hash"的情况。
+// hash 只用于定位歌曲，播放文件由请求里的 quality 参数决定，因此有任意一档就够用。
 func TestParseSongHashFallback(t *testing.T) {
-	t.Cleanup(func() { play.SetPreferredQuality(play.DefaultPreferred) })
-	play.SetPreferredQuality(play.LevelSQ)
-	priority := play.Priority()
+	priority := play.PriorityForAny(play.DefaultQuality)
 
-	if got := parseSong(map[string]any{"hash_320": "hq-hash", "hash": "standard-hash"}, priority).Hash; got != "hq-hash" {
-		t.Fatalf("hash = %q, want hq-hash（无损缺失时降到 HQ）", got)
+	if got := parseSong(map[string]any{"hash_flac": "sq-hash"}, priority).Hash; got != "sq-hash" {
+		t.Fatalf("hash = %q, want sq-hash（缺标准档时向上兜底）", got)
 	}
 	if got := parseSong(map[string]any{"hash": "standard-hash"}, priority).Hash; got != "standard-hash" {
 		t.Fatalf("hash = %q, want standard-hash", got)

@@ -87,3 +87,14 @@ func TestBuildPlayURL(t *testing.T) {
 		}
 	})
 }
+
+func TestBuildPlayURLUsesURLQualityWhenSongHashIsStandard(t *testing.T) {
+	url := "http://fs.x.kugou.com/202609271657/sig/v3/08775206d7cc07a363967d40a00e493c/yp/full/quflac_a.flac"
+	result, err := buildSongPlayURL(LevelSQ, "flac", "standard-song-hash", url)
+	if err != nil {
+		t.Fatalf("buildSongPlayURL() error = %v", err)
+	}
+	if result.Degraded {
+		t.Fatalf("matching URL quality should not be marked degraded: %+v", result)
+	}
+}

@@ -1,7 +1,7 @@
 // Package play 负责播放相关的对外接口与策略：
-// 音质档位与用户偏好（quality.go）、播放地址解析（本文件）、地址校验（verify.go）。
+// 音质档位（quality.go）、播放地址解析（本文件）、地址校验（verify.go）。
 //
-// 歌曲与之后的 MV 播放都放在这里：两者共享偏好存取、SDK client 构建与错误语义，
+// 歌曲与之后的 MV 播放都放在这里：两者共享 SDK client 构建与错误语义，
 // 但档位阶梯与地址校验各自独立（音频按文件 hash，视频按清晰度）。
 //
 // 关于播放地址的协议：酷狗 CDN 返回的是 http:// 地址，且实测 fs*.kugou.com
@@ -48,14 +48,6 @@ func New(log *slog.Logger) (*Service, error) {
 	return &Service{client: client, log: log}, nil
 }
 
-// SetPlaybackQuality 设置播放品质偏好（res / sq / hq / standard）。
-// 偏好是进程内共享的用户级设置，影响所有返回 Song 的接口里 Hash 的解析起点
-// （搜索结果、首页榜单）以及播放地址的 quality 参数：从该档位起按音质从高到低找第一个
-// 可用的文件，不回退到更高档位。值未知或为空时按默认偏好（标准）处理。
-func (s *Service) SetPlaybackQuality(quality string) {
-	SetPreferredQuality(quality)
-}
-
 // PlayURL 是播放地址解析结果。
 type PlayURL struct {
 	// URL 上游返回的播放地址（含时间戳签名，按账号 + 设备签发，会过期）
@@ -70,14 +62,14 @@ type PlayURL struct {
 	Degraded bool `json:"degraded"`
 }
 
-// GetSongPlayURL 按当前播放品质偏好解析歌曲播放地址。
+// GetSongPlayURL 按请求指定的播放品质解析歌曲播放地址。
 //
-// hash 与 quality 必须成对：hash 传"目标档位的文件 hash"（搜索结果里的 Song.Hash 就是按
-// 同一偏好解析出来的），quality 由偏好映射（见 QualityParam）。上游是按 quality 选文件的
-// （传哪个档位的 hash 都一样），所以拿到地址后用 URL 里的文件 hash 校验是否真的命中目标
-// 档位；被降级时 Degraded 为 true，由前端决定提示还是照常播放。
+// hash 传歌曲的文件 hash，quality 是前端传入的目标档位（res / sq / hq / standard），
+// 由后端映射为上游参数。
+// 上游按 quality 选文件，返回地址后依据 URL 中的品质标记及文件类型判断是否降级。
+// 被降级时 Degraded 为 true，由前端决定提示还是照常播放。
 // albumAudioID 传 Song.ID（MixSongID / album_audio_id），可为 0。
-func (s *Service) GetSongPlayURL(hash string, albumAudioID int) (*PlayURL, error) {
+func (s *Service) GetSongPlayURL(hash string, albumAudioID int, quality string) (*PlayURL, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -86,7 +78,7 @@ func (s *Service) GetSongPlayURL(hash string, albumAudioID int) (*PlayURL, error
 		return nil, errors.New("该条目没有可用的文件 hash")
 	}
 
-	level := EffectiveQuality()
+	level := normalizeRequestedQuality(quality)
 	qualityParam := QualityParamFor(level)
 
 	result, err := s.client.ResolveSongPlayURL(context.Background(), kg.SongPlayURLRequest{
@@ -123,4 +115,11 @@ func (s *Service) GetSongPlayURL(hash string, albumAudioID int) (*PlayURL, error
 			"hash", expectedHash, "fileHash", playURL.FileHash, "quality", level)
 	}
 	return playURL, nil
+}
+
+func normalizeRequestedQuality(quality string) string {
+	if normalized := normalizeLevel(quality); normalized != "" {
+		return normalized
+	}
+	return DefaultQuality
 }

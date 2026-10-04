@@ -15,6 +15,10 @@ kuwave 是基于 Wails v2、Go、React 和 TypeScript 的第三方酷狗音乐�
 - `frontend/src/pages/` 放页面，`components/` 放组件，`services/` 放 Wails 调用封装，`stores/` 放全局状态，`types/` 放共用类型，`hooks/` 放 React hooks。
 - 沿用现有命名：Go 包和文件名使用小写；React 页面与组件文件使用 PascalCase，服务与 hook 文件使用 camelCase，测试文件与对应 Go 代码相邻并以 `_test.go` 结尾。
 
+## 注释语言
+- 代码注释使用中文书写，力求简洁、清晰、准确表达意图。不要为了注释而注释；只在逻辑不直观、存在隐含约束或需要解释“为什么”时添加注释。
+- 避免直译式或啰嗦的注释；注释应说明目的或原因，而非重复代码字面含义。
+
 ## 生成代码与 SDK
 
 - `frontend/wailsjs/` 由 Wails 自动生成，不手动修改，也不提交到 Git。Go 暴露方法发生变化后，在仓库根目录运行 `wails generate module`，再检查前端调用的类型。

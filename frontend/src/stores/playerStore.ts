@@ -178,7 +178,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     // 第一步：解析地址
     let playURL
     try {
-      playURL = await getSongPlayURL(song.hash, song.id)
+      playURL = await getSongPlayURL(song.hash, song.id, 'standard')
     } catch (error) {
       if (seq !== requestSeq) return
       set({ status: 'error', url: null, error: errorMessage(error) })

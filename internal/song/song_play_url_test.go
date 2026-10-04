@@ -15,7 +15,7 @@ import (
 
 // 内置样例歌曲：《无情画 (愿为你放下万千的荣华)》，来自 TopCard 热门推荐，
 // 当前登录态下可以拿到 128 标准音质地址。换歌时用环境变量覆盖，不必改代码。
-const defaultPlayURLHash = "86F25A60EBB16DAF0FE7094D65FEE5EA"
+const defaultPlayURLHash = "63FC9D28DCFC2497C2F0ED8BE8BFAD85"
 
 // TestGetSongPlayURLLive 调用 SDK 的 GetSongPlayURL 并打印解析结果，
 // 便于联调不同歌曲、不同音质下的返回。
@@ -44,6 +44,7 @@ func TestGetSongPlayURLLive(t *testing.T) {
 		AlbumID:      envInt("KUGOU_TEST_ALBUM_ID", 0),
 		AlbumAudioID: envInt("KUGOU_TEST_ALBUM_AUDIO_ID", 0),
 		Cookie:       auth.LoadSession(),
+		Quality:      "flac",
 	}
 	if quality := envString("KUGOU_TEST_QUALITY", ""); quality != "" {
 		req.Quality = quality

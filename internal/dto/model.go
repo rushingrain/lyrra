@@ -9,7 +9,8 @@ type Song struct {
 	Album    string `json:"album,omitempty"`
 	CoverURL string `json:"coverUrl"`
 	Duration int64  `json:"duration,omitempty"`
-	// Hash 播放用文件 hash：按播放品质偏好（默认标准）从高到低解析出的第一个可用值，
+	// Hash 播放用文件 hash，只用于定位歌曲：实际返回的文件由 play.GetSongPlayURL 的
+	// quality 参数决定，因此这里取候选档位里第一个非空值（默认标准档缺档时向上兜底），
 	// 为空表示该条目没有任何可用音质，前端需给出提示
 	Hash       string   `json:"hash,omitempty"`
 	Quality    string   `json:"quality,omitempty"`

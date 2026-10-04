@@ -77,7 +77,7 @@ func (s *Service) Search(keyword string, pageNum int, pageSize int, searchType s
 		return nil, err
 	}
 
-	return mapNormalSearch(searchType, searchData(resp.Body), play.Priority()), nil
+	return mapNormalSearch(searchType, searchData(resp.Body), searchHashPriority()), nil
 }
 
 // SearchComplex 执行综合搜索，不向 SDK 传递 type 参数。
@@ -107,7 +107,7 @@ func (s *Service) SearchComplex(keyword string, pageNum int, pageSize int) (*Res
 		return nil, err
 	}
 
-	return mapComplexSearch(searchData(resp.Body), play.Priority()), nil
+	return mapComplexSearch(searchData(resp.Body), searchHashPriority()), nil
 }
 
 // loadSearchCookie 读取最新登录态，并同步到搜索 client。
@@ -143,6 +143,15 @@ func normalizePage(pageNum int, pageSize int) (int, int) {
 		pageSize = defaultPageSize
 	}
 	return pageNum, pageSize
+}
+
+// searchHashPriority 返回搜索结果解析 Song.Hash 的候选顺序。
+//
+// 搜索只需要一个能定位歌曲的 hash：播放文件由 play.GetSongPlayURL 的 quality 参数决定
+// （见 internal/play/verify.go 的说明），所以缺了默认档位时可以继续往上找，
+// 而不是把整条结果判成“没有可用音质”。
+func searchHashPriority() []string {
+	return play.PriorityForAny(play.DefaultQuality)
 }
 
 func validateResponse(body map[string]any) error {

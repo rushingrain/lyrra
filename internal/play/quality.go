@@ -2,7 +2,6 @@ package play
 
 import (
 	"strings"
-	"sync"
 )
 
 // 音质档位标识。刻意与前端展示标签（Hi-Res / 无损 / HQ）解耦：
@@ -14,8 +13,8 @@ const (
 	LevelStandard = "standard"
 )
 
-// DefaultPreferred 默认偏好档位：标准音质。
-const DefaultPreferred = LevelStandard
+// DefaultQuality 默认播放档位：标准音质。
+const DefaultQuality = LevelStandard
 
 // ladder 是唯一的档位顺序定义（从高到低）。
 var ladder = []string{LevelRes, LevelSQ, LevelHQ, LevelStandard}
@@ -46,64 +45,40 @@ var qualityParams = map[string]string{
 	LevelStandard: "128",
 }
 
-var (
-	preferredMu sync.RWMutex
-	// preferred 是进程内共享的播放品质偏好，属于用户级设置，搜索 / 首页 / 播放共用一份。
-	preferred = DefaultPreferred
-)
-
-// SetPreferredQuality 设置播放品质偏好（res / sq / hq / standard）。
-// 值未知或为空时，解析阶段会回落到 DefaultPreferred。
-func SetPreferredQuality(quality string) {
-	preferredMu.Lock()
-	defer preferredMu.Unlock()
-	preferred = strings.ToLower(strings.TrimSpace(quality))
-}
-
-// PreferredQuality 返回当前偏好（可能是未知值，由 PriorityFor 负责回落）。
-func PreferredQuality() string {
-	preferredMu.RLock()
-	defer preferredMu.RUnlock()
-	return preferred
-}
-
-// EffectiveQuality 返回归一化后的档位：偏好为空或未知时回落到 DefaultPreferred。
-func EffectiveQuality() string {
-	if level := normalizeLevel(PreferredQuality()); level != "" {
-		return level
-	}
-	return DefaultPreferred
-}
-
-// Priority 按当前偏好返回档位顺序。
-func Priority() []string {
-	return PriorityFor(PreferredQuality())
-}
-
-// QualityParam 返回当前偏好对应的 GetSongPlayURL 的 quality 取值。
-func QualityParam() string {
-	return QualityParamFor(EffectiveQuality())
-}
-
 // QualityParamFor 返回指定档位对应的 quality 取值；未知档位回落到默认档位。
 func QualityParamFor(level string) string {
 	if normalized := normalizeLevel(level); normalized != "" {
 		return qualityParams[normalized]
 	}
-	return qualityParams[DefaultPreferred]
+	return qualityParams[DefaultQuality]
 }
 
-// PriorityFor 返回从偏好档位开始、按音质从高到低截取的档位列表（不回头：
-// 设 HQ 就只走 HQ → standard，不会再去试更高档位）。偏好为空或不在阶梯中时回落到默认档位。
-func PriorityFor(preferred string) []string {
-	index := levelIndex(preferred)
+// PriorityForAny 返回“任意档位有 hash 就算命中”的候选顺序：先目标档位，
+// 再逐级向更高档位兜底，最后才回落到比目标更低的档位。
+// 默认档位是最低档，所以默认结果是：标准 → HQ → 无损 → Hi-Res。
+//
+// hash 只用于定位歌曲，实际播放文件由请求里的 quality 参数决定（见 verify.go 的说明），
+// 因此调用方只关心“能不能拿到一个可用 hash”，缺档时继续换档找比直接判定
+// “没有可用音质”更合适。播放品质到上游参数的映射由 QualityParamFor 负责。
+func PriorityForAny(quality string) []string {
+	index := levelIndex(quality)
 	if index < 0 {
-		index = levelIndex(DefaultPreferred)
+		index = levelIndex(DefaultQuality)
 	}
 	if index < 0 {
 		return nil
 	}
-	return append([]string(nil), ladder[index:]...)
+
+	out := make([]string, 0, len(ladder))
+	out = append(out, ladder[index])
+	// ladder 从高到低排列：index 之前是更高档位，之后是更低档位。
+	for i := index - 1; i >= 0; i-- {
+		out = append(out, ladder[i])
+	}
+	for i := index + 1; i < len(ladder); i++ {
+		out = append(out, ladder[i])
+	}
+	return out
 }
 
 func levelIndex(level string) int {

@@ -78,7 +78,7 @@ func TestMapComplexSearch(t *testing.T) {
 				},
 			},
 		},
-	}, play.PriorityFor(play.DefaultPreferred))
+	}, play.PriorityForAny(play.DefaultQuality))
 
 	if len(result.Songs) != 1 || result.Songs[0].ID != 33138036 {
 		t.Fatalf("unexpected songs: %+v", result.Songs)
@@ -124,7 +124,7 @@ func TestMapNormalSearch(t *testing.T) {
 				"TagContent":  "热门",
 			},
 		},
-	}, play.PriorityFor(play.DefaultPreferred))
+	}, play.PriorityForAny(play.DefaultQuality))
 
 	if len(result.Songs) != 1 {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
@@ -209,13 +209,38 @@ func TestMapNormalSearchMVCover(t *testing.T) {
 				"Pic":        "20240118194600124028.jpg",
 			},
 		},
-	}, play.PriorityFor(play.DefaultPreferred))
+	}, play.PriorityForAny(play.DefaultQuality))
 
 	if len(result.MVs) != 1 {
 		t.Fatalf("mv count = %d, want 1", len(result.MVs))
 	}
 	if got, want := result.MVs[0].CoverURL, "https://imge.kugou.com/mvhdpic/400/20240118/20240118194600124028.jpg"; got != want {
 		t.Fatalf("MV cover URL = %q, want %q", got, want)
+	}
+}
+
+// TestMapNormalSearchHashFallsBackUpwards 覆盖“搜索结果只有高音质 hash”的条目：
+// hash 只用于定位歌曲（播放文件由 quality 参数决定），缺标准档时应继续向上取，
+// 而不是把整条结果判成没有可用音质。
+func TestMapNormalSearchHashFallsBackUpwards(t *testing.T) {
+	data := map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":  "1",
+				"SongName":   "只有高音质 hash",
+				"SQFileHash": "sq-flat-hash",
+			},
+		},
+	}
+
+	song := mapNormalSearch("song", data, play.PriorityForAny(play.DefaultQuality)).Songs[0]
+	if song.Hash != "sq-flat-hash" {
+		t.Fatalf("hash = %q, want sq-flat-hash", song.Hash)
+	}
+
+	// 旧的“只取标准档”策略会漏掉这条：hash 为空即不可播放。
+	if got := mapNormalSearch("song", data, []string{play.LevelStandard}).Songs[0].Hash; got != "" {
+		t.Fatalf("只给标准档候选时 hash = %q, want 空", got)
 	}
 }
 
@@ -248,7 +273,7 @@ func TestMapNormalSearchLyricSongs(t *testing.T) {
 				},
 			},
 		},
-	}, play.PriorityFor(play.DefaultPreferred))
+	}, play.PriorityForAny(play.DefaultQuality))
 
 	if len(result.Songs) != 1 {
 		t.Fatalf("song count = %d, want 1", len(result.Songs))
@@ -345,8 +370,9 @@ func TestResolveQualityByNestedHash(t *testing.T) {
 	}
 }
 
-// TestMapNormalSearchHashFollowsPlaybackQuality 验证播放品质偏好会影响搜索结果里的 Hash。
-func TestMapNormalSearchHashFollowsPlaybackQuality(t *testing.T) {
+// TestMapNormalSearchHashFollowsPriority 验证 mapper 按调用方给的候选顺序取 Hash：
+// 默认顺序优先标准档，缺档时向上兜底；候选顺序变了取值随之变化。
+func TestMapNormalSearchHashFollowsPriority(t *testing.T) {
 	data := map[string]any{
 		"lists": []any{
 			map[string]any{
@@ -361,19 +387,19 @@ func TestMapNormalSearchHashFollowsPlaybackQuality(t *testing.T) {
 	}
 
 	tests := []struct {
-		level string
-		want  string
+		name   string
+		levels []string
+		want   string
 	}{
-		{level: play.LevelRes, want: "res-hash"},
-		{level: play.LevelSQ, want: "sq-hash"},
-		{level: play.LevelHQ, want: "hq-hash"},
-		{level: play.LevelStandard, want: "standard-hash"},
-		{level: "", want: "standard-hash"}, // 默认档位是标准
+		{name: "默认顺序优先标准档", levels: play.PriorityForAny(play.DefaultQuality), want: "standard-hash"},
+		{name: "候选顺序决定优先级", levels: []string{play.LevelHQ, play.LevelStandard}, want: "hq-hash"},
+		{name: "只给无损档", levels: []string{play.LevelSQ}, want: "sq-hash"},
+		{name: "只给 Hi-Res 档", levels: []string{play.LevelRes}, want: "res-hash"},
 	}
 
 	for _, tt := range tests {
-		t.Run("preferred="+tt.level, func(t *testing.T) {
-			result := mapNormalSearch("song", data, play.PriorityFor(tt.level))
+		t.Run(tt.name, func(t *testing.T) {
+			result := mapNormalSearch("song", data, tt.levels)
 			if len(result.Songs) != 1 {
 				t.Fatalf("song count = %d, want 1", len(result.Songs))
 			}
