@@ -16,13 +16,10 @@ import {
   MoveRight
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { usePlayerStore } from '@/stores/playerStore'
+import { usePlayerStore, type PlayMode } from '@/stores/playerStore'
 import { Cover } from '@/components/common/Cover'
 import { qualityLabel } from '@/services/play'
 
-type PlayMode = 'list-loop' | 'order' | 'single' | 'shuffle'
-
-const PLAY_MODE_ORDER: PlayMode[] = ['list-loop', 'order', 'single', 'shuffle']
 const PLAY_MODE_LABEL: Record<PlayMode, string> = {
   'list-loop': '列表循环',
   order: '顺序播放',
@@ -30,7 +27,14 @@ const PLAY_MODE_LABEL: Record<PlayMode, string> = {
   shuffle: '随机播放',
 }
 
-export function MiniPlayer() {
+interface MiniPlayerProps {
+  /** 播放列表面板是否展开（面板由 MainLayout 渲染在右侧栏位） */
+  playlistOpen: boolean
+  /** 切换播放列表面板 */
+  onTogglePlaylist: () => void
+}
+
+export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) {
   // 播放状态统一来自 playerStore（时间单位均为毫秒）
   const currentSong = usePlayerStore((s) => s.song)
   const status = usePlayerStore((s) => s.status)
@@ -39,14 +43,19 @@ export function MiniPlayer() {
   const volume = usePlayerStore((s) => s.volume)
   const quality = usePlayerStore((s) => s.quality)
   const degraded = usePlayerStore((s) => s.degraded)
+  const stats = usePlayerStore((s) => s.stats)
+  const playMode = usePlayerStore((s) => s.playMode)
+  const playlist = usePlayerStore((s) => s.playlist)
   const toggle = usePlayerStore((s) => s.toggle)
+  const cyclePlayMode = usePlayerStore((s) => s.cyclePlayMode)
+  const playNext = usePlayerStore((s) => s.playNext)
+  const playPrev = usePlayerStore((s) => s.playPrev)
   const seek = usePlayerStore((s) => s.seek)
   const setVolume = usePlayerStore((s) => s.setVolume)
 
   const isPlaying = status === 'playing'
   const isLoading = status === 'loading'
 
-  const [playMode, setPlayMode] = useState<PlayMode>('list-loop')
   const [isLiked, setIsLiked] = useState(false)
   const [showLyrics, setShowLyrics] = useState(false)
 
@@ -114,8 +123,9 @@ export function MiniPlayer() {
   /** 没有播放内容时显示占位时间 */
   const displayDuration = (ms: number) => (duration > 0 ? formatDuration(ms) : '--:--')
 
-  const formatCount = (n: number) =>
-    n >= 10000 ? `${(n / 10000).toFixed(1)}w` : `${n}`
+  // 收藏数 / 评论数由后端格式化（k / w / 亿）；取不到时显示占位符，不弹提示
+  const favoriteText = stats?.favorite?.text ?? '-'
+  const commentText = stats?.comment?.text ?? '-'
 
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
   const VolumeIcon = volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2
@@ -200,28 +210,30 @@ export function MiniPlayer() {
             <Cover src={currentSong?.coverUrl} alt={currentSong?.name ?? '未播放'} className="h-10 w-10" variant="circle" />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-[var(--color-text-primary)]">
+            <p className="truncate font-medium text-[var(--color-text-primary)]">
               {currentSong?.name ?? '未播放'}
             </p>
-            <p className="truncate text-xs text-[var(--color-text-secondary)]">
+            <p className="truncate text-sm text-[var(--color-text-secondary)]">
               {currentSong?.artist ?? '点击歌曲封面开始播放'}
             </p>
           </div>
           <button
             className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
-            aria-label="点赞"
-            title="点赞"
+            aria-label="收藏"
+            title="收藏数"
+            disabled
           >
             <Heart size={16} />
-            <span>{formatCount(1234567)}</span>
+            <span>{favoriteText}</span>
           </button>
           <button
             className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
             aria-label="评论"
-            title="评论"
+            title="评论数"
+            disabled
           >
             <MessageSquare size={16} />
-            <span>{formatCount(86234)}</span>
+            <span>{commentText}</span>
           </button>
         </div>
 
@@ -230,12 +242,7 @@ export function MiniPlayer() {
           <div className="group relative">
             <button
               className={iconBtn}
-              onClick={() =>
-                setPlayMode((m) => {
-                  const idx = PLAY_MODE_ORDER.indexOf(m)
-                  return PLAY_MODE_ORDER[(idx + 1) % PLAY_MODE_ORDER.length]
-                })
-              }
+              onClick={cyclePlayMode}
               aria-label={PLAY_MODE_LABEL[playMode]}
             >
               {playMode === 'list-loop' && <Repeat size={18} />}
@@ -260,11 +267,17 @@ export function MiniPlayer() {
               {PLAY_MODE_LABEL[playMode]}
             </span>
           </div>
-          <button className={iconBtn} aria-label="上一首" title="上一首">
+          <button
+            className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+            onClick={playPrev}
+            disabled={playlist.length === 0}
+            aria-label="上一首"
+            title="上一首"
+          >
             <SkipBack size={20} fill="currentColor" />
           </button>
           <button
-            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
             onClick={toggle}
             disabled={!currentSong || isLoading}
             aria-label={isPlaying ? '暂停' : '播放'}
@@ -276,13 +289,24 @@ export function MiniPlayer() {
               <Play size={18} fill="currentColor" className="ml-0.5" />
             )}
           </button>
-          <button className={iconBtn} aria-label="下一首" title="下一首">
+          <button
+            className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+            onClick={playNext}
+            disabled={playlist.length === 0}
+            aria-label="下一首"
+            title="下一首"
+          >
             <SkipForward size={20} fill="currentColor" />
           </button>
 
           <button
-            className="relative flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-gray-100 ${
+              playlistOpen ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'
+            }`}
+            onClick={onTogglePlaylist}
+            data-playlist-toggle
             aria-label="播放列表"
+            aria-expanded={playlistOpen}
             title="播放列表"
           >
             <ListVideo size={18} />
@@ -315,6 +339,7 @@ export function MiniPlayer() {
             onClick={() => setShowLyrics((v) => !v)}
             aria-label="桌面歌词"
             title="桌面歌词"
+            disabled
           >
             词
           </button>
@@ -357,7 +382,7 @@ export function MiniPlayer() {
             </div>
           </div>
 
-          <button className={iconBtn} aria-label="更多" title="更多">
+          <button className={iconBtn} aria-label="更多" title="更多" disabled>
             <MoreHorizontal size={18} />
           </button>
         </div>

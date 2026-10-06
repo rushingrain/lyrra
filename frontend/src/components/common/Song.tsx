@@ -12,6 +12,8 @@ interface SongProps {
   onPlay?: (song: SongType) => void
   /** 是否是当前正在播放的歌曲：遮罩常显并显示暂停图标 */
   playing?: boolean
+  /** 是否是当前曲目：标题高亮（播放列表用来标记正在播放的那一行） */
+  active?: boolean
 }
 
 const PRESETS = {
@@ -20,8 +22,16 @@ const PRESETS = {
 } as const
 
 /** 歌曲条目：封面 + 标题 + 元信息行（音质/原唱标签 + 歌手）+ 风格标签 */
-export function Song({ song, size = 'sm', className = '', onPlay, playing = false }: SongProps) {
+export function Song({
+  song,
+  size = 'sm',
+  className = '',
+  onPlay,
+  playing = false,
+  active = false,
+}: SongProps) {
   const preset = PRESETS[size]
+  const titleColor = active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'
   return (
     <div className={`group flex min-w-0 items-center ${preset.root} ${className}`}>
       <div className="relative shrink-0">
@@ -46,7 +56,7 @@ export function Song({ song, size = 'sm', className = '', onPlay, playing = fals
         )}
       </div>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm text-[15px] text-[var(--color-text-primary)]">{song.name}</p>
+        <p className={`truncate text-sm text-[15px] ${titleColor}`}>{song.name}</p>
         <div className={`${preset.meta} flex min-w-0 items-center gap-1.5 text-[13px] text-[var(--color-text-secondary)]`}>
           {song.quality && <Tag variant="outline">{song.quality}</Tag>}
           {song.isOriginal && <Tag variant="solid">原唱</Tag>}

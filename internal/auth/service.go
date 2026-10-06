@@ -14,6 +14,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"kuwave/internal/imageurl"
+	"kuwave/internal/playerstate"
 )
 
 // ErrNotLoggedIn 未登录或会话已过期
@@ -194,6 +195,10 @@ func (s *Service) Logout() error {
 	s.client.SetCookie("vip_token", "")
 	s.client.SetCookie("vip_type", "")
 	clearSession()
+	// 账号级播放数据（播放队列 / 当前歌曲）随登出清除；设备级设置（音量 / 播放模式）保留。
+	if err := playerstate.ClearAccount(); err != nil {
+		s.log.Warn("failed to clear player account state", "err", err.Error())
+	}
 	s.log.Info("logged out")
 	return nil
 }

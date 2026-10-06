@@ -1,7 +1,8 @@
 import type { Song } from '@/types'
 import { mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetLatestSongs, GetHotSongs } from '../../wailsjs/go/song/Service'
+import { GetLatestSongs, GetHotSongs, GetSongStats } from '../../wailsjs/go/song/Service'
+import type { song } from '../../wailsjs/go/models'
 
 /**
  * 首页最新音乐接口
@@ -29,6 +30,9 @@ const CACHE_TTL_MS = 60 * 60 * 1000
 /** 前端请求最新音乐的默认参数：page=1、pagesize=15（卡片网格约两行，不多不少） */
 export const DEFAULT_SONG_PAGE = 1
 export const DEFAULT_SONG_PAGE_SIZE = 15
+
+/** 歌曲统计数据（收藏数 / 评论数）；单项缺失表示该项取不到 */
+export type SongStats = song.SongStats
 
 // 模块级缓存：仅存在于 app 窗口生命周期；请求失败不入缓存，下次挂载自动重试。
 // 以 page:pagesize 为 key 区分不同参数的请求，避免不同参数互相串缓存。
@@ -103,4 +107,15 @@ export function getHotSongs(): Promise<Song[]> {
     return Promise.resolve(mockSongs)
   }
   return cachedRequest('hot', '热门音乐加载失败，请稍后重试', () => GetHotSongs())
+}
+
+/**
+ * 获取歌曲统计数据（收藏数 / 评论数）。
+ *
+ * mixSongID 传 Song.id，hash 传 Song.hash；后端把数量格式化成展示文案（k / w / 亿）放在 text 里。
+ * 单项取不到时该字段为空，两项都取不到时后端才 reject。
+ * 统计数据属于可降级信息：调用方不要弹错误提示，展示占位符即可。
+ */
+export function getSongStats(mixSongID: number, hash: string): Promise<SongStats> {
+  return GetSongStats(mixSongID, hash)
 }
