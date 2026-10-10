@@ -13,6 +13,32 @@
   --color-scrollbar-thumb: #c1c1c1;
 }
 
+/*
+ * 歌词展开时的播放栏配色：播放栏浮在封面模糊背景（NowPlayingBackdrop）上，
+ * 需要浅色文字。这里只覆盖配色变量，组件结构与浅色主题样式完全不受影响。
+ */
+.player-on-media {
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: rgba(255, 255, 255, 0.72);
+  --color-border: rgba(255, 255, 255, 0.22);
+  --color-surface: rgba(255, 255, 255, 0.1);
+  --color-background: rgba(24, 24, 27, 0.92);
+}
+
+/* 沉浸背景与歌词内容一起淡入，避免展开瞬间过于生硬 */
+.immersive-fade-in {
+  animation: immersive-fade-in 180ms ease-out;
+}
+
+@keyframes immersive-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
@@ -63,4 +89,3 @@ body {
 .scrollbar:hover .simplebar-track.simplebar-vertical .simplebar-scrollbar::before {
   opacity: 1;
 }
-

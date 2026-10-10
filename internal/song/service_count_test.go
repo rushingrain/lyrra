@@ -23,14 +23,24 @@ type stubClient struct {
 	commentReq   kg.CommentCountRequest
 	commentResp  *kg.CommentCountResponse
 	commentErr   error
+
+	searchLyricCalls int
+	searchLyricReq   kg.SearchLyricRequest
+	searchLyricResp  *kg.SearchLyricResponse
+	searchLyricErr   error
+
+	lyricCalls int
+	lyricReq   kg.LyricRequest
+	lyricResp  *kg.LyricResponse
+	lyricErr   error
 }
 
 func (s *stubClient) TopSong(context.Context, kg.TopSongRequest) (*kg.TopSongResponse, error) {
-	return nil, errors.New("TopSong 不应被计数接口调用")
+	return nil, errors.New("TopSong 不应在单元测试中被调用")
 }
 
 func (s *stubClient) TopCard(context.Context, kg.TopCardRequest) (*kg.TopCardResponse, error) {
-	return nil, errors.New("TopCard 不应被计数接口调用")
+	return nil, errors.New("TopCard 不应在单元测试中被调用")
 }
 
 func (s *stubClient) FavoriteCount(_ context.Context, req kg.FavoriteCountRequest) (*kg.FavoriteCountResponse, error) {
@@ -43,6 +53,18 @@ func (s *stubClient) CommentCount(_ context.Context, req kg.CommentCountRequest)
 	s.commentCalls++
 	s.commentReq = req
 	return s.commentResp, s.commentErr
+}
+
+func (s *stubClient) SearchLyric(_ context.Context, req kg.SearchLyricRequest) (*kg.SearchLyricResponse, error) {
+	s.searchLyricCalls++
+	s.searchLyricReq = req
+	return s.searchLyricResp, s.searchLyricErr
+}
+
+func (s *stubClient) Lyric(_ context.Context, req kg.LyricRequest) (*kg.LyricResponse, error) {
+	s.lyricCalls++
+	s.lyricReq = req
+	return s.lyricResp, s.lyricErr
 }
 
 // newCountService 构造只注入桩 client 的被测服务。

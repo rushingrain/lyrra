@@ -1,7 +1,7 @@
 import type { Song } from '@/types'
 import { mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetLatestSongs, GetHotSongs, GetSongStats } from '../../wailsjs/go/song/Service'
+import { GetLatestSongs, GetHotSongs, GetSongStats, GetLyrics } from '../../wailsjs/go/song/Service'
 import type { song } from '../../wailsjs/go/models'
 
 /**
@@ -33,6 +33,9 @@ export const DEFAULT_SONG_PAGE_SIZE = 15
 
 /** 歌曲统计数据（收藏数 / 评论数）；单项缺失表示该项取不到 */
 export type SongStats = song.SongStats
+
+/** 一行时间轴歌词；time 为毫秒 */
+export type LyricLine = song.LyricLine
 
 // 模块级缓存：仅存在于 app 窗口生命周期；请求失败不入缓存，下次挂载自动重试。
 // 以 page:pagesize 为 key 区分不同参数的请求，避免不同参数互相串缓存。
@@ -118,4 +121,46 @@ export function getHotSongs(): Promise<Song[]> {
  */
 export function getSongStats(mixSongID: number, hash: string): Promise<SongStats> {
   return GetSongStats(mixSongID, hash)
+}
+
+/**
+ * 歌词缓存有效期(ms)：同一首歌的歌词基本不变，缓存久一点减少重复请求。
+ * 歌词只在用户打开歌词页时才拉取，缓存仅在 app 窗口生命周期内有效。
+ */
+const LYRIC_CACHE_TTL_MS = 60 * 60 * 1000
+
+const lyricCache = new Map<string, { data: LyricLine[]; at: number }>()
+const lyricInflight = new Map<string, Promise<LyricLine[]>>()
+
+/**
+ * 获取歌曲歌词（按时间升序的毫秒时间轴）。
+ *
+ * hash 传 Song.hash；后端把 LRC 解析成结构化列表，上游没有歌词时返回空数组（不是错误）。
+ * 请求本身失败会 reject——歌词属于可降级信息，调用方静默处理即可，不要弹 toast。
+ * 只缓存成功结果；空数组同样入缓存，避免每次打开都重试没有歌词的歌曲。
+ */
+export function getLyrics(hash: string): Promise<LyricLine[]> {
+  const key = hash.trim()
+  if (!key) return Promise.resolve([])
+
+  const cached = lyricCache.get(key)
+  if (cached && Date.now() - cached.at < LYRIC_CACHE_TTL_MS) {
+    return Promise.resolve(cached.data)
+  }
+
+  const pending = lyricInflight.get(key)
+  if (pending) return pending
+
+  const task = GetLyrics(key)
+    .then((lines) => {
+      const data = lines ?? []
+      lyricCache.set(key, { data, at: Date.now() })
+      return data
+    })
+    .finally(() => {
+      lyricInflight.delete(key)
+    })
+
+  lyricInflight.set(key, task)
+  return task
 }

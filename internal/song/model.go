@@ -15,3 +15,12 @@ type SongStats struct {
 	Favorite *Count `json:"favorite,omitempty"`
 	Comment  *Count `json:"comment,omitempty"`
 }
+
+// LyricLine 是一行时间轴歌词。
+//
+// Time 为毫秒（与 dto.Song.Duration 一致，方便前端和播放进度对齐），Text 为歌词文本。
+// 返回结果按 Time 升序排列；上游没有歌词时返回空列表，由前端显示占位文案。
+type LyricLine struct {
+	Time int64  `json:"time"`
+	Text string `json:"text"`
+}

@@ -32,9 +32,13 @@ interface MiniPlayerProps {
   playlistOpen: boolean
   /** 切换播放列表面板 */
   onTogglePlaylist: () => void
+  /** 歌词详情页是否展开（页面由 MainLayout 覆盖在播放栏上方） */
+  lyricsOpen: boolean
+  /** 切换歌词详情页 */
+  onToggleLyrics: () => void
 }
 
-export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) {
+export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggleLyrics }: MiniPlayerProps) {
   // 播放状态统一来自 playerStore（时间单位均为毫秒）
   const currentSong = usePlayerStore((s) => s.song)
   const status = usePlayerStore((s) => s.status)
@@ -57,7 +61,6 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
   const isLoading = status === 'loading'
 
   const [isLiked, setIsLiked] = useState(false)
-  const [showLyrics, setShowLyrics] = useState(false)
 
   // 进度条拖拽与悬浮
   const trackRef = useRef<HTMLDivElement>(null)
@@ -160,7 +163,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
 
   // 通用图标按钮样式
   const iconBtn =
-    'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100'
+    'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]'
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -205,10 +208,17 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
       <div className="flex flex-1 items-center gap-4 px-10">
         {/* 左：封面 + 歌曲信息 + 点赞 + 评论 */}
         <div className="flex w-[340px] items-center gap-3">
-          {/* 唱片样式：黑圈包裹圆形图片 */}
-          <div className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2.5 transition-transform hover:scale-105">
+          {/* 唱片样式：黑圈包裹圆形图片，点击唤出/收起歌词详情页 */}
+          <button
+            type="button"
+            onClick={onToggleLyrics}
+            className="flex cursor-pointer items-center justify-center rounded-full bg-black p-2.5 transition-transform hover:scale-105"
+            aria-label="歌词"
+            aria-expanded={lyricsOpen}
+            title={lyricsOpen ? '收起歌词' : '查看歌词'}
+          >
             <Cover src={currentSong?.coverUrl} alt={currentSong?.name ?? '未播放'} className="h-10 w-10" variant="circle" />
-          </div>
+          </button>
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium text-[var(--color-text-primary)]">
               {currentSong?.name ?? '未播放'}
@@ -218,7 +228,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
             </p>
           </div>
           <button
-            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
             aria-label="收藏"
             title="收藏数"
             disabled
@@ -227,7 +237,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
             <span>{favoriteText}</span>
           </button>
           <button
-            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
             aria-label="评论"
             title="评论数"
             disabled
@@ -300,7 +310,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
           </button>
 
           <button
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-gray-100 ${
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-[var(--color-surface)] ${
               playlistOpen ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'
             }`}
             onClick={onTogglePlaylist}
@@ -316,7 +326,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
         {/* 右：播放列表 + 音质 + 收藏 + 桌面歌词 + 音量 + 更多 */}
         <div className="flex w-[340px] items-center justify-end gap-1">
           <button
-            className="flex h-7 cursor-pointer items-center rounded px-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-gray-100"
+            className="flex h-7 cursor-pointer items-center rounded px-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
             title={
               quality
                 ? `当前音质：${qualityLabel(quality, degraded)}${degraded ? '（上游把该档位降级成了其它文件）' : ''}`
@@ -334,9 +344,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist }: MiniPlayerProps) 
             <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
           </button>
           <button
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base font-medium transition-colors hover:bg-gray-100 ${showLyrics ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'
-              }`}
-            onClick={() => setShowLyrics((v) => !v)}
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
             aria-label="桌面歌词"
             title="桌面歌词"
             disabled

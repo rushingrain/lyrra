@@ -52,7 +52,7 @@ export function PlaylistPanel({ onClose }: PlaylistPanelProps) {
   return (
     <div
       ref={panelRef}
-      className="absolute inset-y-3 right-0 z-30 flex w-[380px] max-w-[80vw] flex-col overflow-hidden rounded-l-xl bg-[var(--color-background)] shadow-[-8px_0_24px_rgba(0,0,0,0.12)]"
+      className="absolute inset-y-3 right-0 z-40 flex w-[380px] max-w-[80vw] flex-col overflow-hidden rounded-l-xl bg-[var(--color-background)] shadow-[-8px_0_24px_rgba(0,0,0,0.12)]"
     >
       {/* 标题栏：左标题 + 总数，右清空 */}
       <div className="flex items-center justify-between px-4 py-2">

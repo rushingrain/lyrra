@@ -5,6 +5,8 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { MiniPlayer } from '@/components/layout/MiniPlayer'
 import { TopBar } from '@/components/layout/TopBar'
 import { PlaylistPanel } from '@/components/business/PlaylistPanel'
+import { LyricsView } from '@/components/business/LyricsView'
+import { NowPlayingBackdrop } from '@/components/business/NowPlayingBackdrop'
 import { getCurrentUser, logout } from '@/services/auth'
 import type { LoginResult } from '@/types'
 import { mockPlayHistory } from '@/data/mock'
@@ -21,6 +23,10 @@ export function MainLayout() {
   const [user, setUser] = useState<LoginResult['user'] | null>(null)
   // 播放列表面板：贴在内容区右侧展开（高度从顶栏下沿到播放栏上沿）
   const [showPlaylist, setShowPlaylist] = useState(false)
+  // 歌词详情页：覆盖侧边栏 / 顶栏 / 内容区（顶栏下沿到播放栏上沿），由播放栏封面唤出
+  const [showLyrics, setShowLyrics] = useState(false)
+  // 歌词展开时的沉浸背景取当前歌曲封面
+  const currentCoverUrl = usePlayerStore((s) => s.song?.coverUrl)
 
   // 启动时恢复已保存的登录会话
   useEffect(() => {
@@ -39,6 +45,14 @@ export function MainLayout() {
 
   const closePlaylist = useCallback(() => setShowPlaylist(false), [])
   const togglePlaylist = useCallback(() => setShowPlaylist((open) => !open), [])
+  const closeLyrics = useCallback(() => setShowLyrics(false), [])
+  const toggleLyrics = useCallback(() => setShowLyrics((open) => !open), [])
+
+  // 歌词页是覆盖整屏的沉浸视图，展开时收起播放列表面板，避免"面板开着却看不见"。
+  // 反向不成立：歌词页展开时仍可唤出播放列表，面板会浮在歌词页之上。
+  useEffect(() => {
+    if (showLyrics) setShowPlaylist(false)
+  }, [showLyrics])
 
   /** 退出登录：调用后端清空会话，无论成功与否都清除本地登录态 */
   const handleLogout = useCallback(() => {
@@ -48,15 +62,17 @@ export function MainLayout() {
       })
       .finally(() => {
         setUser(null)
+        // 当前歌曲随登出一起清掉，歌词页失去内容，同时收起
+        setShowLyrics(false)
         // 后端已在 Logout 里删掉账号级播放数据，前端同步复位，避免旧队列继续显示或被回写
         usePlayerStore.getState().resetAccountData()
       })
   }, [])
 
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
       {/* 上部分：侧边栏 + 顶部栏/主内容区 */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-hidden">
         <Sidebar user={user} />
 
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -78,12 +94,27 @@ export function MainLayout() {
             {showPlaylist && <PlaylistPanel onClose={closePlaylist} />}
           </div>
         </div>
+
+        {/* 歌词详情页：覆盖整窗上半部分（含侧边栏），底边紧贴播放栏 */}
+        {showLyrics && <LyricsView onClose={closeLyrics} />}
       </div>
 
-      {/* 底部播放控制器：全宽 */}
+      {/* 沉浸背景：盖住上半区，也延伸到播放栏下方，让歌词与播放栏连成一体 */}
+      {showLyrics && <NowPlayingBackdrop coverUrl={currentCoverUrl} />}
+
+      {/* 底部播放控制器：全宽；歌词展开时背景透明并浮在沉浸背景之上 */}
       {showPlayer && (
-        <div className="h-[82px] min-h-[82px] bg-[var(--color-background)]">
-          <MiniPlayer playlistOpen={showPlaylist} onTogglePlaylist={togglePlaylist} />
+        <div
+          className={`h-[82px] min-h-[82px] ${
+            showLyrics ? 'player-on-media relative z-40 bg-transparent' : 'bg-[var(--color-background)]'
+          }`}
+        >
+          <MiniPlayer
+            playlistOpen={showPlaylist}
+            onTogglePlaylist={togglePlaylist}
+            lyricsOpen={showLyrics}
+            onToggleLyrics={toggleLyrics}
+          />
         </div>
       )}
     </div>

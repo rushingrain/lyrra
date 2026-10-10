@@ -22,7 +22,11 @@ kuwave 是基于 Wails v2、Go、React 和 TypeScript 的第三方酷狗音乐�
 ## 生成代码与 SDK
 
 - `frontend/wailsjs/` 由 Wails 自动生成，不手动修改，也不提交到 Git。Go 暴露方法发生变化后，在仓库根目录运行 `wails generate module`，再检查前端调用的类型。
-- `github.com/rushingrain/kugou-music-api` 是从 JavaScript 版移植的 Go SDK。排查接口异常时，考虑 JS 与 Go 在 `null`、数值和动态类型等方面的语义差异；先定位问题并向开发者说明，不擅自修改 SDK 源码。
+- `github.com/rushingrain/kugou-music-api` 是从 JavaScript 版移植的 Go SDK。排查接口异常时，考虑 JS 与 Go 在 `null`、数值和动态类型等方面的语义差异。
+- JS 原版仓库是排查移植差异的唯一参照标准，本地路径：`../KuGouMusicApi`。仅作只读参考，禁止修改。
+- 若 JS 原版目录不存在或无法读取，视为缺少修复依据：立即停止，向开发者报告"需要提供 JS 原版仓库"，等待提供后再继续。不得凭记忆或推测替代参照物。
+- 怀疑问题出在 SDK 时，先对照 JS 原版确认预期行为，再停下向开发者报告，未经明确指示不得修改 SDK 源码。
+- 严禁在业务代码中重新实现 SDK 已有的逻辑（复制内部实现、绕过 SDK 直接请求、自行拼装返回结构等）。
 - `go.mod` 当前用本机绝对路径 `replace` 指向 SDK 源码，便于开发期间修复 SDK。暂时保留该配置；本地缺少该目录时，说明验证受阻的原因，不擅自更改依赖指向。
 
 ## 敏感区域

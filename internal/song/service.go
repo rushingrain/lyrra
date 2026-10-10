@@ -28,6 +28,8 @@ type songClient interface {
 	TopCard(ctx context.Context, req kg.TopCardRequest) (*kg.TopCardResponse, error)
 	FavoriteCount(ctx context.Context, req kg.FavoriteCountRequest) (*kg.FavoriteCountResponse, error)
 	CommentCount(ctx context.Context, req kg.CommentCountRequest) (*kg.CommentCountResponse, error)
+	SearchLyric(ctx context.Context, req kg.SearchLyricRequest) (*kg.SearchLyricResponse, error)
+	Lyric(ctx context.Context, req kg.LyricRequest) (*kg.LyricResponse, error)
 }
 
 // Service 音乐服务。
