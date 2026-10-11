@@ -11,9 +11,9 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/dto"
-	"kuwave/internal/imageurl"
-	"kuwave/internal/play"
+	"lyrra/internal/dto"
+	"lyrra/internal/imageurl"
+	"lyrra/internal/play"
 )
 
 // 新歌首发榜 rank_id：与 SDK TopSong 默认值一致。

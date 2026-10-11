@@ -1,8 +1,8 @@
 package play
 
 import (
-	"kuwave/internal/auth"
-	"kuwave/internal/playerstate"
+	"lyrra/internal/auth"
+	"lyrra/internal/playerstate"
 )
 
 // 播放器本地状态的读写（设备设置 + 当前账号的播放队列 / 当前歌曲）。

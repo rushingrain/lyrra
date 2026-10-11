@@ -13,8 +13,8 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/imageurl"
-	"kuwave/internal/playerstate"
+	"lyrra/internal/imageurl"
+	"lyrra/internal/playerstate"
 )
 
 // ErrNotLoggedIn 未登录或会话已过期

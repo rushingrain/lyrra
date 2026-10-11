@@ -23,7 +23,7 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/auth"
+	"lyrra/internal/auth"
 )
 
 // Service 播放服务。

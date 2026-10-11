@@ -24,6 +24,9 @@ import { claimDailyVip } from '@/services/vip'
 /** 隐藏入口：logo 区域连续点击多少次触发领 VIP */
 const LOGO_CLAIM_CLICK_TIMES = 7
 
+/** 侧边栏宽度：MainLayout 的窗口顶部交通灯留白要与它对齐，所以在同一处定义 */
+export const SIDEBAR_WIDTH_CLASS = 'w-[200px] min-w-[200px]'
+
 interface NavItemProps {
   icon: React.ReactNode
   label: string
@@ -174,16 +177,16 @@ export function Sidebar({ user }: SidebarProps) {
   }, [user])
 
   return (
-    <aside className="h-full w-[200px] min-w-[200px] bg-gray-50">
+    <aside className={`h-full ${SIDEBAR_WIDTH_CLASS} bg-gray-50`}>
       <SimpleBar className="h-full scrollbar">
         {/* Logo */}
         <div
           className="flex items-center h-[72px] min-h-[72px] gap-2.5 px-6 select-none"
           onClick={handleLogoClick}
         >
-          <img src={logo} alt="kuwave" className="h-8 w-8 rounded-lg object-cover" />
+          <img src={logo} alt="lyrra" className="h-8 w-8 rounded-lg object-cover" />
           <span className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
-            kuwave
+            lyrra
           </span>
         </div>
 

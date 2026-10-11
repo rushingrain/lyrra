@@ -7,23 +7,24 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/mac"
 
-	"kuwave/internal/auth"
-	"kuwave/internal/banner"
-	"kuwave/internal/log"
-	"kuwave/internal/netguard"
-	"kuwave/internal/play"
-	"kuwave/internal/playlist"
-	"kuwave/internal/search"
-	"kuwave/internal/song"
-	"kuwave/internal/vip"
+	"lyrra/internal/auth"
+	"lyrra/internal/banner"
+	"lyrra/internal/log"
+	"lyrra/internal/netguard"
+	"lyrra/internal/play"
+	"lyrra/internal/playlist"
+	"lyrra/internal/search"
+	"lyrra/internal/song"
+	"lyrra/internal/vip"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-	// 日志最先初始化：slog 写入 logs/kuwave.log（lumberjack 轮转清理），
+	// 日志最先初始化：slog 写入 logs/lyrra.log（lumberjack 轮转清理），
 	// 并注入 App / auth.Service，供关键业务事件记录。
 	logService := log.New()
 	logger := logService.Logger()
@@ -92,7 +93,7 @@ func main() {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:  "kuwave",
+		Title:  "lyrra",
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
@@ -115,12 +116,16 @@ func main() {
 		// 它是 vip 风控的一部分：vip.json 的“一天只成功一次”依赖同一时刻只有一个
 		// 进程读写本地状态（vip 包里的互斥锁只能管住进程内并发）。
 		SingleInstanceLock: &options.SingleInstanceLock{
-			UniqueId: "kuwave",
+			UniqueId: "lyrra",
 			OnSecondInstanceLaunch: func(data options.SecondInstanceData) {
 				logger.Info("second instance launched, focusing existing window",
 					"args", strings.Join(data.Args, " "), "workdir", data.WorkingDirectory)
 				app.focusWindow()
 			},
+		},
+		Mac: &mac.Options{
+			// 隐藏标题文字，保留原生交通灯按钮，内容填满窗口
+			TitleBar: mac.TitleBarHiddenInset(),
 		},
 	})
 

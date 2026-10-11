@@ -3,7 +3,7 @@ package song
 import (
 	"testing"
 
-	"kuwave/internal/play"
+	"lyrra/internal/play"
 )
 
 // TestParseSongHash 验证首页榜单（TopSong / TopCard）的 Hash 取值：

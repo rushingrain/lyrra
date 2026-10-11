@@ -10,9 +10,9 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/auth"
-	"kuwave/internal/imageurl"
-	"kuwave/internal/play"
+	"lyrra/internal/auth"
+	"lyrra/internal/imageurl"
+	"lyrra/internal/play"
 )
 
 const defaultPageSize = 15

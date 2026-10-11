@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { Sidebar } from '@/components/layout/Sidebar'
+import { Sidebar, SIDEBAR_WIDTH_CLASS } from '@/components/layout/Sidebar'
 import { MiniPlayer } from '@/components/layout/MiniPlayer'
 import { TopBar } from '@/components/layout/TopBar'
 import { PlaylistPanel } from '@/components/business/PlaylistPanel'
 import { LyricsView } from '@/components/business/LyricsView'
 import { NowPlayingBackdrop } from '@/components/business/NowPlayingBackdrop'
 import { getCurrentUser, logout } from '@/services/auth'
+import { toggleWindowMaximise } from '@/services/window'
 import type { LoginResult } from '@/types'
 import { mockPlayHistory } from '@/data/mock'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -16,6 +17,14 @@ import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
 
 const CONTENT_WRAPPER = 'mx-auto w-full max-w-[1400px]'
+
+/**
+ * 窗口顶部交通灯安全区高度：
+ * main.go 里用 mac.TitleBarHiddenInset() 隐藏了标题文字但保留原生交通灯，
+ * 交通灯会浮在网页内容之上，这里留出一条空白避免侧边栏 logo / 顶栏被压住。
+ * 留白按下方分区拆成两段（左段与侧边栏同色），避免出现颜色断层。
+ */
+const TITLEBAR_SAFE_AREA_CLASS = 'h-[28px] min-h-[28px] shrink-0 select-none titlebar-drag-region'
 
 export function MainLayout() {
   const [playHistory] = useState(() => mockPlayHistory.length > 0 ? mockPlayHistory : [])
@@ -71,6 +80,12 @@ export function MainLayout() {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
+      {/* 交通灯安全区：留白作为窗口拖拽区，双击切换窗口缩放（系统默认的标题栏双击行为） */}
+      <div className={`${TITLEBAR_SAFE_AREA_CLASS} flex`} onDoubleClick={toggleWindowMaximise} aria-hidden>
+        <div className={`${SIDEBAR_WIDTH_CLASS} bg-gray-50`} />
+        <div className="flex-1" />
+      </div>
+
       {/* 上部分：侧边栏 + 顶部栏/主内容区 */}
       <div className="relative flex flex-1 overflow-hidden">
         <Sidebar user={user} />

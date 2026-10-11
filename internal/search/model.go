@@ -1,6 +1,6 @@
 package search
 
-import "kuwave/internal/dto"
+import "lyrra/internal/dto"
 
 // Result 是搜索服务的稳定响应 DTO。
 // 普通搜索只填充其中一个分类；综合搜索按上游分组填充多个分类。

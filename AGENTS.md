@@ -1,6 +1,6 @@
 # 项目说明
 
-kuwave 是基于 Wails v2、Go、React 和 TypeScript 的第三方酷狗音乐桌面客户端。本文件适用于整个仓库。
+lyrra 是基于 Wails v2、Go、React 和 TypeScript 的第三方酷狗音乐桌面客户端。本文件适用于整个仓库。
 
 ## 职责与调用边界
 

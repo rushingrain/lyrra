@@ -10,7 +10,7 @@ package playerstate
 import (
 	"strings"
 
-	"kuwave/internal/dto"
+	"lyrra/internal/dto"
 )
 
 // 播放模式取值：与前端 playerStore 的 PlayMode 保持一致。

@@ -1,4 +1,4 @@
-module kuwave
+module lyrra
 
 go 1.25.0
 

@@ -10,7 +10,7 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/auth"
+	"lyrra/internal/auth"
 )
 
 // 内置样例歌曲：《无情画 (愿为你放下万千的荣华)》，来自 TopCard 热门推荐，

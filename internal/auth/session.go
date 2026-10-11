@@ -6,19 +6,17 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+
+	"lyrra/internal/appdir"
 )
 
 // 会话持久化：只保存关键的登录态 cookie 字段。
-// 存储位置为用户配置目录（macOS: ~/Library/Application Support/kuwave/、
-// Windows: %AppData%\kuwave\、Linux: ~/.config/kuwave/），
+// 存储位置为用户配置目录（macOS: ~/Library/Application Support/lyrra/、
+// Windows: %AppData%\lyrra\、Linux: ~/.config/lyrra/），
 // 不依赖当前工作目录（桌面应用 cwd 不可靠）。
 
 func sessionPath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	return filepath.Join(dir, "kuwave", "session.json")
+	return filepath.Join(appdir.Dir(), "session.json")
 }
 
 // saveSession 保存会话，登录成功后调用。

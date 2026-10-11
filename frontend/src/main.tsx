@@ -4,7 +4,7 @@ import './style.css'
 import App from './App'
 
 // 前端 console 转发到后端日志：wails runtime.Log* 路由到 options.Logger，
-// 与后端 slog 日志落入同一文件 logs/kuwave.log。
+// 与后端 slog 日志落入同一文件 logs/lyrra.log。
 // runtime 缺失（如浏览器调试环境）时静默跳过，保留原 console 输出。
 const rt = (window as { runtime?: Record<string, (...a: unknown[]) => unknown> }).runtime
 if (rt && typeof rt.LogDebug === 'function') {

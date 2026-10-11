@@ -5,9 +5,11 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+
+	"lyrra/internal/appdir"
 )
 
-// 存储位置与 session.json / vip.json 同目录（os.UserConfigDir()/kuwave/）。
+// 存储位置与 session.json / vip.json 同目录（应用数据目录，见 internal/appdir）。
 const (
 	deviceFileName  = "player-device.json"
 	accountFileName = "player-account.json"
@@ -28,22 +30,12 @@ type Store struct {
 
 // NewStore 返回使用用户配置目录的 Store。
 func NewStore() *Store {
-	return newStoreWithDir(configDir())
+	return newStoreWithDir(appdir.Dir())
 }
 
 // newStoreWithDir 指定目录构造，便于单测写临时目录。
 func newStoreWithDir(dir string) *Store {
 	return &Store{dir: dir}
-}
-
-// configDir 返回应用的数据目录（macOS: ~/Library/Application Support/kuwave/）。
-// 与 auth/session.go、vip/store.go 保持同一约定，不依赖当前工作目录。
-func configDir() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	return filepath.Join(dir, "kuwave")
 }
 
 func (s *Store) devicePath() string {

@@ -5,11 +5,13 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"lyrra/internal/appdir"
 )
 
 // 本地状态记录：风控的落地点。
 //
-// 存储位置与登录会话同基址（os.UserConfigDir()/kuwave/vip.json）：
+// 存储位置与登录会话同基址（应用数据目录下的 vip.json）：
 // 保存“当天领取 / 当天升级”两条最近记录，用于当天重复调用时直接短路、
 // 不再请求服务器。与 session.json 一样按用户维度隔离（目录本身属于当前用户）。
 const recordFileName = "vip.json"
@@ -55,11 +57,7 @@ type state struct {
 
 // recordPath 返回本地状态文件路径。
 func recordPath() string {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	return filepath.Join(dir, "kuwave", recordFileName)
+	return filepath.Join(appdir.Dir(), recordFileName)
 }
 
 // loadState 读取本地风控状态。文件缺失或内容损坏时返回空状态（按“今天什么都没做”处理）。

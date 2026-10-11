@@ -3,7 +3,7 @@ package search
 import (
 	"testing"
 
-	"kuwave/internal/play"
+	"lyrra/internal/play"
 )
 
 func TestMapComplexSearch(t *testing.T) {

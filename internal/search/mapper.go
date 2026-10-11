@@ -5,9 +5,9 @@ import (
 	"strconv"
 	"strings"
 
-	"kuwave/internal/dto"
-	"kuwave/internal/imageurl"
-	"kuwave/internal/play"
+	"lyrra/internal/dto"
+	"lyrra/internal/imageurl"
+	"lyrra/internal/play"
 )
 
 // ApiRecord 是 SDK 动态 JSON 响应中的对象。

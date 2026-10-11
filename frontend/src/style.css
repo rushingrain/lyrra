@@ -13,6 +13,11 @@
   --color-scrollbar-thumb: #c1c1c1;
 }
 
+/* 窗口顶部交通灯安全区：隐藏标题栏后，可拖动窗口（Wails 读取该自定义属性） */
+.titlebar-drag-region {
+  --wails-draggable: drag;
+}
+
 /*
  * 歌词展开时的播放栏配色：播放栏浮在封面模糊背景（NowPlayingBackdrop）上，
  * 需要浅色文字。这里只覆盖配色变量，组件结构与浅色主题样式完全不受影响。

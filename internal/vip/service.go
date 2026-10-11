@@ -11,7 +11,7 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/auth"
+	"lyrra/internal/auth"
 )
 
 // ErrNotLoggedIn 未登录或登录态已失效（语义与 auth.ErrNotLoggedIn 一致）。

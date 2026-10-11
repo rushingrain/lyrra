@@ -82,7 +82,7 @@ export default function Home() {
 
   return (
 
-    <div className="flex flex-col gap-8 pb-8">
+    <div className="flex flex-col gap-8 pb-4">
       {renderSection('精选活动', <BannerCarousel banners={banners} />, false)}
       {renderSection('官方歌单', <PlaylistList minWidth={104} playlists={playlists} />)}
       {renderSection('最新音乐', <SongList songs={newSongs} />)}

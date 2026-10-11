@@ -11,8 +11,8 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
-	"kuwave/internal/dto"
-	"kuwave/internal/imageurl"
+	"lyrra/internal/dto"
+	"lyrra/internal/imageurl"
 )
 
 // Service 首页 banner 服务。

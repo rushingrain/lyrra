@@ -2,8 +2,8 @@
 <project version="4">
     <component name="ProjectModuleManager">
         <modules>
-            <module fileurl="file://$PROJECT_DIR$/.idea/kuwave.iml"
-                    filepath="$PROJECT_DIR$/.idea/kuwave.iml"/>
+            <module fileurl="file://$PROJECT_DIR$/.idea/lyrra.iml"
+                    filepath="$PROJECT_DIR$/.idea/lyrra.iml"/>
         </modules>
     </component>
 </project>

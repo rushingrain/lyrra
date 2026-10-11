@@ -8,12 +8,14 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/logger"
 	"gopkg.in/natefinch/lumberjack.v2"
+
+	"lyrra/internal/appdir"
 )
 
 // Service 统一日志服务。
 //
 // 后端使用标准库 log/slog 输出结构化日志，写入用户配置目录下的
-// logs/kuwave.log；由 lumberjack 按大小轮转并自动清理，磁盘占用有界。
+// logs/lyrra.log；由 lumberjack 按大小轮转并自动清理，磁盘占用有界。
 // 同时提供 Wails logger.Logger 适配器，将 Wails 运行时内部日志路由到同一文件。
 type Service struct {
 	logger *slog.Logger
@@ -21,17 +23,13 @@ type Service struct {
 }
 
 // New 初始化日志服务。
-//   - 日志目录：os.UserConfigDir()/kuwave/logs（与 session.go 的会话目录同基址）
+//   - 日志目录：应用数据目录下的 logs（与 session.go 的会话目录同基址，见 internal/appdir）
 //   - 写入器：lumberjack，单文件上限 10MB、保留 3 个备份、最长 7 天、过期压缩
 //   - 级别：默认 INFO，过滤 DEBUG 噪音
 func New() *Service {
-	dir, err := os.UserConfigDir()
-	if err != nil {
-		dir = "."
-	}
-	logDir := filepath.Join(dir, "kuwave", "logs")
+	logDir := filepath.Join(appdir.Dir(), "logs")
 	_ = os.MkdirAll(logDir, 0o700)
-	return newService(filepath.Join(logDir, "kuwave.log"))
+	return newService(filepath.Join(logDir, "lyrra.log"))
 }
 
 // newService 用指定文件构造日志服务，便于测试注入临时目录。

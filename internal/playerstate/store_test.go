@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"kuwave/internal/dto"
+	"lyrra/internal/dto"
 )
 
 func newTestStore(t *testing.T) *Store {

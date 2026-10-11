@@ -12,21 +12,21 @@ import (
 // TestServiceWritesFile 验证日志写入文件且包含时间戳与级别。
 func TestServiceWritesFile(t *testing.T) {
 	dir := t.TempDir()
-	svc := newService(filepath.Join(dir, "kuwave.log"))
+	svc := newService(filepath.Join(dir, "lyrra.log"))
 	defer func() {
 		if err := svc.Close(); err != nil {
 			t.Errorf("关闭日志服务失败: %v", err)
 		}
 	}()
 
-	svc.Logger().Info("hello kuwave", "key", "val")
+	svc.Logger().Info("hello lyrra", "key", "val")
 
-	data, err := os.ReadFile(filepath.Join(dir, "kuwave.log"))
+	data, err := os.ReadFile(filepath.Join(dir, "lyrra.log"))
 	if err != nil {
 		t.Fatalf("读取日志文件失败: %v", err)
 	}
 	line := string(data)
-	if !strings.Contains(line, "hello kuwave") {
+	if !strings.Contains(line, "hello lyrra") {
 		t.Errorf("日志缺少消息: %s", line)
 	}
 	if !strings.Contains(line, "INFO") {
@@ -41,7 +41,7 @@ func TestServiceWritesFile(t *testing.T) {
 // TestLumberjackRotation 验证 lumberjack 达到 MaxSize 后轮转出备份文件。
 func TestLumberjackRotation(t *testing.T) {
 	dir := t.TempDir()
-	filename := filepath.Join(dir, "kuwave.log")
+	filename := filepath.Join(dir, "lyrra.log")
 	lj := &lumberjack.Logger{
 		Filename:   filename,
 		MaxSize:    1, // 1MB，方便触发轮转
@@ -72,7 +72,7 @@ func TestLumberjackRotation(t *testing.T) {
 	}
 	backups := 0
 	for _, e := range entries {
-		if strings.Contains(e.Name(), "kuwave-") {
+		if strings.Contains(e.Name(), "lyrra-") {
 			backups++
 		}
 	}

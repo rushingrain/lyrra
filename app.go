@@ -44,6 +44,18 @@ func (a *App) focusWindow() {
 	runtime.WindowShow(ctx)
 }
 
+// ToggleWindowMaximise 在窗口的缩放（最大化）与还原之间切换，即 macOS 标题栏双击的默认行为。
+// 标题栏被隐藏后系统不再处理标题栏双击，由前端双击顶部留白处调用。
+func (a *App) ToggleWindowMaximise() {
+	a.mu.Lock()
+	ctx := a.ctx
+	a.mu.Unlock()
+	if ctx == nil {
+		return
+	}
+	runtime.WindowToggleMaximise(ctx)
+}
+
 // Greet returns a greeting for the given name
 func (a *App) Greet(name string) string {
 	return fmt.Sprintf("Hello %s, It's show time!", name)
