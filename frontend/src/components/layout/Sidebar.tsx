@@ -13,7 +13,7 @@ import { NavLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
-import logo from '../../assets/images/logo-universal.png'
+import logo from '../../assets/images/lyrra_logo.svg'
 import type { LoginResult, UserPlaylist } from '@/types'
 import { useEffect, useRef, useState } from 'react'
 import { useClickStreak } from '@/hooks/useClickStreak'
@@ -179,15 +179,13 @@ export function Sidebar({ user }: SidebarProps) {
   return (
     <aside className={`h-full ${SIDEBAR_WIDTH_CLASS} bg-gray-50`}>
       <SimpleBar className="h-full scrollbar">
-        {/* Logo */}
+        {/* Logo：吸顶在侧边栏顶部，下方导航/歌单滚动时不会被带走 */}
         <div
-          className="flex items-center h-[72px] min-h-[72px] gap-2.5 px-6 select-none"
+          className="sticky top-0 z-10 flex h-[68px] min-h-[68px] items-center gap-2.5 bg-gray-50 px-6 select-none"
           onClick={handleLogoClick}
         >
-          <img src={logo} alt="lyrra" className="h-8 w-8 rounded-lg object-cover" />
-          <span className="text-lg font-bold tracking-tight text-[var(--color-text-primary)]">
-            lyrra
-          </span>
+          {/* 品牌字标：宽度按 SVG 自带比例自动（151.2:68.6 ≈ 2.2:1），只固定高度 */}
+          <img src={logo} alt="lyrra" className="h-9 w-auto shrink-0" />
         </div>
 
         {/* 主导航 */}
