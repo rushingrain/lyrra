@@ -100,7 +100,7 @@ export function MainLayout() {
           {/* 内容区外层相对定位：播放列表面板贴右缘覆盖，不挤压正文 */}
           <div className="relative flex-1 overflow-hidden">
             <SimpleBar className="h-full scrollbar">
-              <main className="py-8 px-10">
+              <main className="pb-8 px-10">
                 <div className={CONTENT_WRAPPER}>
                   <Outlet />
                 </div>

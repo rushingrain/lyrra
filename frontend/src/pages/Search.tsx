@@ -1,6 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import toast from 'react-hot-toast'
 import { SongList } from '@/components/common/SongList'
 import { Section } from '@/components/common/Section'
 import { PlaylistList } from '@/components/common/PlaylistList'
@@ -12,12 +11,8 @@ import { songColumns } from '@/components/search/songColumns'
 import { playlistColumns } from '@/components/search/playlistColumns'
 import { albumColumns } from '@/components/search/albumColumns'
 import { lyricColumns } from '@/components/search/lyricColumns'
-import {
-  EMPTY_RESULT,
-  getSearch,
-  type SearchResult,
-  type SearchTabType,
-} from '@/services/search'
+import { useSearchPagination } from '@/hooks/useSearchPagination'
+import { SEARCH_MAX_ITEMS, type SearchResult, type SearchTabType } from '@/services/search'
 import type { Album, Artist } from '@/types'
 
 type SearchTab = SearchTabType
@@ -78,6 +73,21 @@ function hasResults(result: SearchResult): boolean {
   return Object.values(result).some((items) => items.length > 0)
 }
 
+/**
+ * 把最近的滚动容器滚回顶部。
+ * 搜索页自身不滚动，滚动发生在外层 SimpleBar 的内容容器上，
+ * 因此这里向上找第一个可滚动祖先，而不是直接操作 window。
+ */
+function scrollAncestorToTop(node: HTMLElement) {
+  for (let el: HTMLElement | null = node.parentElement; el; el = el.parentElement) {
+    const { overflowY } = getComputedStyle(el)
+    if (overflowY === 'auto' || overflowY === 'scroll') {
+      el.scrollTop = 0
+      return
+    }
+  }
+}
+
 function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>; result: SearchResult }) {
   switch (tab) {
     case 'song':
@@ -98,41 +108,21 @@ function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>;
 export default function Search() {
   const [searchParams] = useSearchParams()
   const query = searchParams.get('q')?.trim() || ''
-  const [activeTab, setActiveTab] = useState<SearchTab>('complex')
-  const [result, setResult] = useState<SearchResult>(EMPTY_RESULT)
-  const [isLoading, setIsLoading] = useState(false)
-  const [loadError, setLoadError] = useState<string | null>(null)
+  // 分类状态带上它所属的关键词：新关键词下默认回到综合分类，用户点击后才落到新关键词上。
+  // 这样比较在渲染期完成，不会像 effect 那样先按上一次的分类发一次请求再丢弃。
+  const [tabState, setTabState] = useState({ query, tab: 'complex' as SearchTab })
+  const activeTab = tabState.query === query ? tabState.tab : 'complex'
 
-  useEffect(() => {
-    if (query) setActiveTab('complex')
-  }, [query])
-
-  useEffect(() => {
-    if (!query) return
-
-    let cancelled = false
-    setIsLoading(true)
-    setLoadError(null)
-    setResult(EMPTY_RESULT)
-
-    getSearch(query, activeTab)
-      .then((data) => {
-        if (!cancelled) setResult(data)
-      })
-      .catch(() => {
-        if (cancelled) return
-        const message = '搜索失败，请稍后重试'
-        setLoadError(message)
-        toast.error(message)
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false)
-      })
-
-    return () => {
-      cancelled = true
-    }
-  }, [query, activeTab])
+  const {
+    result,
+    isLoading,
+    loadError,
+    loadMoreError,
+    hasMore,
+    limitReached,
+    sentinelRef,
+    loadMore,
+  } = useSearchPagination(query, activeTab)
 
   if (!query) {
     return (
@@ -144,27 +134,30 @@ export default function Search() {
 
   return (
     <div className="flex flex-col">
-      <p className="mb-4 text-xl font-bold text-[var(--color-text-primary)]">{query}</p>
+      {/* 标题与分类吸顶：列表滚到深处时仍能直接切换分类 */}
+      <div className="sticky top-0 z-10 bg-[var(--color-background)] pb-4">
+        <p className="mb-4 text-2xl font-semibold text-[var(--color-text-primary)]">{query}</p>
 
-      <div className="mb-4 flex gap-6">
-        {TABS.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            className={`cursor-pointer border-b-3 text-base transition-[color,border-color] ${activeTab === tab.key
-                ? 'border-b-(--color-accent) font-bold text-(--color-text-primary)'
-                : 'border-b-transparent font-normal text-(--color-text-secondary) hover:text-(--color-text-primary)'
-              }`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-          </button>
-        ))}
+        <div className="flex gap-6">
+          {TABS.map((tab) => (
+            <button
+              key={tab.key}
+              type="button"
+              className={`cursor-pointer border-b-3 text-base transition-[color,border-color] ${activeTab === tab.key
+                  ? 'border-b-(--color-accent) font-bold text-(--color-text-primary)'
+                  : 'border-b-transparent font-normal text-(--color-text-secondary) hover:text-(--color-text-primary)'
+                }`}
+              onClick={(event) => {
+                setTabState({ query, tab: tab.key })
+                // 新分类从头加载第一页，滚动位置也一并回到顶部
+                scrollAncestorToTop(event.currentTarget)
+              }}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
-
-      {isLoading && (
-        <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">正在搜索...</p>
-      )}
 
       {loadError && (
         <p className="py-8 text-center text-sm text-[var(--color-text-secondary)]">{loadError}</p>
@@ -207,8 +200,26 @@ export default function Search() {
       )}
 
       {activeTab !== 'complex' && !isLoading && !loadError && hasResults(result) && (
-        <div className="pb-8">
+        <div>
           <TabSearchResults tab={activeTab} result={result} />
+
+          {/* 无限滚动哨兵：进入视口即追加下一页 */}
+          {hasMore && <div ref={sentinelRef} className="h-px" aria-hidden />}
+
+          <div className="pt-4 text-center text-sm text-[var(--color-text-secondary)]">
+            {loadMoreError && (
+              <button
+                type="button"
+                className="cursor-pointer hover:text-[var(--color-text-primary)]"
+                onClick={loadMore}
+              >
+                加载失败，点击重试
+              </button>
+            )}
+            {!loadMoreError && !hasMore && (
+              <span>{limitReached ? `最多展示 ${SEARCH_MAX_ITEMS} 条` : '没有更多了'}</span>
+            )}
+          </div>
         </div>
       )}
     </div>
