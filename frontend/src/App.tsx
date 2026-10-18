@@ -8,6 +8,7 @@ import Likes from './pages/Likes'
 import History from './pages/History'
 import Cloud from './pages/Cloud'
 import Search from './pages/Search'
+import SongTable from './pages/SongTable'
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
             <Route path="history" element={<History />} />
             <Route path="cloud" element={<Cloud />} />
             <Route path="search" element={<Search />} />
+            <Route path="songs/new" element={<SongTable kind="new" />} />
+            <Route path="songs/hot" element={<SongTable kind="hot" />} />
+            <Route path="songs/daily" element={<SongTable kind="daily" />} />
           </Route>
         </Routes>
       </HashRouter>

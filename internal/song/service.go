@@ -11,6 +11,7 @@ import (
 
 	kg "github.com/rushingrain/kugou-music-api"
 
+	"lyrra/internal/auth"
 	"lyrra/internal/dto"
 	"lyrra/internal/imageurl"
 	"lyrra/internal/play"
@@ -25,7 +26,8 @@ const defaultPageSize = 15
 // songClient 只暴露 song 服务用到的 SDK 方法，便于测试注入桩实现。
 type songClient interface {
 	TopSong(ctx context.Context, req kg.TopSongRequest) (*kg.TopSongResponse, error)
-	TopCard(ctx context.Context, req kg.TopCardRequest) (*kg.TopCardResponse, error)
+	TopCardYouth(ctx context.Context, req kg.TopCardYouthRequest) (*kg.TopCardYouthResponse, error)
+	GetDailyRecommendGuest(ctx context.Context, cookie map[string]string) (*kg.Response, error)
 	FavoriteCount(ctx context.Context, req kg.FavoriteCountRequest) (*kg.FavoriteCountResponse, error)
 	CommentCount(ctx context.Context, req kg.CommentCountRequest) (*kg.CommentCountResponse, error)
 	SearchLyric(ctx context.Context, req kg.SearchLyricRequest) (*kg.SearchLyricResponse, error)
@@ -93,25 +95,26 @@ func (s *Service) GetLatestSongs(page int, pagesize int) ([]dto.Song, error) {
 		if fmt.Sprintf("%v", m["__status"]) != "1" {
 			continue
 		}
-		songs = append(songs, parseSong(m, priority))
+		songs = append(songs, parseLatestSong(m, priority))
 	}
 	return songs, nil
 }
 
-// GetHotSongs 获取热门音乐
-// TopCard 返回固定条数（song_list_size），无需分页参数；card_id 使用 SDK 默认 1。
-func (s *Service) GetHotSongs() ([]dto.Song, error) {
+// GetRecommendedSongs 获取推荐歌曲（TopCardYouth 卡片推荐）。
+// typeId 是上游卡片 ID，原样作为 SDK 的 cardId 参数；前端热门音乐传 3005。
+// 该接口不支持分页，固定返回一批歌曲（song_list）。
+func (s *Service) GetRecommendedSongs(typeId int) ([]dto.Song, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	resp, err := s.client.TopCard(context.Background(), kg.TopCardRequest{CardId: 1})
+	resp, err := s.client.TopCardYouth(context.Background(), kg.TopCardYouthRequest{CardId: typeId})
 	if err != nil {
-		s.log.Warn("failed to fetch hot songs", "err", err.Error())
+		s.log.Warn("failed to fetch recommended songs", "typeId", typeId, "err", err.Error())
 		return nil, err
 	}
 	// 业务成功判断同其他服务：body 里 status=="1" 且 error_code==0。
 	if fmt.Sprintf("%v", resp.Body["status"]) != "1" {
-		return nil, errors.New("top_card 接口业务失败")
+		return nil, errors.New("top_card_youth 接口业务失败")
 	}
 
 	data, _ := resp.Body["data"].(map[string]any)
@@ -123,7 +126,54 @@ func (s *Service) GetHotSongs() ([]dto.Song, error) {
 		if !ok {
 			continue
 		}
-		songs = append(songs, parseSong(m, priority))
+		songs = append(songs, parseRecommendedSong(m, priority))
+	}
+	return songs, nil
+}
+
+// GetDailyRecommendSongs 获取每日推荐。
+//
+// 调用 SDK 的 GetDailyRecommendGuest：内部先请求 EverydayRecommend，
+// 上游返回 200103 时由 SDK 回退到 RecommendSongs。
+// 必须带当前会话 cookie，未登录时直接返回错误；前端也只在登录后才会调用。
+func (s *Service) GetDailyRecommendSongs() ([]dto.Song, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	cookie := auth.LoadSession()
+	if cookie["token"] == "" || cookie["userid"] == "" {
+		return nil, errors.New("未登录，无法获取每日推荐")
+	}
+
+	ctx := context.Background()
+	resp, err := s.client.GetDailyRecommendGuest(ctx, cookie)
+	if err != nil {
+		s.log.Warn("failed to fetch daily recommend songs", "err", err.Error())
+		return nil, err
+	}
+
+	// 业务成功判断同其他服务：body 里 status=="1" 且 error_code==0。
+	if fmt.Sprintf("%v", resp.Body["status"]) != "1" {
+		status := resp.Body["status"]
+		code := resp.Body["error_code"]
+		s.log.Warn("daily recommend business failure",
+			"status", status,
+			"error_code", code,
+			"error_msg", resp.Body["error_msg"],
+		)
+		return nil, fmt.Errorf("everyday_recommend 接口业务失败（status=%v, error_code=%v）", status, code)
+	}
+
+	data, _ := resp.Body["data"].(map[string]any)
+	items, _ := data["song_list"].([]any)
+	songs := make([]dto.Song, 0, len(items))
+	priority := play.PriorityForAny(play.DefaultQuality)
+	for _, item := range items {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		songs = append(songs, parseDailyRecommendSong(m, priority))
 	}
 	return songs, nil
 }
@@ -270,13 +320,13 @@ func commentCountOf(body map[string]any, hash string) int64 {
 	return 0
 }
 
-// parseSong 把上游单曲条目统一解析为 dto.Song。
-// TopSong（新歌首发榜）与 TopCard（热门推荐）字段略有差异，这里做兼容处理。
-// priority 是 Hash 的档位候选顺序，取其中第一个非空值（见 internal/play）。
-func parseSong(m map[string]any, priority []string) dto.Song {
+// parseFlatSong 解析字段平铺在条目顶层的榜单歌曲（TopSong / 每日推荐）。
+// idKey 是播放地址接口用来定位歌曲的 ID 字段；priority 是 Hash 的档位候选顺序，
+// 取其中第一个非空值（见 internal/play）。
+func parseFlatSong(m map[string]any, idKey string, name string, priority []string) dto.Song {
 	return dto.Song{
-		ID:         songID(m),
-		Name:       pickString(m, "songname"),
+		ID:         int64(pickInt(m, idKey)),
+		Name:       name,
 		Artist:     songArtist(m),
 		Album:      pickString(m, "album_name"),
 		CoverURL:   songCover(m),
@@ -287,7 +337,77 @@ func parseSong(m map[string]any, priority []string) dto.Song {
 	}
 }
 
-// songArtist 拼接歌手名：优先取结构化歌手列表（TopSong 的 authors / TopCard 的 singerinfo），
+// parseLatestSong 解析 TopSong（新歌首发榜）条目。
+//
+// ID 取 album_audio_id：播放地址接口按它定位歌曲，顶层的 audio_id 是另一个值，
+// 用 audio_id 请求会拿不到正确的播放地址。歌名直接用 songname（已带版本后缀）。
+func parseLatestSong(m map[string]any, priority []string) dto.Song {
+	return parseFlatSong(m, "album_audio_id", pickString(m, "songname"), priority)
+}
+
+// parseDailyRecommendSong 解析每日推荐条目。
+//
+// 字段与 TopSong 一样平铺在顶层：ID 取 mixsongid；歌名优先 songname
+// （上游已带上版本后缀），缺失时回退 ori_audio_name。
+func parseDailyRecommendSong(m map[string]any, priority []string) dto.Song {
+	name := pickString(m, "songname")
+	if name == "" {
+		name = pickString(m, "ori_audio_name")
+	}
+	return parseFlatSong(m, "mixsongid", name, priority)
+}
+
+// parseRecommendedSong 解析 TopCardYouth（卡片推荐）条目。
+//
+// 与 TopSong 不同：音质 hash、时长、原唱标记都在 audio_info 下，专辑信息在 album_info 下。
+// 顶层的 hash 不是音质 hash（取它播放会失败），所以只在 audio_info 里找播放用的 hash。
+func parseRecommendedSong(m map[string]any, priority []string) dto.Song {
+	audioInfo, _ := m["audio_info"].(map[string]any)
+	albumInfo, _ := m["album_info"].(map[string]any)
+	trans, _ := audioInfo["trans_param"].(map[string]any)
+
+	// audio_info.timelength 已是毫秒；整个 audio_info 缺失时再按顶层字段兜底
+	duration := int64(pickInt(audioInfo, "timelength"))
+	if duration <= 0 {
+		duration = songDuration(m)
+	}
+
+	return dto.Song{
+		ID:         int64(pickInt(m, "mixsongid")),
+		Name:       joinSongNameSuffix(pickString(m, "ori_audio_name"), pickString(trans, "songname_suffix")),
+		Artist:     songArtist(m),
+		Album:      pickString(albumInfo, "album_name"),
+		CoverURL:   recommendedCover(m, albumInfo, audioInfo),
+		Duration:   duration,
+		Hash:       play.Resolve(audioInfo, priority),
+		Quality:    songQuality(audioInfo),
+		IsOriginal: isOriginal(audioInfo),
+	}
+}
+
+// joinSongNameSuffix 用空格把歌名与后缀拼起来（如 "冷雨夜 R&B版"）；后缀为空时返回原名。
+func joinSongNameSuffix(name string, suffix string) string {
+	if name == "" || suffix == "" {
+		return name
+	}
+	return name + " " + suffix
+}
+
+// recommendedCover 取推荐歌曲封面：优先专辑封面，其次卡片自带的封面图。
+func recommendedCover(item map[string]any, albumInfo map[string]any, audioInfo map[string]any) string {
+	if cover := pickString(albumInfo, "sizable_cover"); cover != "" {
+		return imageurl.Normalize(cover)
+	}
+	for _, key := range []string{"cover_pic", "pic"} {
+		if cover := pickString(item, key); cover != "" {
+			return imageurl.Normalize(cover)
+		}
+	}
+	trans, _ := audioInfo["trans_param"].(map[string]any)
+	return imageurl.Normalize(pickString(trans, "union_cover"))
+}
+
+// songArtist 拼接歌手名：优先取结构化歌手列表（TopSong / TopCardYouth 的 authors），
 // 多个歌手用 "/" 分隔；列表缺失时回退顶层的 author_name。
 func songArtist(m map[string]any) string {
 	if names := collectNames(m, "authors", "author_name"); len(names) > 0 {
@@ -313,18 +433,7 @@ func collectNames(m map[string]any, field string, key string) []string {
 	return names
 }
 
-// songID 依次尝试 audio_id / songid / mixsongid / album_audio_id，
-// 大数先转 int 再格式化避免科学计数法；全缺失时回退 hash。
-func songID(m map[string]any) int64 {
-	for _, key := range []string{"audio_id", "songid", "mixsongid", "album_audio_id"} {
-		if v := pickInt(m, key); v != 0 {
-			return int64(v)
-		}
-	}
-	return 0
-}
-
-// songCover 优先取专辑封面（TopSong 用 album_sizable_cover，TopCard 用 sizable_cover），
+// songCover 优先取专辑封面（TopSong 用 album_sizable_cover），
 // 缺失时回退 trans_param.union_cover。
 func songCover(m map[string]any) string {
 	for _, key := range []string{"album_sizable_cover", "sizable_cover"} {
@@ -352,8 +461,8 @@ func songQuality(m map[string]any) string {
 	}
 }
 
-// songDuration 统一为毫秒：TopSong 的 timelength 已是 ms；
-// TopCard 的 time_length 是秒（浮点），需要 ×1000。
+// songDuration 统一为毫秒：timelength 已是 ms；
+// 旧推荐接口的 time_length 是秒（浮点），需要 ×1000。
 func songDuration(m map[string]any) int64 {
 	if v := pickInt(m, "timelength"); v > 0 {
 		return int64(v)
@@ -364,7 +473,7 @@ func songDuration(m map[string]any) int64 {
 	return 0
 }
 
-// isOriginal 判断原唱：TopCard 的 is_original 在顶层，TopSong 的在 trans_param 里，都兼容。
+// isOriginal 判断原唱：is_original 可能在顶层，也可能在 trans_param 里，两种都兼容。
 func isOriginal(m map[string]any) bool {
 	if fmt.Sprintf("%v", m["is_original"]) == "1" {
 		return true

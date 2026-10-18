@@ -23,14 +23,14 @@ var ladder = []string{LevelRes, LevelSQ, LevelHQ, LevelStandard}
 //
 //	search 单曲 / 综合搜索：SQ.Hash、SQFileHash
 //	search 歌词搜索：SQHash、320Hash
-//	首页榜单（TopSong / TopCard）：hash_flac、hash_320、hash_high
+//	首页榜单（TopSong / TopCardYouth）：hash_128、hash_320、hash_flac、hash_high
 //
 // 含 "." 的项表示取一层嵌套字段。
 var fieldsByLevel = map[string][]string{
 	LevelRes:      {"Res.Hash", "ResFileHash", "hash_high"},
 	LevelSQ:       {"SQ.Hash", "SQFileHash", "SQHash", "hash_flac"},
 	LevelHQ:       {"HQ.Hash", "HQFileHash", "320Hash", "hash_320"},
-	LevelStandard: {"FileHash", "hash"},
+	LevelStandard: {"FileHash", "hash_128", "hash"},
 }
 
 // qualityParams 档位 → GetSongPlayURL 的 quality 取值（实测）。

@@ -1,7 +1,13 @@
 import type { Song } from '@/types'
 import { mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetLatestSongs, GetHotSongs, GetSongStats, GetLyrics } from '../../wailsjs/go/song/Service'
+import {
+  GetDailyRecommendSongs,
+  GetLatestSongs,
+  GetRecommendedSongs,
+  GetSongStats,
+  GetLyrics,
+} from '../../wailsjs/go/song/Service'
 import type { song } from '../../wailsjs/go/models'
 
 /**
@@ -27,9 +33,11 @@ function isBackendAvailable(): boolean {
  */
 const CACHE_TTL_MS = 60 * 60 * 1000
 
-/** 前端请求最新音乐的默认参数：page=1、pagesize=15（卡片网格约两行，不多不少） */
+/** 前端请求最新音乐的默认参数 */
 export const DEFAULT_SONG_PAGE = 1
-export const DEFAULT_SONG_PAGE_SIZE = 15
+export const DEFAULT_SONG_PAGE_SIZE = 30
+/** 热门音乐对应的上游卡片 ID（潮流尝鲜），后端 GetRecommendedSongs 的 typeId */
+const HOT_SONGS_TYPE_ID = 3005
 
 /** 歌曲统计数据（收藏数 / 评论数）；单项缺失表示该项取不到 */
 export type SongStats = song.SongStats
@@ -101,7 +109,8 @@ export function getNewSongs(
 }
 
 /**
- * 获取首页热门音乐（TopCard 单曲卡片推荐，后端固定返回一批）
+ * 获取首页热门音乐（TopCardYouth 卡片推荐，后端固定返回一批）
+ * 后端方法为 GetRecommendedSongs(typeId)，这里固定传热门卡片 ID。
  * 缓存有效期内多次调用直接返回缓存。
  * @returns 纯浏览器开发回退 mock；Wails 下后端请求失败回退空数组（板块自动隐藏）
  */
@@ -109,7 +118,35 @@ export function getHotSongs(): Promise<Song[]> {
   if (!isBackendAvailable()) {
     return Promise.resolve(mockSongs)
   }
-  return cachedRequest('hot', '热门音乐加载失败，请稍后重试', () => GetHotSongs())
+  return cachedRequest('hot', '热门音乐加载失败，请稍后重试', () =>
+    GetRecommendedSongs(HOT_SONGS_TYPE_ID),
+  )
+}
+
+/**
+ * 获取每日推荐（EverydayRecommend，按登录账号返回个性化推荐）。
+ *
+ * 只在登录后调用；不做本地缓存（避免切换账号后命中上一个账号的数据），
+ * 仅在途请求去重（开发模式下 StrictMode 会重复触发 effect）。
+ * @returns 纯浏览器开发回退 mock；Wails 下请求失败提示后返回空数组（板块不展示内容）
+ */
+let dailyRecommendInflight: Promise<Song[]> | null = null
+
+export function getDailyRecommendSongs(): Promise<Song[]> {
+  if (!isBackendAvailable()) {
+    return Promise.resolve(mockSongs)
+  }
+  if (dailyRecommendInflight) return dailyRecommendInflight
+
+  dailyRecommendInflight = GetDailyRecommendSongs()
+    .catch(() => {
+      toast.error('每日推荐加载失败，请稍后重试')
+      return [] as Song[]
+    })
+    .finally(() => {
+      dailyRecommendInflight = null
+    })
+  return dailyRecommendInflight
 }
 
 /**

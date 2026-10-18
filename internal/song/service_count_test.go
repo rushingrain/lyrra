@@ -39,8 +39,12 @@ func (s *stubClient) TopSong(context.Context, kg.TopSongRequest) (*kg.TopSongRes
 	return nil, errors.New("TopSong 不应在单元测试中被调用")
 }
 
-func (s *stubClient) TopCard(context.Context, kg.TopCardRequest) (*kg.TopCardResponse, error) {
-	return nil, errors.New("TopCard 不应在单元测试中被调用")
+func (s *stubClient) TopCardYouth(context.Context, kg.TopCardYouthRequest) (*kg.TopCardYouthResponse, error) {
+	return nil, errors.New("TopCardYouth 不应在单元测试中被调用")
+}
+
+func (s *stubClient) GetDailyRecommendGuest(context.Context, map[string]string) (*kg.Response, error) {
+	return nil, errors.New("GetDailyRecommendGuest 不应在单元测试中被调用")
 }
 
 func (s *stubClient) FavoriteCount(_ context.Context, req kg.FavoriteCountRequest) (*kg.FavoriteCountResponse, error) {
