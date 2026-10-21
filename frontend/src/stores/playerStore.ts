@@ -100,6 +100,8 @@ interface PlayerState {
   cyclePlayMode: () => void
   /** 清空播放列表（正在播放的歌曲不受影响，播完即停） */
   clearPlaylist: () => void
+  /** 从播放列表移出一首歌；正在播放的歌曲不受影响，移出后继续播放 */
+  removeFromPlaylist: (song: Song) => void
   /** 播放下一首（按当前模式决定目标；顺序播放到末尾则停下） */
   playNext: () => void
   /** 播放上一首（随机模式下按列表顺序回退） */
@@ -119,6 +121,11 @@ interface PlayerState {
 let audio: HTMLAudioElement | null = null
 /** 请求序号：切歌期间旧请求返回后丢弃，避免乱序覆盖 */
 let requestSeq = 0
+/**
+ * 当前曲目被移出队列后，下一首在队列里的下标；null 表示当前曲目仍在队列内。
+ * 队列增删时同步调整，切歌或替换队列后清空。
+ */
+let detachedNextIndex: number | null = null
 
 const MS_PER_SECOND = 1000
 
@@ -256,6 +263,34 @@ function prevIndex(mode: PlayMode, current: number, total: number): number {
   return Math.max(0, from - 1)
 }
 
+/**
+ * 计算下一首的下标：当前曲目被移出队列时从锚点继续，
+ * 否则按当前曲目位置和播放模式推导。
+ */
+function resolveNextIndex(playlist: Song[], song: Song | null, mode: PlayMode): number {
+  if (detachedNextIndex !== null && currentIndex(playlist, song) < 0) {
+    const total = playlist.length
+    if (total === 0) return -1
+    if (mode === 'shuffle') return Math.floor(Math.random() * total)
+    if (mode === 'list-loop') return detachedNextIndex % total
+    // 顺序 / 单曲（手动切歌）沿队列前进，到末尾停下
+    return detachedNextIndex < total ? detachedNextIndex : -1
+  }
+  return nextIndex(mode, currentIndex(playlist, song), playlist.length)
+}
+
+/** 计算上一首的下标；当前曲目被移出队列时以锚点前一首为准 */
+function resolvePrevIndex(playlist: Song[], song: Song | null, mode: PlayMode): number {
+  if (detachedNextIndex !== null && currentIndex(playlist, song) < 0) {
+    const total = playlist.length
+    if (total === 0) return -1
+    const before = detachedNextIndex - 1
+    if (mode === 'list-loop') return (before + total) % total
+    return before
+  }
+  return prevIndex(mode, currentIndex(playlist, song), playlist.length)
+}
+
 function errorMessage(error: unknown): string {
   if (error instanceof Error && error.message) return error.message
   return String(error)
@@ -365,6 +400,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       playlist[index] = song
       set({ playlist })
     }
+    // 歌曲已回到队列，移出当前曲目时记录的锚点不再需要
+    detachedNextIndex = null
 
     // 同一首：有地址就播放/暂停切换；仍在解析则忽略重复点击；上次失败则往下重新解析
     if (isSameSong(state.song, song)) {
@@ -476,6 +513,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (truncated) {
       toast.error('播放列表已满，部分歌曲未加入', { id: TOAST_ID_PLAYLIST_FULL })
     }
+    // 替换队列后旧曲目的位置锚点失效
+    if (replaceQueue) detachedNextIndex = null
     if (replaceQueue || playlist.length !== state.playlist.length) {
       set({ playlist })
     }
@@ -502,13 +541,32 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   clearPlaylist: () => {
     // 只清列表，不打断正在播放的歌曲；播完或手动切歌时自然停下
+    detachedNextIndex = null
     set({ playlist: [] })
+  },
+
+  removeFromPlaylist: (song) => {
+    const state = get()
+    const key = songKey(song)
+    const index = state.playlist.findIndex((item) => songKey(item) === key)
+    if (index < 0) return
+
+    const playlist = state.playlist.filter((item) => songKey(item) !== key)
+    if (state.song && songKey(state.song) === key) {
+      // 移出的是当前曲目：记下原位置，之后从原来的下一首继续
+      detachedNextIndex = index
+    } else if (detachedNextIndex !== null && index < detachedNextIndex) {
+      // 移出的是锚点之前的歌：下标左移一位
+      detachedNextIndex -= 1
+    }
+    // 只改队列，不碰播放状态：移出当前曲目后音频继续播放
+    set({ playlist })
   },
 
   playNext: () => {
     const { playlist, playMode, song } = get()
     const index = currentIndex(playlist, song)
-    const target = nextIndex(playMode, index, playlist.length)
+    const target = resolveNextIndex(playlist, song, playMode)
     // 顺序播放到末尾：不跳转，也不改动播放状态（当前曲目继续播）
     if (target < 0 || target >= playlist.length) return
     if (target === index) {
@@ -521,7 +579,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   playPrev: () => {
     const { playlist, playMode, song } = get()
     const index = currentIndex(playlist, song)
-    const target = prevIndex(playMode, index, playlist.length)
+    const target = resolvePrevIndex(playlist, song, playMode)
     if (target < 0 || target >= playlist.length) return
     // 已经在第一首（或列表里只有一首）时，等价于从头重播当前曲目
     if (target === index) {
@@ -543,7 +601,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       return
     }
     const index = currentIndex(playlist, song)
-    const target = nextIndex(playMode, index, playlist.length)
+    const target = resolveNextIndex(playlist, song, playMode)
     if (target < 0 || target >= playlist.length) {
       // 顺序播放到末尾（或列表已清空）：停在当前曲目
       set({ status: 'paused', currentTime: 0 })
@@ -559,6 +617,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   restoreState: (snapshot) => {
+    // 锚点不落盘，恢复时按新的队列重新推导
+    detachedNextIndex = null
     const device = {
       playMode: normalizePlayMode(snapshot.device.playMode),
       volume: clampVolume(snapshot.device.volume),
@@ -589,6 +649,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   },
 
   resetAccountData: () => {
+    detachedNextIndex = null
     // 账号数据随登出清空；设备设置（播放模式 / 音量）保留
     set({
       playlist: [],

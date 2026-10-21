@@ -34,6 +34,7 @@ function formatDuration(ms?: number): string {
 export function PlaylistPanel({ onClose }: PlaylistPanelProps) {
   const playlist = usePlayerStore((state) => state.playlist)
   const clearPlaylist = usePlayerStore((state) => state.clearPlaylist)
+  const removeFromPlaylist = usePlayerStore((state) => state.removeFromPlaylist)
   const panelRef = useRef<HTMLDivElement>(null)
 
   // 点击面板外部关闭
@@ -83,12 +84,24 @@ export function PlaylistPanel({ onClose }: PlaylistPanelProps) {
           playlist.map((song) => (
             <div
               key={`${song.id}:${song.hash ?? ''}`}
-              className="flex items-center gap-3 px-4 py-2 transition-colors hover:bg-gray-100"
+              className="group flex items-center gap-3 px-4 py-2 transition-colors hover:bg-gray-100"
             >
               <PlayableSong song={song} className="min-w-0 flex-1" markCurrent />
-              <span className="shrink-0 text-sm tabular-nums px-3 text-[var(--color-text-secondary)]">
-                {formatDuration(song.duration)}
-              </span>
+              {/* 时长与删除按钮共用同一位置：悬浮行时切换为删除按钮，不产生布局抖动 */}
+              <div className="group/actions relative flex w-14 shrink-0 items-center justify-end">
+                <span className="text-sm tabular-nums text-[var(--color-text-secondary)] transition-opacity group-hover:opacity-0 group-focus-within/actions:opacity-0">
+                  {formatDuration(song.duration)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => removeFromPlaylist(song)}
+                  className="absolute inset-y-0 right-0 flex cursor-pointer items-center rounded-md p-1 text-[var(--color-text-secondary)] opacity-0 transition-[color,opacity] hover:text-[var(--color-text-primary)] group-hover:opacity-100 group-focus-within/actions:opacity-100"
+                  aria-label={`移出播放列表：${song.name}`}
+                  title="移出播放列表"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
           ))
         )}
