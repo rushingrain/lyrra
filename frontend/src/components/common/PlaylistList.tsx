@@ -2,6 +2,7 @@ import type { Playlist as PlaylistType } from '@/types'
 import { Summary } from '@/components/common/Summary'
 import type { SummaryLayout } from '@/components/common/Summary'
 import { Headphones } from 'lucide-react'
+import { Link } from 'react-router-dom'
 
 interface PlaylistListProps extends SummaryLayout {
   playlists: PlaylistType[]
@@ -27,10 +28,10 @@ export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
       items={playlists}
       getItemKey={(playlist) => playlist.id}
       renderItem={(playlist, { className, style }) => (
-        <div
-          role="button"
-          tabIndex={0}
-          // ✅ 关键修改：加上 w-full 让卡片填满 Grid 单元格
+        <Link
+          to={`/songs/playlist/${encodeURIComponent(playlist.globalCollectionId)}`}
+          // 把歌单信息带到详情页：接口不返回播放次数，需要用这里的 playCount 补齐
+          state={{ playlist }}
           className={`flex w-full min-w-0 flex-col cursor-pointer text-left ${className}`}
           style={style}
         >
@@ -52,7 +53,7 @@ export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
           <p className="mt-1 min-w-0 truncate text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
             {playlist.description}
           </p>
-        </div>
+        </Link>
       )}
     />
   )

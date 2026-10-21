@@ -1,7 +1,7 @@
 import type { Song as SongType } from '@/types'
 import { PlayableSong } from '@/components/business/PlayableSong'
 
-interface SongListProps {
+interface SongGridProps {
   songs: SongType[]
   /**
    * 列布局方式：
@@ -24,7 +24,7 @@ interface SongListProps {
  * 并按 1fr 均分整行，指定数字时列数固定；auto / 数字模式的列宽为
  * minmax(clamp(160px, 20vw, 220px), 1fr)，随窗口连续缩放。
  */
-export function SongList({ songs, columns = 'auto', rows }: SongListProps) {
+export function SongGrid({ songs, columns = 'auto', rows }: SongGridProps) {
   if (songs.length === 0) return null
 
   // 首页歌曲板块：小窗口 2 列、大窗口 3 列，列宽 1fr 均分整行

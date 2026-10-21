@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { SongList } from '@/components/common/SongList'
+import { SongGrid } from '@/components/common/SongGrid'
 import { Section } from '@/components/common/Section'
 import { PlaylistList } from '@/components/common/PlaylistList'
 import { AlbumList } from '@/components/common/AlbumList'
@@ -177,8 +177,7 @@ export default function Search() {
           )}
 
           {result.songs.length > 0 && (
-            // TODO 根据窗口宽度调整列数
-            <Section title="单曲" children={<SongList columns={2} songs={result.songs.slice(0, 6)} />} />
+            <Section title="单曲" children={<SongGrid columns={2} songs={result.songs.slice(0, 6)} />} />
           )}
 
           {result.playlists.length > 0 && (

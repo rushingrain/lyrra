@@ -1,7 +1,11 @@
-import type { Playlist } from '@/types'
-import { mockPlaylists } from '@/data/mock'
+import type { Playlist, Song } from '@/types'
+import { mockPlaylists, mockSongs } from '@/data/mock'
 import toast from 'react-hot-toast'
-import { GetHotPlaylists as GetHotPlaylistsAPI } from '../../wailsjs/go/playlist/Service'
+import {
+  GetAllPlaylistSongs as GetAllPlaylistSongsAPI,
+  GetHotPlaylists as GetHotPlaylistsAPI,
+  GetPlaylistSongs as GetPlaylistSongsAPI,
+} from '../../wailsjs/go/playlist/Service'
 
 /**
  * 首页官方歌单接口
@@ -29,6 +33,17 @@ const CACHE_TTL_MS = 60 * 60 * 1000
 /** 前端请求官方歌单的默认参数：与后端约定 pageSize=15、withSong=0 */
 export const DEFAULT_PLAYLIST_PAGE_SIZE = 15
 export const DEFAULT_PLAYLIST_WITH_SONG = 0
+
+/** 歌单歌曲分页大小：与后端默认页大小一致 */
+export const PLAYLIST_PAGE_SIZE = 30
+
+/** 歌单歌曲分页结果；info 由后端从歌单接口的 list_info 解析 */
+export interface PlaylistSongsPage {
+  info: Playlist
+  songs: Song[]
+  total: number
+  hasMore: boolean
+}
 
 // 模块级缓存：仅存在于 app 窗口生命周期；请求失败不入缓存，下次挂载自动重试。
 // 以 pageSize:withSong 为 key 区分不同参数的请求，避免不同参数互相串缓存。
@@ -80,4 +95,54 @@ export async function GetHotPlaylists(
       })
   }
   return entry.inflight
+}
+
+// 歌单歌曲只在途请求去重，不缓存已完成的页：歌单内容可能变化，也避免多份列表常驻内存。
+const songsInflight = new Map<string, Promise<PlaylistSongsPage>>()
+
+/**
+ * 获取歌单歌曲（分页）。
+ * @param globalCollectionId 歌单的 global_collection_id
+ * @param page 页码，从 1 开始
+ * @param pageSize 每页条数，默认 30
+ */
+export function getPlaylistSongs(
+  globalCollectionId: string,
+  page = 1,
+  pageSize = PLAYLIST_PAGE_SIZE,
+): Promise<PlaylistSongsPage> {
+  if (!isBackendAvailable()) {
+    // 纯浏览器 mock：用本地歌单/歌曲模拟分页
+    const info =
+      mockPlaylists.find((item) => item.globalCollectionId === globalCollectionId) ?? mockPlaylists[0]
+    const start = (page - 1) * pageSize
+    const songs = mockSongs.slice(start, start + pageSize)
+    return Promise.resolve({
+      info,
+      songs,
+      total: mockSongs.length,
+      hasMore: start + songs.length < mockSongs.length,
+    })
+  }
+
+  const key = `${globalCollectionId}:${page}:${pageSize}`
+  const existing = songsInflight.get(key)
+  if (existing) return existing
+
+  const request = GetPlaylistSongsAPI(globalCollectionId, page, pageSize).finally(() => {
+    songsInflight.delete(key)
+  })
+  songsInflight.set(key, request)
+  return request
+}
+
+/**
+ * 获取歌单全部歌曲（“播放全部”使用）。
+ * 后端按上游单页上限分页拉取并去重，前端只需等待一次结果。
+ */
+export function getAllPlaylistSongs(globalCollectionId: string): Promise<Song[]> {
+  if (!isBackendAvailable()) {
+    return Promise.resolve(mockSongs)
+  }
+  return GetAllPlaylistSongsAPI(globalCollectionId)
 }

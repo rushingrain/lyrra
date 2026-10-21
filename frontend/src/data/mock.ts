@@ -30,6 +30,7 @@ export const mockBanners: Banner[] = [
 export const mockPlaylists: Playlist[] = [
   {
     id: 1,
+    globalCollectionId: 'mock_collection_1',
     name: '心动rap：借夏天的名义，暗恋变成了热恋',
     coverUrl: 'https://picsum.photos/seed/playlist1/200/200',
     description: '收录了华语乐坛最经典的百首金曲，从邓丽君到周杰伦，跨越时代的音乐记忆',
@@ -39,6 +40,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 2,
+    globalCollectionId: 'mock_collection_2',
     name: '抖音热门BGM',
     coverUrl: 'https://picsum.photos/seed/playlist2/200/200',
     description: '全网最火的短视频背景音乐合集，时刻更新',
@@ -48,6 +50,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 3,
+    globalCollectionId: 'mock_collection_3',
     name: '睡前轻音乐',
     coverUrl: 'https://picsum.photos/seed/playlist3/200/200',
     description: '舒缓的钢琴与自然白噪音，伴你入眠',
@@ -57,6 +60,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 4,
+    globalCollectionId: 'mock_collection_4',
     name: '电子音乐精选',
     coverUrl: 'https://picsum.photos/seed/playlist4/200/200',
     description: '最燃的电子音乐，适合运动和驾驶',
@@ -66,6 +70,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 5,
+    globalCollectionId: 'mock_collection_5',
     name: '民谣在路上',
     coverUrl: 'https://picsum.photos/seed/playlist5/200/200',
     description: '诗和远方都在民谣里，一路走一路听',
@@ -75,6 +80,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 6,
+    globalCollectionId: 'mock_collection_6',
     name: '新歌推荐',
     coverUrl: 'https://picsum.photos/seed/playlist6/200/200',
     description: '每周最新上架的热门单曲',
@@ -84,6 +90,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 7,
+    globalCollectionId: 'mock_collection_7',
     name: '说唱集结号',
     coverUrl: 'https://picsum.photos/seed/playlist7/200/200',
     description: '中文说唱最强阵容，态度与节奏并存',
@@ -93,6 +100,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 8,
+    globalCollectionId: 'mock_collection_8',
     name: '爵士咖啡馆',
     coverUrl: 'https://picsum.photos/seed/playlist8/200/200',
     description: '慵懒午后，一杯咖啡配爵士，刚刚好',
@@ -102,6 +110,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 9,
+    globalCollectionId: 'mock_collection_9',
     name: '摇滚经典永流传',
     coverUrl: 'https://picsum.photos/seed/playlist9/200/200',
     description: 'Beyond、黑豹、唐朝…中国摇滚的黄金年代',
@@ -111,6 +120,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 10,
+    globalCollectionId: 'mock_collection_10',
     name: '古风雅韵',
     coverUrl: 'https://picsum.photos/seed/playlist10/200/200',
     description: '琴瑟和鸣，诗词入曲，品味千年国风之美',
@@ -120,6 +130,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 11,
+    globalCollectionId: 'mock_collection_11',
     name: '欧美流行前线',
     coverUrl: 'https://picsum.photos/seed/playlist11/200/200',
     description: 'Billboard热单全收录，国际流行风向标',
@@ -129,6 +140,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 12,
+    globalCollectionId: 'mock_collection_12',
     name: '治愈系纯音乐',
     coverUrl: 'https://picsum.photos/seed/playlist12/200/200',
     description: '用旋律治愈疲惫的心灵，找回内心的平静',
@@ -138,6 +150,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 13,
+    globalCollectionId: 'mock_collection_13',
     name: 'KPOP热力全开',
     coverUrl: 'https://picsum.photos/seed/playlist13/200/200',
     description: 'BTS、BLACKPINK、NewJeans…韩流最前线',
@@ -147,6 +160,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 14,
+    globalCollectionId: 'mock_collection_14',
     name: '经典粤语金曲',
     coverUrl: 'https://picsum.photos/seed/playlist14/200/200',
     description: '张国荣、梅艳芳、陈奕迅…港乐传奇永不褪色',
@@ -156,6 +170,7 @@ export const mockPlaylists: Playlist[] = [
   },
   {
     id: 15,
+    globalCollectionId: 'mock_collection_15',
     name: '运动健身燃脂歌单',
     coverUrl: 'https://picsum.photos/seed/playlist15/200/200',
     description: '高BPM节奏引爆运动潜力，汗水与音乐一起燃烧',

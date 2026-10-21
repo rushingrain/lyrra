@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { BannerCarousel } from '@/components/common/BannerCarousel'
 import { PlaylistList } from '@/components/common/PlaylistList'
 import { Section } from '@/components/common/Section'
-import { SongList } from '@/components/common/SongList'
+import { SongGrid } from '@/components/common/SongGrid'
 import { useAuthStore } from '@/stores/authStore'
 import type { Banner, Playlist, Song } from '@/types'
 import { getHomeBanners } from '@/services/banner'
@@ -85,14 +85,14 @@ export default function Home() {
       </Section>
       {user && (
         <Section title="每日推荐" to="/songs/daily">
-          <SongList songs={dailySongs} columns="responsive" rows={HOME_SONG_ROWS} />
+          <SongGrid songs={dailySongs} columns="responsive" rows={HOME_SONG_ROWS} />
         </Section>
       )}
       <Section title="最新音乐" to="/songs/new">
-        <SongList songs={newSongs} columns="responsive" rows={HOME_SONG_ROWS} />
+        <SongGrid songs={newSongs} columns="responsive" rows={HOME_SONG_ROWS} />
       </Section>
       <Section title="热门音乐" to="/songs/hot">
-        <SongList songs={hotSongs} columns="responsive" rows={HOME_SONG_ROWS} />
+        <SongGrid songs={hotSongs} columns="responsive" rows={HOME_SONG_ROWS} />
       </Section>
     </div>
   )

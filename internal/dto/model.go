@@ -22,11 +22,17 @@ type Song struct {
 
 // Playlist 是歌单 DTO。
 type Playlist struct {
-	ID          int64  `json:"id"`
-	Name        string `json:"name"`
-	CoverURL    string `json:"coverUrl"`
-	Description string `json:"description"`
-	Creator     string `json:"creator"`
+	ID int64 `json:"id"`
+	// GlobalCollectionID 歌单的上游全局 ID，用于请求歌单歌曲
+	GlobalCollectionID string   `json:"globalCollectionId"`
+	Name               string   `json:"name"`
+	CoverURL           string   `json:"coverUrl"`
+	Description        string   `json:"description"`
+	Creator            string   `json:"creator"`
+	CreatorAvatar      string   `json:"creatorAvatar,omitempty"`
+	Tags               []string `json:"tags,omitempty"`
+	// PublishTime 创建时间，格式由上游决定（如 "2023-03-31 00:00:00"）
+	PublishTime string `json:"publishTime,omitempty"`
 	PlayCount   int64  `json:"playCount"`
 	SongCount   int64  `json:"songCount,omitempty"`
 }

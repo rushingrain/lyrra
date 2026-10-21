@@ -58,6 +58,11 @@ export interface StoredPlayerState {
   account: { playlist?: Song[]; currentSong?: Song }
 }
 
+interface PlayAllOptions {
+  /** 用这批歌曲替换播放队列（歌单详情页使用）；默认追加到现有队列 */
+  replaceQueue?: boolean
+}
+
 interface PlayerState {
   song: Song | null
   /** 当前曲目的播放地址（带签名，会过期；出错时清空以便重新解析） */
@@ -84,10 +89,11 @@ interface PlayerState {
   /** 播放指定歌曲：同一首 → 播放/暂停切换；不同首 → 解析地址并播放 */
   playSong: (song: Song) => Promise<void>
   /**
-   * 播放全部：把一批歌曲追加到播放队列（同一首不重复）并开始播放。
+   * 播放全部：把一批歌曲加入播放队列（同一首不重复）并开始播放。
+   * replaceQueue 为 true 时先清空原队列（歌单详情页），否则追加到现有队列。
    * 队列装不下时只加入能放下的部分并提示。
    */
-  playAll: (songs: Song[]) => Promise<void>
+  playAll: (songs: Song[], options?: PlayAllOptions) => Promise<void>
   /** 播放/暂停切换（无曲目时不动作） */
   toggle: () => void
   /** 切换播放模式（列表循环 → 顺序 → 单曲 → 随机） */
@@ -441,11 +447,19 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     })
   },
 
-  playAll: async (songs) => {
+  playAll: async (songs, options) => {
+    const replaceQueue = options?.replaceQueue ?? false
     const state = get()
+    // 从本批第一首有可用音质的歌开始；全都不可播放时只提示，不改动队列与当前播放
+    const first = songs.find((song) => song.hash)
+    if (!first) {
+      toast.error('该列表暂无可播放的歌曲')
+      return
+    }
+
     // 与单曲入列规则一致：同一首歌只保留一条，这里跳过队列里已有的条目
-    const seen = new Set(state.playlist.map(songKey))
-    const playlist = [...state.playlist]
+    const seen = new Set(replaceQueue ? [] : state.playlist.map(songKey))
+    const playlist = replaceQueue ? [] : [...state.playlist]
     let truncated = false
 
     for (const song of songs) {
@@ -462,14 +476,10 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     if (truncated) {
       toast.error('播放列表已满，部分歌曲未加入', { id: TOAST_ID_PLAYLIST_FULL })
     }
-    if (playlist.length !== state.playlist.length) set({ playlist })
-
-    // 从本批第一首有可用音质的歌开始；全都不可播放时只提示，不改动当前播放
-    const first = songs.find((song) => song.hash)
-    if (!first) {
-      toast.error('该列表暂无可播放的歌曲')
-      return
+    if (replaceQueue || playlist.length !== state.playlist.length) {
+      set({ playlist })
     }
+
     // 已经在播这首时不能再走 playSong：同一首会被当成暂停
     if (isSameSong(state.song, first) && state.status === 'playing') return
     await get().playSong(first)

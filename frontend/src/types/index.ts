@@ -21,10 +21,16 @@ export interface Song {
 
 export interface Playlist {
   id: number
+  /** 上游全局歌单 ID，用于获取歌单歌曲 */
+  globalCollectionId: string
   name: string
   coverUrl: string
   description: string
   creator: string
+  creatorAvatar?: string
+  tags?: string[]
+  /** 创建时间，上游格式如 "2023-03-31 00:00:00" */
+  publishTime?: string
   playCount: number
   songCount?: number
 }
