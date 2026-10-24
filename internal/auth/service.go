@@ -2,18 +2,17 @@ package auth
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"fmt"
 	"log/slog"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"lyrra/internal/imageurl"
+	"lyrra/internal/kgapi"
+	"lyrra/internal/paging"
 	"lyrra/internal/playerstate"
 )
 
@@ -37,7 +36,7 @@ type Service struct {
 // 不发起网络请求，因此不会阻塞应用启动。
 // 会话有效性校验延迟到首次 GetCurrentUser 调用。
 func New(log *slog.Logger) (*Service, error) {
-	client, err := kg.New(
+	client, err := kgapi.NewClient(
 		kg.WithCookie(LoadSession()),
 		// TODO: token 续期功能暂未启用；后续接入续期时改为 kg.WithAutoRefresh(true)，
 		// 并处理会话过期（登录态失效）时的行为。
@@ -136,16 +135,16 @@ func (s *Service) GetCurrentUser() (*UserInfo, error) {
 
 	// 业务成功判断：酷狗 API 用 body 里的 status=="1" 且 error_code==0 表示成功，
 	// resp.Status 是 HTTP 状态码，不能用于业务判断。
-	if fmt.Sprintf("%v", resp.Body["status"]) != "1" {
+	if !kgapi.StatusOK(resp.Body) {
 		return nil, ErrNotLoggedIn
 	}
-	if code := strings.TrimSpace(fmt.Sprintf("%v", resp.Body["error_code"])); code != "" && code != "<nil>" && code != "0" && code != "0.0" {
+	if code := kgapi.Scalar(resp.Body["error_code"]); code != "" && code != "0" {
 		return nil, ErrNotLoggedIn
 	}
 
 	// UserDetail 的用户字段都在 data 子结构下（实测：data.nickname / data.pic，
 	// 以及好友/关注/粉丝数 data.friends / data.follows / data.fans）
-	data, _ := resp.Body["data"].(map[string]any)
+	data := kgapi.RecordOf(resp.Body["data"])
 	user := &UserInfo{
 		Nickname: pickString(data, "nickname", "k_nickname", "fx_nickname"),
 		Avatar:   imageurl.Normalize(pickString(data, "pic", "k_pic", "fx_pic", "avatar")),
@@ -167,17 +166,12 @@ func isConceptVip(vipResp *kg.UserVipDetailResponse) bool {
 	if vipResp == nil || vipResp.Body == nil {
 		return false
 	}
-	data, _ := vipResp.Body["data"].(map[string]any)
-	list, _ := data["busi_vip"].([]any)
-	for _, item := range list {
-		m, ok := item.(map[string]any)
-		if !ok {
+	data := kgapi.RecordOf(vipResp.Body["data"])
+	for _, item := range kgapi.Records(data["busi_vip"]) {
+		if kgapi.Scalar(item["busi_type"]) != "concept" {
 			continue
 		}
-		if strings.TrimSpace(fmt.Sprintf("%v", m["busi_type"])) != "concept" {
-			continue
-		}
-		if v := strings.TrimSpace(fmt.Sprintf("%v", m["is_vip"])); v == "1" || v == "1.0" {
+		if value := kgapi.Scalar(item["is_vip"]); value == "1" || value == "1.0" {
 			return true
 		}
 	}
@@ -213,12 +207,7 @@ func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, erro
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if page <= 0 {
-		page = 1
-	}
-	if pagesize <= 0 {
-		pagesize = 20
-	}
+	page, pagesize = paging.Normalize(page, pagesize, 20)
 	userid := normalizeUserID(s.client.Cookie()["userid"])
 
 	resp, err := s.client.UserPlaylist(context.Background(), kg.UserPlaylistRequest{
@@ -233,26 +222,22 @@ func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, erro
 		s.log.Warn("failed to fetch user playlists", "err", err.Error())
 		return nil, err
 	}
-	if fmt.Sprintf("%v", resp.Body["status"]) != "1" {
+	if !kgapi.StatusOK(resp.Body) {
 		s.log.Warn("user playlists business failure", "error_code", resp.Body["error_code"])
 		return nil, ErrNotLoggedIn
 	}
 
-	data, _ := resp.Body["data"].(map[string]any)
-	items, _ := data["info"].([]any)
+	data := kgapi.RecordOf(resp.Body["data"])
+	items := kgapi.Records(data["info"])
 	playlists := make([]UserPlaylist, 0, len(items))
 	for _, item := range items {
-		m, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
 		playlists = append(playlists, UserPlaylist{
-			ID:        strconv.FormatInt(int64(pickInt(m, "listid")), 10),
-			Name:      pickString(m, "name"),
-			SongCount: pickInt(m, "count"),
-			CoverURL:  imageurl.Normalize(pickString(m, "pic")),
-			IsDefault: pickInt(m, "is_def"),
-			Type:      pickInt(m, "type"),
+			ID:        strconv.FormatInt(kgapi.Int64(item["listid"]), 10),
+			Name:      kgapi.Text(item["name"]),
+			SongCount: kgapi.Int(item["count"]),
+			CoverURL:  imageurl.Normalize(kgapi.Text(item["pic"])),
+			IsDefault: kgapi.Int(item["is_def"]),
+			Type:      kgapi.Int(item["type"]),
 		})
 	}
 	return playlists, nil
@@ -274,32 +259,17 @@ func normalizeUserID(raw string) int {
 // pickInt 在嵌套 map 中按 key 依次查找第一个可解析为整数的值。
 // 兼容 JSON 反序列化后的 float64 / json.Number 及字符串形式的数字。
 func pickInt(v any, keys ...string) int {
-	m, ok := v.(map[string]any)
-	if !ok || m == nil {
+	record := kgapi.RecordOf(v)
+	if record == nil {
 		return 0
 	}
-	for _, k := range keys {
-		x, ok := m[k]
+	for _, key := range keys {
+		value, ok := record[key]
 		if !ok {
 			continue
 		}
-		switch n := x.(type) {
-		case float64:
-			return int(n)
-		case float32:
-			return int(n)
-		case int:
-			return n
-		case int64:
-			return int(n)
-		case json.Number:
-			if i, err := n.Int64(); err == nil {
-				return int(i)
-			}
-		case string:
-			if i, err := strconv.Atoi(strings.TrimSpace(n)); err == nil {
-				return i
-			}
+		if number, ok := kgapi.IntOK(value); ok {
+			return number
 		}
 	}
 	return 0
@@ -308,22 +278,20 @@ func pickInt(v any, keys ...string) int {
 // pickString 在嵌套 map 中按 key 依次查找第一个非空字符串，
 // 兼容 SDK Response.Body 的 data 多层级结构。
 func pickString(v any, keys ...string) string {
-	m, ok := v.(map[string]any)
-	if !ok || m == nil {
+	record := kgapi.RecordOf(v)
+	if record == nil {
 		return ""
 	}
-	for _, k := range keys {
-		if x, ok := m[k]; ok {
-			if s, ok := x.(string); ok && strings.TrimSpace(s) != "" {
-				return s
+	for _, key := range keys {
+		if value, ok := record[key]; ok {
+			if text := kgapi.Text(value); text != "" {
+				return value.(string)
 			}
 		}
 	}
-	for _, x := range m {
-		if mm, ok := x.(map[string]any); ok {
-			if s := pickString(mm, keys...); s != "" {
-				return s
-			}
+	for _, value := range record {
+		if text := pickString(value, keys...); text != "" {
+			return text
 		}
 	}
 	return ""

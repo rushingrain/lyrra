@@ -12,6 +12,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"lyrra/internal/auth"
+	"lyrra/internal/kgapi"
 )
 
 // ErrNotLoggedIn 未登录或登录态已失效（语义与 auth.ErrNotLoggedIn 一致）。
@@ -104,7 +105,7 @@ func (c *cooldown) fail(now time.Time, err error) {
 // New 创建每日 VIP 领取服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
 func New(log *slog.Logger) (*Service, error) {
-	client, err := kg.New(kg.WithAutoRefresh(false))
+	client, err := kgapi.NewClient(kg.WithAutoRefresh(false))
 	if err != nil {
 		return nil, err
 	}
@@ -190,7 +191,7 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 		return nil, err
 	}
 
-	code := intValue(resp.Body["error_code"])
+	code := kgapi.ScalarInt(resp.Body["error_code"])
 	message := pickMessage(resp.Body)
 
 	switch {
@@ -200,7 +201,7 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 			At:      now.UnixMilli(),
 			Days:    claimedDays,
 			UserID:  userID,
-			Message: firstNonEmpty(message, "领取成功"),
+			Message: kgapi.FirstNonEmpty(message, "领取成功"),
 		}
 		st.Claim = rec
 		if err := saveState(s.recordPath, st); err != nil {
@@ -224,7 +225,7 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 			At:            now.UnixMilli(),
 			Days:          claimedDays,
 			UserID:        userID,
-			Message:       firstNonEmpty(message, "今天已领取过 VIP"),
+			Message:       kgapi.FirstNonEmpty(message, "今天已领取过 VIP"),
 			ServerAlready: true,
 			ExpiresAt:     nextActivityReset(now).UnixMilli(),
 		}
@@ -322,7 +323,7 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 		return nil, err
 	}
 
-	code := intValue(resp.Body["error_code"])
+	code := kgapi.ScalarInt(resp.Body["error_code"])
 	message := pickMessage(resp.Body)
 
 	switch {
@@ -331,7 +332,7 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 			Date:       claimDate(now),
 			At:         now.UnixMilli(),
 			UserID:     userID,
-			Message:    firstNonEmpty(message, "升级成功"),
+			Message:    kgapi.FirstNonEmpty(message, "升级成功"),
 			RewardType: pickRewardType(resp.Body),
 			Hours:      pickRechargeHours(resp.Body),
 		}
@@ -349,7 +350,7 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 			Date:          claimDate(now),
 			At:            now.UnixMilli(),
 			UserID:        userID,
-			Message:       firstNonEmpty(message, "今天已升级过 VIP"),
+			Message:       kgapi.FirstNonEmpty(message, "今天已升级过 VIP"),
 			ServerAlready: true,
 			ExpiresAt:     nextActivityReset(now).UnixMilli(),
 		}
@@ -393,13 +394,7 @@ func (s *Service) GetDailyVipStatus() (*DailyVipResult, error) {
 // 返回值 cookie 只带登录必需字段；userID 直接取自会话
 // （auth.LoadSession 已把历史脏数据里的科学计数法 userid 规整成十进制）。
 func (s *Service) loginCookie() (map[string]string, string, error) {
-	session := s.loadCookie()
-	cookie := make(map[string]string, 3)
-	for _, key := range []string{"token", "userid", "dfid"} {
-		if value := strings.TrimSpace(session[key]); value != "" {
-			cookie[key] = value
-		}
-	}
+	cookie := auth.TrimmedLoginCookie(s.loadCookie())
 	if cookie["token"] == "" || cookie["userid"] == "" || cookie["userid"] == "0" {
 		return nil, "", ErrNotLoggedIn
 	}
@@ -417,7 +412,7 @@ func recordResult(rec *record, claimed bool) *DailyVipResult {
 		Claimed:        claimed,
 		ClaimedAt:      rec.At,
 		Days:           days,
-		Message:        firstNonEmpty(rec.Message, "今天已领取过 VIP"),
+		Message:        kgapi.FirstNonEmpty(rec.Message, "今天已领取过 VIP"),
 	}
 }
 
@@ -429,16 +424,16 @@ func upgradeResult(rec *record, requested bool) *UpgradeVipResult {
 		UpgradedAt:    rec.At,
 		RewardType:    rec.RewardType,
 		RechargeHours: rec.Hours,
-		Message:       firstNonEmpty(rec.Message, "今天已升级过 VIP"),
+		Message:       kgapi.FirstNonEmpty(rec.Message, "今天已升级过 VIP"),
 	}
 }
 
 // isBizSuccess 业务成功判断，与其它服务一致：body 里 status=="1" 且 error_code==0。
 func isBizSuccess(body map[string]any) bool {
-	if stringValue(body["status"]) != "1" {
+	if !kgapi.StatusOK(body) {
 		return false
 	}
-	switch stringValue(body["error_code"]) {
+	switch kgapi.Scalar(body["error_code"]) {
 	case "", "0":
 		return true
 	default:
@@ -482,11 +477,11 @@ func pickRewardType(body map[string]any) string {
 	if body == nil {
 		return ""
 	}
-	data, _ := body["data"].(map[string]any)
-	nested, _ := data["data"].(map[string]any)
-	for _, src := range []map[string]any{data, nested, body} {
+	data := kgapi.RecordOf(body["data"])
+	nested := kgapi.RecordOf(data["data"])
+	for _, src := range []kgapi.Record{data, nested, body} {
 		for _, key := range []string{"vip_type", "reward_type", "upgrade_type"} {
-			if text := stringValue(src[key]); text != "" {
+			if text := kgapi.Scalar(src[key]); text != "" {
 				return text
 			}
 		}
@@ -499,10 +494,10 @@ func pickRechargeHours(body map[string]any) int {
 	if body == nil {
 		return 0
 	}
-	data, _ := body["data"].(map[string]any)
-	nested, _ := data["data"].(map[string]any)
-	for _, src := range []map[string]any{data, nested, body} {
-		if hours := intValue(src["recharge_hours"]); hours > 0 {
+	data := kgapi.RecordOf(body["data"])
+	nested := kgapi.RecordOf(data["data"])
+	for _, src := range []kgapi.Record{data, nested, body} {
+		if hours := kgapi.ScalarInt(src["recharge_hours"]); hours > 0 {
 			return hours
 		}
 	}
@@ -526,66 +521,19 @@ func pickMessage(body map[string]any) string {
 	if body == nil {
 		return ""
 	}
-	data, _ := body["data"].(map[string]any)
-	nested, _ := data["data"].(map[string]any)
-	for _, src := range []map[string]any{body, data, nested} {
+	data := kgapi.RecordOf(body["data"])
+	nested := kgapi.RecordOf(data["data"])
+	for _, src := range []kgapi.Record{body, data, nested} {
 		for _, key := range []string{"error_msg", "err_msg", "msg", "message", "toast", "alert_msg"} {
 			if value, ok := src[key]; ok {
-				if text := stringValue(value); text != "" {
+				if text := kgapi.Scalar(value); text != "" {
 					return text
 				}
 			}
 		}
 	}
 	// 少数接口直接返回字符串型 data，同样按文案处理
-	return stringValue(body["data"])
-}
-
-// stringValue 把上游字段规整成字符串；map / 数组等复合类型返回空串。
-func stringValue(value any) string {
-	switch typed := value.(type) {
-	case nil:
-		return ""
-	case string:
-		text := strings.TrimSpace(typed)
-		if text == "<nil>" {
-			return ""
-		}
-		// JSON 里的数字可能被解析成 float64 后再被格式化，这里统一去掉小数尾巴
-		return text
-	case float64:
-		if typed == float64(int64(typed)) {
-			return fmt.Sprintf("%d", int64(typed))
-		}
-		return fmt.Sprintf("%v", typed)
-	case map[string]any, []any:
-		return ""
-	default:
-		return strings.TrimSpace(fmt.Sprintf("%v", typed))
-	}
-}
-
-// intValue 把上游字段规整成整数，无法解析时返回 0。
-func intValue(value any) int {
-	text := stringValue(value)
-	if text == "" {
-		return 0
-	}
-	var out int
-	if _, err := fmt.Sscanf(text, "%d", &out); err != nil {
-		return 0
-	}
-	return out
-}
-
-// firstNonEmpty 返回第一个非空字符串。
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
+	return kgapi.Scalar(body["data"])
 }
 
 // claimDate 返回本次领取使用的“领取日”（北京时间当天）。

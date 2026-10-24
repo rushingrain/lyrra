@@ -11,9 +11,18 @@ lyrra 是基于 Wails v2、Go、React 和 TypeScript 的第三方酷狗音乐桌
 
 ## 目录与命名
 
-- `internal/` 按业务域分包，如 `auth`、`search`、`play`、`vip`。服务入口通常放在 `service.go`，模型、映射、持久化等逻辑分别放在 `model.go`、`mapper.go`、`store.go` 等文件；跨服务共用的音乐实体放在 `internal/dto/`。
+- `internal/` 按业务域分包，如 `auth`、`search`、`play`、`vip`。服务入口通常放在 `service.go`，模型、持久化等逻辑分别放在 `model.go`、`store.go` 等文件。跨服务复用的音乐实体放在 `internal/dto/`；SDK 动态值读取放在 `internal/kgapi/`，音乐实体映射放在 `internal/catalogmap/`，通用分页回退放在 `internal/paging/`，原子文件写入放在 `internal/atomicfile/`。业务服务负责流程编排，不复制这些共享能力。
 - `frontend/src/pages/` 放页面，`components/` 放组件，`services/` 放 Wails 调用封装，`stores/` 放全局状态，`types/` 放共用类型，`hooks/` 放 React hooks。
 - 沿用现有命名：Go 包和文件名使用小写；React 页面与组件文件使用 PascalCase，服务与 hook 文件使用 camelCase，测试文件与对应 Go 代码相邻并以 `_test.go` 结尾。
+
+## Go 后端复用约定
+
+- `internal/dto/` 只放稳定的跨端实体；`internal/kgapi/` 统一处理 SDK client 和动态字段；`internal/catalogmap/` 统一处理响应到实体的字段兼容与领域映射。业务服务不重复写字段回退、`is_original`、歌曲名后缀、封面优先级等逻辑。
+- 同一实体在不同接口的字段差异只在 `catalogmap` 适配；新增同类接口时新增语义明确的映射函数，不在业务服务里再写一套 mapper。
+- `play` 的 hash 优先级、`paging` 的分页回退、`atomicfile` 的原子写入、`auth` 的登录 cookie 选择，分别以现有包为准，不在调用方复制。
+- 只有出现两个以上真实调用点且语义一致时才抽取公共代码；流程相似但副作用、重试或错误处理不同的代码，保留各自实现。
+- 不建 `utils`、`common`、`helpers` 等杂物袋包，不为一次性逻辑强行抽象。
+- 重构不得改变 Wails 方法签名、返回结构和 JSON 字段名；新增契约时再同步前端并运行 `wails generate module`。
 
 ## 注释语言
 - 代码注释使用中文书写，力求简洁、清晰、准确表达意图。不要为了注释而注释；只在逻辑不直观、存在隐含约束或需要解释“为什么”时添加注释。

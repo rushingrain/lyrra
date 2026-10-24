@@ -10,6 +10,8 @@ import (
 	"strings"
 
 	kg "github.com/rushingrain/kugou-music-api"
+
+	"lyrra/internal/kgapi"
 )
 
 // 歌词获取分两步：SearchLyric 按歌曲 hash 搜索候选，取第一条的 id + accesskey；
@@ -72,7 +74,7 @@ func (s *Service) GetLyrics(hash string) ([]LyricLine, error) {
 	// parseLRC 找不到时间标签，同样收敛为空列表。
 	text := lyricResp.DecodedContent()
 	if strings.TrimSpace(text) == "" {
-		text = pickString(lyricResp.Body, "content")
+		text = kgapi.Text(lyricResp.Body["content"])
 	}
 	return parseLRC(text), nil
 }
@@ -80,14 +82,9 @@ func (s *Service) GetLyrics(hash string) ([]LyricLine, error) {
 // firstLyricCandidate 取 candidates 里第一条同时带 id 与 accesskey 的候选。
 // 上游已按匹配度排序，取第一条即可；没有可用候选时返回空字符串。
 func firstLyricCandidate(body map[string]any) (id string, accesskey string) {
-	candidates, _ := body["candidates"].([]any)
-	for _, item := range candidates {
-		m, ok := item.(map[string]any)
-		if !ok {
-			continue
-		}
-		candidateID := pickString(m, "id")
-		candidateKey := pickString(m, "accesskey")
+	for _, candidate := range kgapi.Records(body["candidates"]) {
+		candidateID := kgapi.Text(candidate["id"])
+		candidateKey := kgapi.Text(candidate["accesskey"])
 		if candidateID == "" || candidateKey == "" {
 			continue
 		}

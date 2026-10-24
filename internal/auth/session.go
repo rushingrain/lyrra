@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"lyrra/internal/appdir"
+	"lyrra/internal/atomicfile"
 )
 
 // 会话持久化：只保存关键的登录态 cookie 字段。
@@ -34,10 +35,31 @@ func saveSession(cookie map[string]string) {
 	if err != nil {
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(sessionPath()), 0o700); err != nil {
-		return
+	_ = atomicfile.Write(sessionPath(), data)
+}
+
+// LoginCookie 选取 token/userid/dfid 三个有效字段，保持原值。
+func LoginCookie(session map[string]string) map[string]string {
+	return selectLoginCookie(session, false)
+}
+
+// TrimmedLoginCookie 选取 token/userid/dfid 三个有效字段并去掉首尾空白。
+func TrimmedLoginCookie(session map[string]string) map[string]string {
+	return selectLoginCookie(session, true)
+}
+
+func selectLoginCookie(session map[string]string, trim bool) map[string]string {
+	cookie := make(map[string]string, 3)
+	for _, key := range []string{"token", "userid", "dfid"} {
+		value := session[key]
+		if trim {
+			value = strings.TrimSpace(value)
+		}
+		if value != "" {
+			cookie[key] = value
+		}
 	}
-	_ = os.WriteFile(sessionPath(), data, 0o600)
+	return cookie
 }
 
 // LoadSession 恢复会话。无会话时返回 nil。

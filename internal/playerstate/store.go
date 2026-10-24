@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"lyrra/internal/appdir"
+	"lyrra/internal/atomicfile"
 )
 
 // 存储位置与 session.json / vip.json 同目录（应用数据目录，见 internal/appdir）。
@@ -112,7 +113,7 @@ func (s *Store) SaveDevice(device DeviceState) error {
 	if string(payload) == s.lastDevice {
 		return nil
 	}
-	if err := writeFileAtomic(s.devicePath(), payload); err != nil {
+	if err := atomicfile.Write(s.devicePath(), payload); err != nil {
 		return err
 	}
 	s.lastDevice = string(payload)
@@ -142,7 +143,7 @@ func (s *Store) SaveAccount(userID string, account AccountState) error {
 	if string(payload) == s.lastAccount {
 		return nil
 	}
-	if err := writeFileAtomic(s.accountPath(), payload); err != nil {
+	if err := atomicfile.Write(s.accountPath(), payload); err != nil {
 		return err
 	}
 	s.lastAccount = string(payload)
@@ -160,35 +161,6 @@ func (s *Store) ClearAccount() error {
 		return err
 	}
 	return nil
-}
-
-// writeFileAtomic 先写同目录临时文件再 rename，避免进程中断把主文件截断成半截 JSON。
-// 权限与 session.json 一致（目录 0700、文件 0600）。
-func writeFileAtomic(path string, payload []byte) error {
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(dir, filepath.Base(path)+".tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() { _ = os.Remove(tmpName) }()
-
-	if _, err := tmp.Write(payload); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	// 先落盘再改名，避免 rename 成功但内容还在页缓存里
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpName, path)
 }
 
 // 默认 Store：play 服务读写、auth 登出清理共用同一份路径与去重缓存。

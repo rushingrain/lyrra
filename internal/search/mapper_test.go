@@ -142,63 +142,6 @@ func TestMapNormalSearch(t *testing.T) {
 	}
 }
 
-func TestResolveSongQuality(t *testing.T) {
-	tests := []struct {
-		name string
-		item ApiRecord
-		want string
-	}{
-		{
-			name: "hi res",
-			item: ApiRecord{
-				"Res":         map[string]any{},
-				"ResDuration": float64(1),
-			},
-			want: "Hi-Res",
-		},
-		{
-			name: "lossless",
-			item: ApiRecord{
-				"SQFileHash": "sq-hash",
-				"SQExtName":  "flac",
-			},
-			want: "无损",
-		},
-		{
-			name: "high quality",
-			item: ApiRecord{
-				"HQFileHash": "hq-hash",
-				"HQBitrate":  float64(320),
-			},
-			want: "HQ",
-		},
-		{
-			name: "standard has no quality badge",
-			item: ApiRecord{
-				"FileHash": "file-hash",
-				"Bitrate":  128,
-			},
-			want: "",
-		},
-		{
-			name: "missing required fields",
-			item: ApiRecord{
-				"SQBitrate": 702,
-				"HQBitrate": 320,
-			},
-			want: "",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := resolveSongQuality(tt.item); got != tt.want {
-				t.Fatalf("quality = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestMapNormalSearchMVCover(t *testing.T) {
 	result := mapNormalSearch("mv", map[string]any{
 		"lists": []any{
@@ -302,71 +245,6 @@ func TestMapNormalSearchLyricSongs(t *testing.T) {
 	// textValue 会去掉首尾空白，词之间的连续空格保留。
 	if song.MatchedLyric != "眼角的泪这不是错觉  有太多话想说" {
 		t.Fatalf("matched lyric = %q", song.MatchedLyric)
-	}
-}
-
-func TestSongNameByLyric(t *testing.T) {
-	tests := []struct {
-		name string
-		item map[string]any
-		want string
-	}{
-		{
-			name: "拼接 trans_param 后缀",
-			item: map[string]any{
-				"SongName":    "一个人想着一个人",
-				"trans_param": map[string]any{"songname_suffix": "(说唱版)"},
-			},
-			want: "一个人想着一个人 (说唱版)",
-		},
-		{
-			name: "没有 trans_param 时返回原名",
-			item: map[string]any{"SongName": "一个人想着一个人"},
-			want: "一个人想着一个人",
-		},
-		{
-			name: "后缀为空串时返回原名",
-			item: map[string]any{
-				"SongName":    "一个人想着一个人",
-				"trans_param": map[string]any{"songname_suffix": ""},
-			},
-			want: "一个人想着一个人",
-		},
-		{name: "没有歌名时返回空", item: map[string]any{}, want: ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := songNameByLyric(tt.item); got != tt.want {
-				t.Fatalf("songNameByLyric() = %q, want %q", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestResolveQualityByNestedHash(t *testing.T) {
-	hq := map[string]any{"Hash": "hq-hash"}
-	sq := map[string]any{"Hash": "sq-hash"}
-	res := map[string]any{"Hash": "res-hash"}
-
-	tests := []struct {
-		name string
-		item map[string]any
-		want string
-	}{
-		{name: "res 优先", item: map[string]any{"HQ": hq, "SQ": sq, "Res": res}, want: "Hi-Res"},
-		{name: "sq 次之", item: map[string]any{"HQ": hq, "SQ": sq}, want: "无损"},
-		{name: "只剩 hq", item: map[string]any{"HQ": hq}, want: "HQ"},
-		{name: "空 hash 视作不存在", item: map[string]any{"Res": map[string]any{"Hash": ""}, "SQ": map[string]any{}}, want: ""},
-		{name: "仅标准音质不展示标签", item: map[string]any{"FileHash": "std-hash"}, want: ""},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := resolveQualityByNestedHash(tt.item); got != tt.want {
-				t.Fatalf("resolveQualityByNestedHash() = %q, want %q", got, tt.want)
-			}
-		})
 	}
 }
 

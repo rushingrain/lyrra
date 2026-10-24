@@ -24,6 +24,7 @@ import (
 	kg "github.com/rushingrain/kugou-music-api"
 
 	"lyrra/internal/auth"
+	"lyrra/internal/kgapi"
 )
 
 // Service 播放服务。
@@ -41,7 +42,7 @@ type Service struct {
 // 使用概念版（lite）平台：当前账号的会员权益只在概念版平台上生效
 // （普通平台拿不到无损 / Hi-Res 地址，实测见 internal/play 的档位探测记录）。
 func New(log *slog.Logger) (*Service, error) {
-	client, err := kg.New(kg.WithAutoRefresh(false), kg.WithLite(true))
+	client, err := kgapi.NewClient(kg.WithAutoRefresh(false), kg.WithLite(true))
 	if err != nil {
 		return nil, err
 	}

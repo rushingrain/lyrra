@@ -2,6 +2,8 @@ package play
 
 import (
 	"strings"
+
+	"lyrra/internal/kgapi"
 )
 
 // 音质档位标识。刻意与前端展示标签（Hi-Res / 无损 / HQ）解耦：
@@ -107,7 +109,7 @@ func normalizeLevel(level string) string {
 func Resolve(item map[string]any, priority []string) string {
 	for _, level := range priority {
 		for _, field := range fieldsByLevel[level] {
-			if value := textValue(readNestedField(item, field)); value != "" {
+			if value := kgapi.Text(readNestedField(item, field)); value != "" {
 				return value
 			}
 		}
@@ -122,14 +124,5 @@ func readNestedField(item map[string]any, field string) any {
 	if !nested {
 		return item[outer]
 	}
-	nestedItem, _ := item[outer].(map[string]any)
-	return nestedItem[inner]
-}
-
-// textValue 只接受字符串值并去掉首尾空白，与 mapper 侧的口径保持一致。
-func textValue(value any) string {
-	if text, ok := value.(string); ok {
-		return strings.TrimSpace(text)
-	}
-	return ""
+	return kgapi.RecordOf(item[outer])[inner]
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"lyrra/internal/appdir"
+	"lyrra/internal/atomicfile"
 )
 
 // 本地状态记录：风控的落地点。
@@ -104,31 +105,7 @@ func saveState(path string, st state) error {
 	if err != nil {
 		return err
 	}
-	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	// os.CreateTemp 以 0600 创建，权限与 session.json 保持一致
-	tmp, err := os.CreateTemp(dir, recordFileName+".tmp-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer func() { _ = os.Remove(tmpName) }()
-
-	if _, err := tmp.Write(data); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	// 先落盘再改名，避免 rename 成功但内容还在页缓存里
-	if err := tmp.Sync(); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmpName, path)
+	return atomicfile.Write(path, data)
 }
 
 // covers 判断记录是否仍然代表“当前这次调用无需请求服务器”。
