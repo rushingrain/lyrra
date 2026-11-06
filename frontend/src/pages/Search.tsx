@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SongGrid } from '@/components/common/SongGrid'
 import { Section } from '@/components/common/Section'
@@ -26,6 +25,10 @@ const TABS: { key: SearchTab; label: string }[] = [
   { key: 'mv', label: 'MV' },
   { key: 'lyric', label: '歌词' },
 ]
+
+function normalizeSearchTab(value: string | null): SearchTab {
+  return TABS.some((tab) => tab.key === value) ? (value as SearchTab) : 'complex'
+}
 
 function formatCount(value: number): string {
   const unit = value >= 1e8 ? 1e8 : value >= 1e4 ? 1e4 : 1
@@ -120,12 +123,10 @@ function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>;
 }
 
 export default function Search() {
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const query = searchParams.get('q')?.trim() || ''
-  // 分类状态带上它所属的关键词：新关键词下默认回到综合分类，用户点击后才落到新关键词上。
-  // 这样比较在渲染期完成，不会像 effect 那样先按上一次的分类发一次请求再丢弃。
-  const [tabState, setTabState] = useState({ query, tab: 'complex' as SearchTab })
-  const activeTab = tabState.query === query ? tabState.tab : 'complex'
+  // 分类写入 URL，从歌单详情返回时仍能恢复原分类；未指定时默认综合搜索。
+  const activeTab = normalizeSearchTab(searchParams.get('tab'))
 
   const {
     result,
@@ -162,7 +163,14 @@ export default function Search() {
                   : 'border-b-transparent font-normal text-(--color-text-secondary) hover:text-(--color-text-primary)'
                 }`}
               onClick={(event) => {
-                setTabState({ query, tab: tab.key })
+                const nextParams = new URLSearchParams(searchParams)
+                if (tab.key === 'complex') {
+                  nextParams.delete('tab')
+                } else {
+                  nextParams.set('tab', tab.key)
+                }
+                // 替换当前历史记录，避免返回键在多个搜索分类之间来回切换
+                setSearchParams(nextParams, { replace: true })
                 // 新分类从头加载第一页，滚动位置也一并回到顶部
                 scrollAncestorToTop(event.currentTarget)
               }}
