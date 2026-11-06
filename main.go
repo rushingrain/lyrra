@@ -9,6 +9,7 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/mac"
 
+	"lyrra/internal/album"
 	"lyrra/internal/auth"
 	"lyrra/internal/banner"
 	"lyrra/internal/log"
@@ -63,6 +64,13 @@ func main() {
 		return
 	}
 
+	// Create the album service instance
+	albumService, err := album.New(logger)
+	if err != nil {
+		logger.Error("failed to init album service", "err", err.Error())
+		return
+	}
+
 	// Create the song service instance
 	songService, err := song.New(logger)
 	if err != nil {
@@ -107,6 +115,7 @@ func main() {
 			authService,
 			bannerService,
 			playlistService,
+			albumService,
 			songService,
 			searchService,
 			playService,

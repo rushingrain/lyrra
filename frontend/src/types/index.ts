@@ -43,6 +43,12 @@ export interface Album {
   artist: string
   coverUrl: string
   date: string
+  /** 专辑简介；详情接口返回 */
+  description?: string
+  /** 专辑类型，如「录音室专辑」；详情接口返回 */
+  type?: string
+  /** 专辑语言，如「国语」；详情接口返回 */
+  language?: string
 }
 
 export interface Artist {

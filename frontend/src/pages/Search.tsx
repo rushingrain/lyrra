@@ -112,7 +112,17 @@ function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>;
         />
       )
     case 'album':
-      return <ResultTable columns={albumColumns} rows={result.albums} rowKey={(album) => album.id} />
+      return (
+        <ResultTable
+          columns={albumColumns}
+          rows={result.albums}
+          rowKey={(album) => album.id}
+          onRowClick={(album) => {
+            if (!album.id) return
+            navigate(`/songs/album/${album.id}`, { state: { album } })
+          }}
+        />
+      )
     case 'author':
       return <ArtistList artists={result.artists} />
     case 'mv':

@@ -10,6 +10,7 @@ import Cloud from './pages/Cloud'
 import Search from './pages/Search'
 import SongList from './pages/SongList'
 import Playlist from './pages/Playlist'
+import Album from './pages/Album'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="search" element={<Search />} />
             <Route path="songs/:kind" element={<SongList />} />
             <Route path="songs/playlist/:globalId" element={<Playlist />} />
+            <Route path="songs/album/:albumId" element={<Album />} />
           </Route>
         </Routes>
       </HashRouter>

@@ -41,11 +41,14 @@ type Playlist struct {
 
 // Album 是专辑 DTO。
 type Album struct {
-	ID       int64  `json:"id"`
-	Name     string `json:"name"`
-	Artist   string `json:"artist"`
-	CoverURL string `json:"coverUrl"`
-	Date     string `json:"date"`
+	ID          int64  `json:"id"`
+	Name        string `json:"name"`
+	Artist      string `json:"artist"`
+	CoverURL    string `json:"coverUrl"`
+	Date        string `json:"date"`
+	Description string `json:"description,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Language    string `json:"language,omitempty"`
 }
 
 // Artist 是歌手 DTO。

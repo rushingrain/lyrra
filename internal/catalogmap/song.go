@@ -97,6 +97,42 @@ func PlaylistSongs(items []kgapi.Record, hashPriority []string) []dto.Song {
 	return songs
 }
 
+// AlbumSongs 映射专辑歌曲，并跳过没有歌名的条目。
+func AlbumSongs(items []kgapi.Record, hashPriority []string) []dto.Song {
+	songs := make([]dto.Song, 0, len(items))
+	for _, item := range items {
+		base := kgapi.RecordOf(item["base"])
+		audioInfo := kgapi.RecordOf(item["audio_info"])
+		albumInfo := kgapi.RecordOf(item["album_info"])
+		name := kgapi.Text(base["audio_name"])
+		if name == "" {
+			continue
+		}
+
+		artist := flatArtist(item)
+		if artist == "" {
+			artist = kgapi.Text(base["author_name"])
+		}
+		duration := kgapi.Int64(audioInfo["duration"])
+		if duration <= 0 {
+			duration = kgapi.Int64(audioInfo["duration_128"])
+		}
+
+		songs = append(songs, dto.Song{
+			ID:         kgapi.Int64(base["album_audio_id"]),
+			Name:       name,
+			Artist:     artist,
+			Album:      kgapi.Text(albumInfo["album_name"]),
+			CoverURL:   imageurl.Normalize(kgapi.Text(albumInfo["cover"])),
+			Duration:   duration,
+			Hash:       play.Resolve(audioInfo, hashPriority),
+			Quality:    flatQuality(audioInfo),
+			IsOriginal: isOriginal(item),
+		})
+	}
+	return songs
+}
+
 func searchSongName(item kgapi.Record) string {
 	if name := kgapi.Text(item["SongName"]); name != "" {
 		return name

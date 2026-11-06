@@ -89,12 +89,45 @@ func Albums(items []kgapi.Record) []dto.Album {
 		albums = append(albums, dto.Album{
 			ID:       kgapi.Int64(item["albumid"]),
 			Name:     kgapi.Text(item["albumname"]),
-			Artist:   searchArtist(item, "singer", "singers"),
-			CoverURL: kgapi.Text(item["img"]),
+			Artist:   albumArtist(item),
+			CoverURL: albumCover(item),
 			Date:     strings.SplitN(kgapi.Text(item["publish_time"]), " ", 2)[0],
 		})
 	}
 	return albums
+}
+
+// AlbumDetail 映射专辑详情。
+func AlbumDetail(item kgapi.Record) dto.Album {
+	return dto.Album{
+		ID:          kgapi.Int64(item["album_id"]),
+		Name:        kgapi.Text(item["album_name"]),
+		Artist:      albumArtist(item),
+		CoverURL:    albumCover(item),
+		Date:        kgapi.Text(item["publish_date"]),
+		Description: kgapi.Text(item["intro"]),
+		Type:        kgapi.Text(item["type"]),
+		Language:    kgapi.Text(item["language"]),
+	}
+}
+
+func albumArtist(item kgapi.Record) string {
+	names := collectNames(item, "authors", "author_name")
+	if len(names) == 0 {
+		names = collectNames(item, "singers", "name")
+	}
+	if len(names) > 0 {
+		return strings.Join(names, "/")
+	}
+	return kgapi.FirstNonEmpty(kgapi.Text(item["singer"]), kgapi.Text(item["author_name"]))
+}
+
+func albumCover(item kgapi.Record) string {
+	return imageurl.Normalize(kgapi.FirstNonEmpty(
+		kgapi.Text(item["sizable_cover"]),
+		kgapi.Text(item["img"]),
+		kgapi.Text(item["cover"]),
+	))
 }
 
 // Artists 映射搜索结果中的歌手。
