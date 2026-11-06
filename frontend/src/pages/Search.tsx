@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SongGrid } from '@/components/common/SongGrid'
 import { Section } from '@/components/common/Section'
 import { PlaylistList } from '@/components/common/PlaylistList'
@@ -89,11 +89,25 @@ function scrollAncestorToTop(node: HTMLElement) {
 }
 
 function TabSearchResults({ tab, result }: { tab: Exclude<SearchTab, 'complex'>; result: SearchResult }) {
+  const navigate = useNavigate()
+
   switch (tab) {
     case 'song':
       return <ResultTable columns={songColumns} rows={result.songs} rowKey={(song) => song.id} />
     case 'special':
-      return <ResultTable columns={playlistColumns} rows={result.playlists} rowKey={(playlist) => playlist.id} />
+      return (
+        <ResultTable
+          columns={playlistColumns}
+          rows={result.playlists}
+          rowKey={(playlist) => playlist.id}
+          onRowClick={(playlist) => {
+            if (!playlist.globalCollectionId) return
+            navigate(`/songs/playlist/${encodeURIComponent(playlist.globalCollectionId)}`, {
+              state: { playlist },
+            })
+          }}
+        />
+      )
     case 'album':
       return <ResultTable columns={albumColumns} rows={result.albums} rowKey={(album) => album.id} />
     case 'author':

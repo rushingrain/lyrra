@@ -11,17 +11,32 @@ import (
 
 // SearchPlaylists 映射搜索结果中的歌单。
 func SearchPlaylists(items []kgapi.Record) []dto.Playlist {
+	return searchPlaylists(items, false)
+}
+
+// NormalSearchPlaylists 映射普通歌单搜索，并补充命中的歌曲名。
+func NormalSearchPlaylists(items []kgapi.Record) []dto.Playlist {
+	return searchPlaylists(items, true)
+}
+
+func searchPlaylists(items []kgapi.Record, includeContainedSong bool) []dto.Playlist {
 	playlists := make([]dto.Playlist, 0, len(items))
 	for _, item := range items {
-		playlists = append(playlists, dto.Playlist{
-			ID:          kgapi.Int64(item["specialid"]),
-			Name:        kgapi.Text(item["specialname"]),
-			Creator:     kgapi.Text(item["nickname"]),
-			CoverURL:    kgapi.Text(item["img"]),
-			Description: kgapi.Text(item["intro"]),
-			PlayCount:   kgapi.Int64(item["total_play_count"]),
-			SongCount:   kgapi.Int64(item["song_count"]),
-		})
+		playlist := dto.Playlist{
+			ID:                 kgapi.Int64(item["specialid"]),
+			GlobalCollectionID: kgapi.Text(item["gid"]),
+			Name:               kgapi.Text(item["specialname"]),
+			Creator:            kgapi.Text(item["nickname"]),
+			CoverURL:           imageurl.Normalize(kgapi.Text(item["img"])),
+			Description:        kgapi.Text(item["intro"]),
+			PublishTime:        kgapi.Text(item["publish_time"]),
+			PlayCount:          kgapi.Int64(item["total_play_count"]),
+			SongCount:          kgapi.Int64(item["song_count"]),
+		}
+		if includeContainedSong {
+			playlist.ContainedSong = kgapi.Text(item["contain"])
+		}
+		playlists = append(playlists, playlist)
 	}
 	return playlists
 }

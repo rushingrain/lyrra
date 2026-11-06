@@ -51,7 +51,7 @@ export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
             {playlist.name}
           </p>
           <p className="mt-1 min-w-0 truncate text-[13px] leading-relaxed text-[var(--color-text-secondary)]">
-            {playlist.description}
+            {`${playlist.songCount} by ${playlist.creator}`}
           </p>
         </Link>
       )}

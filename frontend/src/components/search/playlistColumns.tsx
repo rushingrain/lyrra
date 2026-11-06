@@ -14,7 +14,11 @@ export const playlistColumns: ResultColumn<Playlist>[] = [
     title: '标题',
     className: 'min-w-0 flex-1',
     render: (playlist) => (
-      <CoverTextCell coverUrl={playlist.coverUrl || ''} title={playlist.name} subtitle={playlist.description} />
+      <CoverTextCell
+        coverUrl={playlist.coverUrl || ''}
+        title={playlist.name}
+        subtitle={playlist.containedSong ? `包含《${playlist.containedSong}》` : undefined}
+      />
     ),
   },
   {

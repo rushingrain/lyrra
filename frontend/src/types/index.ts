@@ -31,6 +31,8 @@ export interface Playlist {
   tags?: string[]
   /** 创建时间，上游格式如 "2023-03-31 00:00:00" */
   publishTime?: string
+  /** 歌单搜索命中的歌曲名；仅普通歌单搜索返回 */
+  containedSong?: string
   playCount: number
   songCount?: number
 }

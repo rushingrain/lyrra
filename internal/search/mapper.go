@@ -25,7 +25,7 @@ func mapNormalSearch(searchType string, data map[string]any, hashPriority []stri
 	case "song":
 		result.Songs = catalogmap.SearchSongs(items, hashPriority)
 	case "special":
-		result.Playlists = catalogmap.SearchPlaylists(items)
+		result.Playlists = catalogmap.NormalSearchPlaylists(items)
 	case "album":
 		result.Albums = catalogmap.Albums(items)
 	case "author":

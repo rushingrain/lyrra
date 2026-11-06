@@ -32,11 +32,14 @@ func TestMapComplexSearch(t *testing.T) {
 				"type": "collect",
 				"lists": []any{
 					map[string]any{
+						"gid":              "collection_3_1461534493_8_0",
 						"specialid":        7215278,
 						"specialname":      "是时候",
 						"nickname":         "孙燕姿",
 						"img":              "https://example.com/playlist.jpg",
 						"intro":            "简介",
+						"contain":          "是时候",
+						"publish_time":     "2024-05-06 11:01:11",
 						"total_play_count": "1994007",
 						"song_count":       40,
 					},
@@ -94,8 +97,14 @@ func TestMapComplexSearch(t *testing.T) {
 		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
 	}
 	playlist := result.Playlists[0]
-	if playlist.ID != 7215278 || playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
+	if playlist.ID != 7215278 || playlist.GlobalCollectionID != "collection_3_1461534493_8_0" || playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
 		t.Fatalf("unexpected playlist: %+v", playlist)
+	}
+	if playlist.PublishTime != "2024-05-06 11:01:11" {
+		t.Fatalf("unexpected playlist: %+v", playlist)
+	}
+	if playlist.ContainedSong != "" {
+		t.Fatalf("综合搜索不应填充命中歌曲: %+v", playlist)
 	}
 	if result.Albums[0].ID != 2997292 || result.Albums[0].Date != "2011-03-08" {
 		t.Fatalf("unexpected albums: %+v", result.Albums)
@@ -139,6 +148,33 @@ func TestMapNormalSearch(t *testing.T) {
 	// 默认档位是标准
 	if song.Hash != "song-hash" {
 		t.Fatalf("hash = %q, want song-hash", song.Hash)
+	}
+}
+
+func TestMapNormalSearchSpecial(t *testing.T) {
+	result := mapNormalSearch("special", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"gid":              "collection_3_1634810791_33_0",
+				"specialid":        6644785,
+				"specialname":      "台湾偶像剧主题曲精选",
+				"nickname":         "TatianaCheung",
+				"img":              "https://example.com/playlist.jpg",
+				"intro":            "简介",
+				"contain":          "孤单心事",
+				"publish_time":     "2023-04-07 22:28:22",
+				"total_play_count": "13404521",
+				"song_count":       85,
+			},
+		},
+	}, nil)
+
+	if len(result.Playlists) != 1 {
+		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
+	}
+	playlist := result.Playlists[0]
+	if playlist.GlobalCollectionID != "collection_3_1634810791_33_0" || playlist.PublishTime != "2023-04-07 22:28:22" || playlist.ContainedSong != "孤单心事" {
+		t.Fatalf("unexpected playlist: %+v", playlist)
 	}
 }
 

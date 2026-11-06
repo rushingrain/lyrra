@@ -33,8 +33,10 @@ type Playlist struct {
 	Tags               []string `json:"tags,omitempty"`
 	// PublishTime 创建时间，格式由上游决定（如 "2023-03-31 00:00:00"）
 	PublishTime string `json:"publishTime,omitempty"`
-	PlayCount   int64  `json:"playCount"`
-	SongCount   int64  `json:"songCount,omitempty"`
+	// ContainedSong 歌单搜索命中的歌曲名，仅普通歌单搜索返回
+	ContainedSong string `json:"containedSong,omitempty"`
+	PlayCount     int64  `json:"playCount"`
+	SongCount     int64  `json:"songCount,omitempty"`
 }
 
 // Album 是专辑 DTO。
