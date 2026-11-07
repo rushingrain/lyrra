@@ -13,7 +13,6 @@ import { NavLink } from 'react-router-dom'
 import toast from 'react-hot-toast'
 import SimpleBar from 'simplebar-react'
 import 'simplebar-react/dist/simplebar.min.css'
-import logo from '../../assets/images/lyrra_logo.svg'
 import type { LoginResult, UserPlaylist } from '@/types'
 import { useEffect, useRef, useState } from 'react'
 import { useClickStreak } from '@/hooks/useClickStreak'
@@ -184,8 +183,12 @@ export function Sidebar({ user }: SidebarProps) {
           className="sticky top-0 z-10 flex h-[68px] min-h-[68px] items-center gap-2.5 bg-gray-50 px-6 select-none"
           onClick={handleLogoClick}
         >
-          {/* 品牌字标：宽度按 SVG 自带比例自动（151.2:68.6 ≈ 2.2:1），只固定高度 */}
-          <img src={logo} alt="lyrra" className="h-9 w-auto shrink-0" />
+          {/* 品牌字标：SVG 轮廓作为遮罩，颜色随主题色变量切换 */}
+          <span
+            className="sidebar-brand-wordmark h-9 w-[100px] shrink-0"
+            role="img"
+            aria-label="lyrra"
+          />
         </div>
 
         {/* 主导航 */}

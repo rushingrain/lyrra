@@ -13,6 +13,15 @@
   --color-scrollbar-thumb: #c1c1c1;
 }
 
+/* 侧边栏品牌字标：SVG 轮廓作为遮罩，颜色跟随主题色变量。 */
+.sidebar-brand-wordmark {
+  display: inline-block;
+  background-color: var(--color-accent);
+  -webkit-mask: url("./assets/images/lyrra-wordmark.svg") center / contain no-repeat;
+  mask: url("./assets/images/lyrra-wordmark.svg") center / contain no-repeat;
+  transition: background-color 200ms ease;
+}
+
 /* 窗口顶部交通灯安全区：隐藏标题栏后，可拖动窗口（Wails 读取该自定义属性） */
 .titlebar-drag-region {
   --wails-draggable: drag;
