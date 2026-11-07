@@ -1,21 +1,11 @@
 import type { Playlist as PlaylistType } from '@/types'
+import { PlaylistPlayCount } from '@/components/common/PlaylistPlayCount'
 import { Summary } from '@/components/common/Summary'
 import type { SummaryLayout } from '@/components/common/Summary'
-import { Headphones } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 interface PlaylistListProps extends SummaryLayout {
   playlists: PlaylistType[]
-}
-
-function formatCount(count: number): string {
-  if (count >= 100000000) {
-    return `${(count / 100000000).toFixed(1)}亿`
-  }
-  if (count >= 10000) {
-    return `${(count / 10000).toFixed(1)}w`
-  }
-  return `${count}`
 }
 
 /**
@@ -42,10 +32,10 @@ export function PlaylistList({ playlists, ...layout }: PlaylistListProps) {
               className="aspect-square w-full object-cover transition-transform duration-300"
               loading="lazy"
             />
-            <span className="absolute left-1.5 top-1.5 flex items-center gap-1 text-xs font-medium text-white">
-              <Headphones size={12} />
-              <span>{formatCount(playlist.playCount)}</span>
-            </span>
+            <PlaylistPlayCount
+              count={playlist.playCount}
+              className="absolute left-1.5 top-1.5"
+            />
           </div>
           <p className="min-w-0 line-clamp-2 text-[14px] text-[var(--color-text-primary)]">
             {playlist.name}

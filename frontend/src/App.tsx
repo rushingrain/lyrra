@@ -10,6 +10,7 @@ import Cloud from './pages/Cloud'
 import Search from './pages/Search'
 import SongList from './pages/SongList'
 import Playlist from './pages/Playlist'
+import Playlists from './pages/Playlists'
 import Album from './pages/Album'
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
             <Route path="history" element={<History />} />
             <Route path="cloud" element={<Cloud />} />
             <Route path="search" element={<Search />} />
+            <Route path="playlists" element={<Playlists />} />
             <Route path="songs/:kind" element={<SongList />} />
             <Route path="songs/playlist/:globalId" element={<Playlist />} />
             <Route path="songs/album/:albumId" element={<Album />} />

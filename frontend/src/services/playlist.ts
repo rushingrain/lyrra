@@ -8,7 +8,7 @@ import {
 } from '../../wailsjs/go/playlist/Service'
 
 /**
- * 首页官方歌单接口
+ * 官方歌单接口
  *
  * 已接入后端（Wails 绑定 window.go.playlist.Service.*），
  * 后端调酷狗 /top/playlist 接口返回官方推荐歌单。
@@ -25,13 +25,16 @@ function isBackendAvailable(): boolean {
 }
 
 /**
- * 缓存有效期(ms)：官方歌单更新不频繁，缓存 1h 减少重复请求。
+ * 缓存有效期(ms)：官方歌单缓存 20 分钟，减少页面切换时的重复请求。
  * 首页在导航切换时反复挂载，直接拉接口会重复打后端。
  */
-const CACHE_TTL_MS = 60 * 60 * 1000
+const CACHE_TTL_MS = 20 * 60 * 1000
 
-/** 前端请求官方歌单的默认参数：与后端约定 pageSize=15、withSong=0 */
-export const DEFAULT_PLAYLIST_PAGE_SIZE = 15
+/**
+ * 官方歌单统一请求条数：首页与列表页共用同一批数据，避免推荐接口分两次请求时
+ * 返回不同集合，导致首页出现的歌单在列表页缺失。
+ */
+export const OFFICIAL_PLAYLIST_PAGE_SIZE = 15
 export const DEFAULT_PLAYLIST_WITH_SONG = 0
 
 /** 歌单歌曲分页大小：与后端默认页大小一致 */
@@ -55,15 +58,15 @@ interface PlaylistCacheEntry {
 const playlistCache = new Map<string, PlaylistCacheEntry>()
 
 /**
- * 获取首页官方歌单
+ * 获取官方歌单
  * @param pageSize 期望返回条数，默认 15
  * @param withSong 是否携带歌曲（0 不携带 / 1 携带），默认 0
- * 后端固定返回一批歌单，列数由 PlaylistRecommend 的 CSS Grid 自适应，不重复请求。
+ * 后端固定返回一批歌单，页面按各自的卡片布局渲染，不重复请求。
  * 缓存有效期内多次调用直接返回缓存。
  * @returns 纯浏览器开发回退 mock；Wails 下后端请求失败回退空数组（板块自动隐藏）
  */
 export async function GetHotPlaylists(
-  pageSize = DEFAULT_PLAYLIST_PAGE_SIZE,
+  pageSize = OFFICIAL_PLAYLIST_PAGE_SIZE,
   withSong = DEFAULT_PLAYLIST_WITH_SONG,
 ): Promise<Playlist[]> {
   if (!isBackendAvailable()) {
@@ -87,7 +90,7 @@ export async function GetHotPlaylists(
       })
       .catch(() => {
         // 后端请求失败：提示用户，并回退空数组让板块自动隐藏，下次挂载自动重试
-        toast.error('首页歌单加载失败，请稍后重试')
+        toast.error('官方歌单加载失败，请稍后重试')
         return [] as Playlist[]
       })
       .finally(() => {

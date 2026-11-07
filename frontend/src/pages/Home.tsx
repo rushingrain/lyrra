@@ -7,9 +7,9 @@ import { useAuthStore } from '@/stores/authStore'
 import type { Banner, Playlist, Song } from '@/types'
 import { getHomeBanners } from '@/services/banner'
 import {
-  DEFAULT_PLAYLIST_PAGE_SIZE,
   DEFAULT_PLAYLIST_WITH_SONG,
   GetHotPlaylists,
+  OFFICIAL_PLAYLIST_PAGE_SIZE,
 } from '@/services/playlist'
 import {
   DEFAULT_SONG_PAGE,
@@ -19,8 +19,8 @@ import {
   getHotSongs,
 } from '@/services/song'
 
-/** 官方歌单最多展示条数：与请求的 pageSize 一致，后端返回过多时截断，避免页面过长 */
-const MAX_PLAYLISTS = DEFAULT_PLAYLIST_PAGE_SIZE
+/** 首页只展示统一歌单数据的前 15 条，列表页展示完整结果 */
+const MAX_PLAYLISTS = OFFICIAL_PLAYLIST_PAGE_SIZE
 
 /** 首页歌曲板块固定展示 3 行（窄窗口 2 列 / 宽窗口 3 列） */
 const HOME_SONG_ROWS = 3
@@ -58,7 +58,7 @@ export default function Home() {
     getHomeBanners().then((data) => {
       if (!cancelled) setBanners(data)
     })
-    GetHotPlaylists(DEFAULT_PLAYLIST_PAGE_SIZE, DEFAULT_PLAYLIST_WITH_SONG).then((data) => {
+    GetHotPlaylists(OFFICIAL_PLAYLIST_PAGE_SIZE, DEFAULT_PLAYLIST_WITH_SONG).then((data) => {
       if (!cancelled) setPlaylists(data.slice(0, MAX_PLAYLISTS))
     })
     // 显式携带 page=1、pagesize 请求最新音乐
@@ -80,8 +80,8 @@ export default function Home() {
       <Section title="精选活动" clickable={false}>
         <BannerCarousel banners={banners} />
       </Section>
-      <Section title="官方歌单">
-        <PlaylistList minWidth={104} playlists={playlists} />
+      <Section title="歌单推荐" to="/playlists">
+        <PlaylistList minWidth={116} playlists={playlists} />
       </Section>
       {user && (
         <Section title="每日推荐" to="/songs/daily">
