@@ -1,32 +1,31 @@
 // src/components/common/Section.tsx
 import { ChevronRight } from 'lucide-react'
-import { ReactNode } from 'react'
-import { Link } from 'react-router-dom'
+import type { MouseEvent, ReactNode } from 'react'
 
 interface SectionProps {
   title: string
   children: ReactNode
   clickable?: boolean
-  /** 点击标题跳转的路由；不传时标题只是可点击的占位（目标页面尚未实现） */
-  to?: string
+  /** 点击标题执行操作；用于页面内切换等不涉及路由跳转的交互 */
+  onClick?: (event: MouseEvent<HTMLButtonElement>) => void
 }
 
-const TITLE_LINK_CLASS =
-  'flex cursor-pointer items-center font-bold text-lg text-[var(--color-text-primary)] transition-colors hover:opacity-80'
+const TITLE_ACTION_CLASS =
+  'flex cursor-pointer items-center border-0 bg-transparent p-0 text-left font-bold text-lg text-[var(--color-text-primary)] transition-colors hover:opacity-80'
 
-export function Section({ title, children, clickable = true, to }: SectionProps) {
+export function Section({ title, children, clickable = true, onClick }: SectionProps) {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        {clickable && to ? (
-          <Link to={to} className={TITLE_LINK_CLASS}>
+        {clickable && onClick ? (
+          <button type="button" className={TITLE_ACTION_CLASS} onClick={onClick}>
             {title}
             <ChevronRight size={20} />
-          </Link>
+          </button>
         ) : clickable ? (
           <a
             href="#"
-            className={TITLE_LINK_CLASS}
+            className={TITLE_ACTION_CLASS}
             onClick={(e) => e.preventDefault()}
           >
             {title}

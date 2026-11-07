@@ -1,3 +1,4 @@
+import { useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { SongGrid } from '@/components/common/SongGrid'
 import { Section } from '@/components/common/Section'
@@ -138,6 +139,19 @@ export default function Search() {
   // 分类写入 URL，从歌单详情返回时仍能恢复原分类；未指定时默认综合搜索。
   const activeTab = normalizeSearchTab(searchParams.get('tab'))
 
+  const switchTab = useCallback((tab: SearchTab, node: HTMLElement) => {
+    const nextParams = new URLSearchParams(searchParams)
+    if (tab === 'complex') {
+      nextParams.delete('tab')
+    } else {
+      nextParams.set('tab', tab)
+    }
+    // 替换当前历史记录，避免返回键在多个搜索分类之间来回切换
+    setSearchParams(nextParams, { replace: true })
+    // 新分类从头加载第一页，滚动位置也一并回到顶部
+    scrollAncestorToTop(node)
+  }, [searchParams, setSearchParams])
+
   const {
     result,
     isLoading,
@@ -172,18 +186,7 @@ export default function Search() {
                   ? 'border-b-(--color-accent) font-bold text-(--color-text-primary)'
                   : 'border-b-transparent font-normal text-(--color-text-secondary) hover:text-(--color-text-primary)'
                 }`}
-              onClick={(event) => {
-                const nextParams = new URLSearchParams(searchParams)
-                if (tab.key === 'complex') {
-                  nextParams.delete('tab')
-                } else {
-                  nextParams.set('tab', tab.key)
-                }
-                // 替换当前历史记录，避免返回键在多个搜索分类之间来回切换
-                setSearchParams(nextParams, { replace: true })
-                // 新分类从头加载第一页，滚动位置也一并回到顶部
-                scrollAncestorToTop(event.currentTarget)
-              }}
+              onClick={(event) => switchTab(tab.key, event.currentTarget)}
             >
               {tab.label}
             </button>
@@ -209,23 +212,33 @@ export default function Search() {
           )}
 
           {result.songs.length > 0 && (
-            <Section title="单曲" children={<SongGrid columns={2} songs={result.songs.slice(0, 6)} />} />
+            <Section title="单曲" onClick={(event) => switchTab('song', event.currentTarget)}>
+              <SongGrid columns={2} songs={result.songs.slice(0, 6)} />
+            </Section>
           )}
 
           {result.playlists.length > 0 && (
-            <Section title="歌单" children={<PlaylistList playlists={result.playlists} />} />
+            <Section title="歌单" onClick={(event) => switchTab('special', event.currentTarget)}>
+              <PlaylistList playlists={result.playlists} />
+            </Section>
           )}
 
           {result.albums.length > 0 && (
-            <Section title="专辑" children={<AlbumList albums={result.albums} />} />
+            <Section title="专辑" onClick={(event) => switchTab('album', event.currentTarget)}>
+              <AlbumList albums={result.albums} />
+            </Section>
           )}
 
           {result.artists.length > 0 && (
-            <Section title="歌手" children={<ArtistList artists={result.artists} />} />
+            <Section title="歌手" onClick={(event) => switchTab('author', event.currentTarget)}>
+              <ArtistList artists={result.artists} />
+            </Section>
           )}
 
           {result.mvs.length > 0 && (
-            <Section title="MV" children={<MvList mvs={result.mvs} />} />
+            <Section title="MV" onClick={(event) => switchTab('mv', event.currentTarget)}>
+              <MvList mvs={result.mvs} />
+            </Section>
           )}
         </div>
       )}

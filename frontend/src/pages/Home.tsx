@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { BannerCarousel } from '@/components/common/BannerCarousel'
 import { PlaylistList } from '@/components/common/PlaylistList'
 import { Section } from '@/components/common/Section'
@@ -26,6 +27,7 @@ const MAX_PLAYLISTS = OFFICIAL_PLAYLIST_PAGE_SIZE
 const HOME_SONG_ROWS = 3
 
 export default function Home() {
+  const navigate = useNavigate()
   // 登录态：每日推荐属于用户级推荐，未登录时不展示、不请求
   const user = useAuthStore((s) => s.user)
   // 首页 banner：挂载时从后端拉取真实数据，失败时服务层回退（空数组/纯浏览器 mock）
@@ -80,18 +82,18 @@ export default function Home() {
       <Section title="精选活动" clickable={false}>
         <BannerCarousel banners={banners} />
       </Section>
-      <Section title="歌单推荐" to="/playlists">
+      <Section title="歌单推荐" onClick={() => navigate('/playlists')}>
         <PlaylistList minWidth={116} playlists={playlists} />
       </Section>
       {user && (
-        <Section title="每日推荐" to="/songs/daily">
+        <Section title="每日推荐" onClick={() => navigate('/songs/daily')}>
           <SongGrid songs={dailySongs} columns="responsive" rows={HOME_SONG_ROWS} />
         </Section>
       )}
-      <Section title="最新音乐" to="/songs/new">
+      <Section title="最新音乐" onClick={() => navigate('/songs/new')}>
         <SongGrid songs={newSongs} columns="responsive" rows={HOME_SONG_ROWS} />
       </Section>
-      <Section title="热门音乐" to="/songs/hot">
+      <Section title="热门音乐" onClick={() => navigate('/songs/hot')}>
         <SongGrid songs={hotSongs} columns="responsive" rows={HOME_SONG_ROWS} />
       </Section>
     </div>
