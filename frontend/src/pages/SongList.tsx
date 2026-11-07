@@ -45,7 +45,7 @@ export default function SongList() {
     if (!isSongListKind(kind)) return
     let cancelled = false
     setSongs([])
-    // 与首页使用同一组请求参数：song 服务按 key 缓存 1h，
+    // 与首页使用同一组请求参数：song 服务按 key 缓存 20 分钟，
     // 从首页跳转过来直接命中缓存，不会重复请求后端。
     const request =
       kind === 'new'

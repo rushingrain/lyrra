@@ -8,6 +8,7 @@ import { PlaylistPanel } from '@/components/business/PlaylistPanel'
 import { LyricsView } from '@/components/business/LyricsView'
 import { NowPlayingBackdrop } from '@/components/business/NowPlayingBackdrop'
 import { getCurrentUser, logout } from '@/services/auth'
+import { clearDailyRecommendCache } from '@/services/song'
 import { toggleWindowMaximise } from '@/services/window'
 import type { LoginResult } from '@/types'
 import { mockPlayHistory } from '@/data/mock'
@@ -42,7 +43,10 @@ export function MainLayout() {
 
   // 启动时恢复已保存的登录会话
   useEffect(() => {
-    getCurrentUser().then(setUser)
+    getCurrentUser().then((currentUser) => {
+      clearDailyRecommendCache()
+      setUser(currentUser)
+    })
   }, [setUser])
 
   // 启动时恢复本地播放状态（播放模式 / 音量 / 播放队列 / 当前歌曲）
@@ -52,6 +56,7 @@ export function MainLayout() {
 
   /** 登录成功：由 TopBar 透传 LoginModal 回填的用户信息 */
   const handleLoginSuccess = useCallback((u: LoginResult['user']) => {
+    clearDailyRecommendCache()
     setUser(u)
   }, [setUser])
 
@@ -73,6 +78,7 @@ export function MainLayout() {
         toast.error('退出登录失败，请稍后重试')
       })
       .finally(() => {
+        clearDailyRecommendCache()
         setUser(null)
         // 当前歌曲随登出一起清掉，歌词页失去内容，同时收起
         setShowLyrics(false)

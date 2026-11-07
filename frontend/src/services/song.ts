@@ -28,10 +28,10 @@ function isBackendAvailable(): boolean {
 }
 
 /**
- * 缓存有效期(ms)：新歌榜单更新不频繁，缓存 1h 减少重复请求。
+ * 缓存有效期(ms)：首页与歌曲列表页共用，缓存 20 分钟减少重复请求。
  * 首页在导航切换时反复挂载，直接拉接口会重复打后端。
  */
-const CACHE_TTL_MS = 60 * 60 * 1000
+const CACHE_TTL_MS = 20 * 60 * 1000
 
 /** 前端请求最新音乐的默认参数 */
 export const DEFAULT_SONG_PAGE = 1
@@ -56,7 +56,8 @@ const songCache = new Map<string, SongCacheEntry>()
 
 /**
  * 带缓存的请求：命中缓存直接返回；进行中请求去重；失败 toast 并回退空数组。
- * 缓存按 key 区分（最新音乐按 page:pagesize，热门音乐固定 "hot"），条目有界，无泄漏。
+ * 缓存按 key 区分（最新音乐按 page:pagesize，热门音乐固定 "hot"，每日推荐固定 "daily"），
+ * 条目有界，无泄漏。
  */
 async function cachedRequest(
   key: string,
@@ -92,7 +93,7 @@ async function cachedRequest(
 /**
  * 获取首页最新音乐
  * @param page 页码，默认 1
- * @param pagesize 每页条数，默认 15
+ * @param pagesize 每页条数，默认 30
  * 缓存有效期内多次调用直接返回缓存。
  * @returns 纯浏览器开发回退 mock；Wails 下后端请求失败回退空数组（板块自动隐藏）
  */
@@ -126,27 +127,24 @@ export function getHotSongs(): Promise<Song[]> {
 /**
  * 获取每日推荐（EverydayRecommend，按登录账号返回个性化推荐）。
  *
- * 只在登录后调用；不做本地缓存（避免切换账号后命中上一个账号的数据），
- * 仅在途请求去重（开发模式下 StrictMode 会重复触发 effect）。
+ * 只在登录后调用。缓存与首页、列表页共享；登录态变化时由 clearDailyRecommendCache
+ * 主动清空，避免切换账号后命中上一个账号的数据。
  * @returns 纯浏览器开发回退 mock；Wails 下请求失败提示后返回空数组（板块不展示内容）
  */
-let dailyRecommendInflight: Promise<Song[]> | null = null
+const DAILY_RECOMMEND_CACHE_KEY = 'daily'
 
 export function getDailyRecommendSongs(): Promise<Song[]> {
   if (!isBackendAvailable()) {
     return Promise.resolve(mockSongs)
   }
-  if (dailyRecommendInflight) return dailyRecommendInflight
+  return cachedRequest(DAILY_RECOMMEND_CACHE_KEY, '每日推荐加载失败，请稍后重试', () =>
+    GetDailyRecommendSongs(),
+  )
+}
 
-  dailyRecommendInflight = GetDailyRecommendSongs()
-    .catch(() => {
-      toast.error('每日推荐加载失败，请稍后重试')
-      return [] as Song[]
-    })
-    .finally(() => {
-      dailyRecommendInflight = null
-    })
-  return dailyRecommendInflight
+/** 登录状态变化时清空账号相关的每日推荐缓存。 */
+export function clearDailyRecommendCache(): void {
+  songCache.delete(DAILY_RECOMMEND_CACHE_KEY)
 }
 
 /**

@@ -30,11 +30,11 @@ export default function Home() {
   const user = useAuthStore((s) => s.user)
   // 首页 banner：挂载时从后端拉取真实数据，失败时服务层回退（空数组/纯浏览器 mock）
   const [banners, setBanners] = useState<Banner[]>([])
-  // 首页官方歌单：同上，服务层缓存 1h，导航切换不重复请求
+  // 首页官方歌单：同上，服务层缓存 20 分钟，导航切换不重复请求
   const [playlists, setPlaylists] = useState<Playlist[]>([])
-  // 首页最新音乐：真实 TopSong 数据，服务层缓存 1h
+  // 首页最新音乐：真实 TopSong 数据，服务层缓存 20 分钟
   const [newSongs, setNewSongs] = useState<Song[]>([])
-  // 首页热门音乐：真实 TopCardYouth 数据，服务层缓存 1h
+  // 首页热门音乐：真实 TopCardYouth 数据，服务层缓存 20 分钟
   const [hotSongs, setHotSongs] = useState<Song[]>([])
   // 首页每日推荐：按登录账号返回，登录态变化时重新拉取
   const [dailySongs, setDailySongs] = useState<Song[]>([])
