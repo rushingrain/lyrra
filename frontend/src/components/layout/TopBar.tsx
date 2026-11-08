@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Search, User, Settings, Shirt, Mail, ChevronDown, Power } from 'lucide-react'
 import { LoginModal } from '@/components/business/LoginModal'
@@ -26,6 +26,7 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
   const [loginModalOpen, setLoginModalOpen] = useState(false)
   const [cardOpen, setCardOpen] = useState(false)
   const accountRef = useRef<HTMLDivElement>(null)
+  const closeLoginModal = useCallback(() => setLoginModalOpen(false), [])
 
   // 登录态切换（登录/登出）时关闭弹出的个人卡片；
   // 仅比较登录态本身，用户信息刷新导致对象引用变化时不应关闭卡片
@@ -224,7 +225,7 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
       {/* 未登录时点击账号按钮弹出的扫码登录弹窗 */}
       <LoginModal
         open={loginModalOpen}
-        onClose={() => setLoginModalOpen(false)}
+        onClose={closeLoginModal}
         onLoginSuccess={onLoginSuccess}
       />
     </div>

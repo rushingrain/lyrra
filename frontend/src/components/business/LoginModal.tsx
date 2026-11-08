@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Loader2, RefreshCw, Smartphone, X } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
@@ -133,6 +133,8 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
   const [qrInfo, setQrInfo] = useState<QrLoginResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<QrLoginStatus>('pending')
+  // 父组件更新登录态会引起重渲染；确保同一次扫码确认只处理一次
+  const loginHandledRef = useRef(false)
 
   /** 获取二维码（接入后端后，请求逻辑收敛在 services/auth 中） */
   const loadQrCode = useCallback(async () => {
@@ -151,6 +153,7 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
   // 打开弹窗时：默认手机号登录，并预加载二维码
   useEffect(() => {
     if (open) {
+      loginHandledRef.current = false
       setMode('phone')
       loadQrCode()
     }
@@ -193,13 +196,14 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
 
   // 扫码确认后视为登录成功：获取用户信息 → 通知父组件更新登录态 → 关闭弹窗
   useEffect(() => {
-    if (status !== 'confirmed') return
+    if (!open || status !== 'confirmed' || loginHandledRef.current) return
+    loginHandledRef.current = true
     getCurrentUser()
       .then((user) => {
         if (user) onLoginSuccess?.(user)
       })
       .finally(() => onClose())
-  }, [status, onClose, onLoginSuccess])
+  }, [open, status, onClose, onLoginSuccess])
 
   // ESC 关闭
   useEffect(() => {
