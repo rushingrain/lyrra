@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import toast from 'react-hot-toast'
 import { ArrowLeft, Search, User, Settings, Shirt, Mail, ChevronDown, Power } from 'lucide-react'
 import { LoginModal } from '@/components/business/LoginModal'
 import type { LoginResult } from '@/types'
@@ -65,6 +66,11 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
     if (e.key === 'Enter') {
       const query = (e.target as HTMLInputElement).value.trim()
       if (query) {
+        if (!user) {
+          toast.error('登录后启用搜索功能')
+          setLoginModalOpen(true)
+          return
+        }
         navigate(`/search?q=${encodeURIComponent(query)}`)
       }
     }
