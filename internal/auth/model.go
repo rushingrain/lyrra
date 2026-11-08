@@ -27,6 +27,8 @@ type UserInfo struct {
 	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
 	IsVip    bool   `json:"isVip"`
+	// 登录会话过期时间戳(ms)，前端据此在应用持续运行时自动退出登录
+	SessionExpiresAt int64 `json:"sessionExpiresAt"`
 	// 好友 / 关注 / 粉丝数（来自 user_detail 接口 data.friends/follows/fans）
 	Friends int `json:"friends"`
 	Follows int `json:"follows"`

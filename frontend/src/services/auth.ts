@@ -23,6 +23,8 @@ import {
 
 /** 二维码有效期（毫秒），与后端 5 分钟过期保持一致，仅 mock 使用 */
 const QR_EXPIRES_MS = 5 * 60 * 1000
+/** 登录有效期（毫秒），与后端 sessionTTL 保持一致，仅 mock 使用 */
+const LOGIN_SESSION_MS = 5 * 24 * 60 * 60 * 1000
 
 /** Wails 运行时是否可用（真实后端是否存在） */
 function isBackendAvailable(): boolean {
@@ -71,6 +73,7 @@ export async function getCurrentUser(): Promise<LoginResult['user'] | null> {
       nickname: '测试用户',
       avatar: 'https://imge.kugou.com/common/3_0_0.jpg',
       isVip: true,
+      sessionExpiresAt: Date.now() + LOGIN_SESSION_MS,
       friends: 3,
       follows: 10,
       fans: 100,

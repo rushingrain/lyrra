@@ -36,8 +36,14 @@ type Service struct {
 // 不发起网络请求，因此不会阻塞应用启动。
 // 会话有效性校验延迟到首次 GetCurrentUser 调用。
 func New(log *slog.Logger) (*Service, error) {
+	session, _, expired := loadSession()
+	if expired {
+		if err := playerstate.ClearAccount(); err != nil {
+			log.Warn("failed to clear expired player account state", "err", err.Error())
+		}
+	}
 	client, err := kgapi.NewClient(
-		kg.WithCookie(LoadSession()),
+		kg.WithCookie(session),
 		// TODO: token 续期功能暂未启用；后续接入续期时改为 kg.WithAutoRefresh(true)，
 		// 并处理会话过期（登录态失效）时的行为。
 		kg.WithAutoRefresh(false),
@@ -125,8 +131,16 @@ func (s *Service) GetCurrentUser() (*UserInfo, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// TODO: 会话过期处理行为暂未定义（token 续期功能未启用）。
-	// 当前行为：UserDetail 失败即视为未登录，前端静默进入未登录态。
+	_, expiresAt, _ := loadSession()
+	if expiresAt == 0 {
+		// 会话在应用运行期间过期时，内存里的 SDK client 仍持有旧 cookie，需要主动清理。
+		if s.client.Cookie()["token"] != "" || s.client.Cookie()["userid"] != "" {
+			s.clearLoginState()
+		}
+		return nil, ErrNotLoggedIn
+	}
+
+	// UserDetail 失败也视为未登录，前端静默进入未登录态。
 	resp, err := s.client.UserDetail(context.Background(), kg.UserDetailRequest{})
 	if err != nil {
 		s.log.Warn("failed to fetch user info, treating as not logged in", "err", err.Error())
@@ -146,11 +160,12 @@ func (s *Service) GetCurrentUser() (*UserInfo, error) {
 	// 以及好友/关注/粉丝数 data.friends / data.follows / data.fans）
 	data := kgapi.RecordOf(resp.Body["data"])
 	user := &UserInfo{
-		Nickname: pickString(data, "nickname", "k_nickname", "fx_nickname"),
-		Avatar:   imageurl.Normalize(pickString(data, "pic", "k_pic", "fx_pic", "avatar")),
-		Friends:  pickInt(data, "friends"),
-		Follows:  pickInt(data, "follows"),
-		Fans:     pickInt(data, "fans"),
+		Nickname:         pickString(data, "nickname", "k_nickname", "fx_nickname"),
+		Avatar:           imageurl.Normalize(pickString(data, "pic", "k_pic", "fx_pic", "avatar")),
+		SessionExpiresAt: expiresAt,
+		Friends:          pickInt(data, "friends"),
+		Follows:          pickInt(data, "follows"),
+		Fans:             pickInt(data, "fans"),
 	}
 	// VIP 判断用权威接口 UserVipDetail：概念版 VIP 在 data.busi_vip 中 busi_type=="concept" 的条目。
 	// （UserDetail 的 data.vip_type / cookie 的 vip_type 对概念版账号恒为 0，不能用于判断）
@@ -183,6 +198,12 @@ func (s *Service) Logout() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	s.clearLoginState()
+	s.log.Info("logged out")
+	return nil
+}
+
+func (s *Service) clearLoginState() {
 	s.client.SetCookie("token", "")
 	s.client.SetCookie("userid", "")
 	s.client.SetCookie("dfid", "")
@@ -193,8 +214,6 @@ func (s *Service) Logout() error {
 	if err := playerstate.ClearAccount(); err != nil {
 		s.log.Warn("failed to clear player account state", "err", err.Error())
 	}
-	s.log.Info("logged out")
-	return nil
 }
 
 // GetUserPlaylists 拉取当前登录用户的歌单列表（/v7/get_all_list）。

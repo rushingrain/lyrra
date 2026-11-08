@@ -111,6 +111,8 @@ export interface LoginResult {
     nickname: string
     avatar: string
     isVip: boolean
+    /** 登录会话过期时间戳(ms)，由后端统一控制 */
+    sessionExpiresAt?: number
     /** 好友 / 关注 / 粉丝数（来自 user_detail 接口，未返回时缺省） */
     friends?: number
     follows?: number

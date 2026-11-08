@@ -60,6 +60,15 @@ export function MainLayout() {
     setUser(u)
   }, [setUser])
 
+  const clearAuthState = useCallback(() => {
+    clearDailyRecommendCache()
+    setUser(null)
+    // 当前歌曲随登录态一起清掉，歌词页失去内容，同时收起
+    setShowLyrics(false)
+    // 后端已删除账号级播放数据，前端同步复位，避免旧队列继续显示或被回写
+    usePlayerStore.getState().resetAccountData()
+  }, [setUser])
+
   const closePlaylist = useCallback(() => setShowPlaylist(false), [])
   const togglePlaylist = useCallback(() => setShowPlaylist((open) => !open), [])
   const closeLyrics = useCallback(() => setShowLyrics(false), [])
@@ -77,15 +86,31 @@ export function MainLayout() {
       .catch(() => {
         toast.error('退出登录失败，请稍后重试')
       })
+      .finally(clearAuthState)
+  }, [clearAuthState])
+
+  /** 会话到期：清理本地状态并提示重新登录 */
+  const handleSessionExpired = useCallback(() => {
+    logout()
+      .catch(() => {})
       .finally(() => {
-        clearDailyRecommendCache()
-        setUser(null)
-        // 当前歌曲随登出一起清掉，歌词页失去内容，同时收起
-        setShowLyrics(false)
-        // 后端已在 Logout 里删掉账号级播放数据，前端同步复位，避免旧队列继续显示或被回写
-        usePlayerStore.getState().resetAccountData()
+        clearAuthState()
+        toast.error('登录已过期，请重新登录')
       })
-  }, [setUser])
+  }, [clearAuthState])
+
+  // 前后端都会校验五天有效期；这里负责应用持续运行跨过过期时间点时立即退出登录
+  useEffect(() => {
+    const expiresAt = user?.sessionExpiresAt
+    if (!expiresAt) return
+    const remaining = expiresAt - Date.now()
+    if (remaining <= 0) {
+      handleSessionExpired()
+      return
+    }
+    const timer = window.setTimeout(handleSessionExpired, remaining)
+    return () => window.clearTimeout(timer)
+  }, [user?.sessionExpiresAt, handleSessionExpired])
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
