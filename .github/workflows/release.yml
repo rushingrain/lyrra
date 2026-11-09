@@ -1,0 +1,242 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  WAILS_VERSION: v2.13.0
+
+jobs:
+  validate:
+    name: Validate release tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate version and main ancestry
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          version="${tag#v}"
+
+          if [[ ! "$version" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo "::error::Release tags must look like v1.2.3, got ${tag}"
+            exit 1
+          fi
+
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tag ${tag} points to a commit that is not on main"
+            exit 1
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "Validated ${tag} (${version}) on main"
+
+  build-macos:
+    name: Build macOS universal
+    needs: validate
+    runs-on: macos-latest
+    timeout-minutes: 45
+    env:
+      GOWORK: "off"
+      VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${WAILS_VERSION}
+
+      - name: Add Go binaries to PATH
+        run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Stamp application version
+        run: node .github/scripts/set-wails-version.mjs "$VERSION"
+
+      - name: Build macOS application
+        run: wails build -clean -trimpath -platform darwin/universal
+
+      - name: Verify macOS application version
+        run: |
+          actual_version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' build/bin/lyrra.app/Contents/Info.plist)"
+          if [[ "$actual_version" != "$VERSION" ]]; then
+            echo "::error::Expected macOS version ${VERSION}, got ${actual_version}"
+            exit 1
+          fi
+
+      - name: Package macOS application
+        run: |
+          mkdir -p release
+          ditto -c -k --sequesterRsrc --keepParent \
+            build/bin/lyrra.app \
+            "release/lyrra-v${VERSION}-macos-universal.zip"
+
+      - name: Upload macOS artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: release/*.zip
+          if-no-files-found: error
+          retention-days: 7
+
+  build-windows:
+    name: Build Windows amd64
+    needs: validate
+    runs-on: windows-latest
+    timeout-minutes: 45
+    env:
+      GOWORK: "off"
+      VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Wails CLI
+        shell: pwsh
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@${env:WAILS_VERSION}
+
+      - name: Add Go binaries to PATH
+        shell: pwsh
+        run: Join-Path (go env GOPATH) "bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Install NSIS
+        shell: pwsh
+        run: |
+          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+            choco install nsis --no-progress -y
+          }
+
+      - name: Stamp application version
+        shell: pwsh
+        run: node .github/scripts/set-wails-version.mjs $env:VERSION
+
+      - name: Build Windows application and installer
+        shell: pwsh
+        run: wails build -clean -trimpath -platform windows/amd64 -nsis
+
+      - name: Verify Windows application version
+        shell: pwsh
+        run: |
+          $actualVersion = (Get-Item "build\bin\lyrra.exe").VersionInfo.ProductVersion
+          if (-not $actualVersion.StartsWith($env:VERSION)) {
+            throw "Expected Windows version $env:VERSION, got $actualVersion"
+          }
+
+      - name: Package Windows artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          Copy-Item "build\bin\lyrra-amd64-installer.exe" "release\lyrra-v$env:VERSION-windows-amd64-installer.exe"
+          Copy-Item "build\bin\lyrra.exe" "release\lyrra-v$env:VERSION-windows-amd64-portable.exe"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-amd64
+          path: release/*.exe
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Create draft GitHub Release
+    needs:
+      - validate
+      - build-macos
+      - build-windows
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: release
+          merge-multiple: true
+
+      - name: Generate SHA-256 checksums
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd release
+          sha256sum lyrra-v"${VERSION}"-* > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: lyrra v${{ needs.validate.outputs.version }}
+          draft: true
+          prerelease: false
+          generate_release_notes: true
+          fail_on_unmatched_files: true
+          body: |
+            ## 下载
+
+            - macOS：`lyrra-v${{ needs.validate.outputs.version }}-macos-universal.zip`，支持 Intel 与 Apple Silicon。
+            - Windows：优先下载 `lyrra-v${{ needs.validate.outputs.version }}-windows-amd64-installer.exe`；免安装版为 `lyrra-v${{ needs.validate.outputs.version }}-windows-amd64-portable.exe`。
+
+            ## 安装说明
+
+            当前构建未使用 Apple Developer 证书或 Windows 代码签名证书。
+
+            - macOS 首次打开时，请右键应用并选择“打开”。若系统仍阻止运行，需要在“系统设置 > 隐私与安全性”中允许。
+            - Windows 若出现 SmartScreen 提示，请选择“更多信息”，再选择“仍要运行”。
+
+            ## 文件校验
+
+            下载后可使用 `SHA256SUMS.txt` 校验安装包完整性。
+
+            本 Release 先以草稿形式创建，维护者确认安装包可用后再公开。
+          files: |
+            release/*.zip
+            release/*.exe
+            release/SHA256SUMS.txt

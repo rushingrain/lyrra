@@ -132,10 +132,34 @@ wails generate module
 
 `frontend/wailsjs/` 是生成目录，不应手动修改或提交。
 
+## 发布版本
+
+发布由 GitHub Actions 自动完成：
+
+- 提交或合并到 `main` 时只运行 CI，不创建 Release。
+- 推送形如 `v1.0.0` 的 tag 时，先确认 tag 指向 `main` 上的提交，再构建 macOS Universal 和 Windows amd64 产物，最后创建一个 GitHub Release 草稿。
+- Release 草稿需要维护者下载并验证安装包后，在 GitHub 页面手动点击发布。
+
+发布一个新版本：
+
+```bash
+git switch main
+git pull --ff-only
+git tag -a v1.0.0 -m "lyrra v1.0.0"
+git push origin v1.0.0
+```
+
+必须在 workflow 已经合并到 `main` 后再推送 tag。构建期间由 tag 自动写入应用版本号，不需要手动修改 `wails.json`。
+
+若首次构建失败且必须修改 workflow，只能在 Release 尚未公开时删除该 tag，修复并合并后再重新打 tag；不要移动已经公开的版本 tag。
+
+当前发布产物没有 Apple Developer 签名/公证和 Windows 代码签名，用户首次安装时可能看到系统安全提示，Release 说明中会给出对应操作方式。
+
 ## 项目结构
 
 ```text
 .
+├── .github/                # CI 检查与 tag 发布 workflow
 ├── main.go                 # Wails 启动、服务注册与单实例配置
 ├── app.go                  # 窗口级 Wails 方法
 ├── internal/               # Go 业务服务、DTO、SDK 适配与持久化
