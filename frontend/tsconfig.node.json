@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "outDir": "./node_modules/.tsc/node",
+    "tsBuildInfoFile": "./node_modules/.tsc/node.tsbuildinfo",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": [
+    "vite.config.ts"
+  ]
+}

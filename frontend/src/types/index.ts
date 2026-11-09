@@ -1,0 +1,121 @@
+export interface Song {
+  id: number
+  name: string
+  artist: string
+  /** 专辑名；搜索等接口不返回，消费端按需做空值守卫 */
+  album?: string
+  coverUrl: string
+  /** 时长(ms)；部分数据源（如搜索）不返回，播放器已做 ?? 0 兜底 */
+  duration?: number
+  /** 播放用文件 hash，只用于定位歌曲（实际文件由播放品质参数决定）：默认取标准档，缺档时向上兜底；为空表示该条目没有可用音质，需提示用户 */
+  hash?: string
+  /** 最高音质标签，如 "Hi-Res"、"无损" */
+  quality?: string
+  /** 是否为原唱 */
+  isOriginal?: boolean
+  /** 歌曲标签，如 "昨日超万人播放"、"上周播放top1W"；首页数据源可能不返回，消费端需做空值守卫 */
+  tags?: string[]
+  /** 歌词搜索命中的歌词片段；仅歌词搜索返回 */
+  matchedLyric?: string
+}
+
+export interface Playlist {
+  id: number
+  /** 上游全局歌单 ID，用于获取歌单歌曲 */
+  globalCollectionId: string
+  name: string
+  coverUrl: string
+  description: string
+  creator: string
+  creatorAvatar?: string
+  tags?: string[]
+  /** 创建时间，上游格式如 "2023-03-31 00:00:00" */
+  publishTime?: string
+  /** 歌单搜索命中的歌曲名；仅普通歌单搜索返回 */
+  containedSong?: string
+  playCount: number
+  songCount?: number
+}
+
+export interface Album {
+  id: number
+  name: string
+  artist: string
+  coverUrl: string
+  date: string
+  /** 专辑简介；详情接口返回 */
+  description?: string
+  /** 专辑类型，如「录音室专辑」；详情接口返回 */
+  type?: string
+  /** 专辑语言，如「国语」；详情接口返回 */
+  language?: string
+}
+
+export interface Artist {
+  id: number
+  name: string
+  songCount: number
+  avatarUrl: string
+  genre: string
+  fans: number
+}
+
+export interface Mv {
+  id: number
+  name: string
+  artist: string
+  coverUrl: string
+}
+
+export interface Banner {
+  id: string
+  imageUrl: string
+  title: string
+  linkUrl: string
+}
+
+/** 用户歌单（侧边栏展示，来自 /v7/get_all_list） */
+export interface UserPlaylist {
+  id: string
+  name: string
+  songCount: number
+  coverUrl: string
+  /** 1=默认收藏，2=我喜欢，0=普通歌单 */
+  isDefault: number
+  /** 0=创建的歌单，1=收藏的歌单 */
+  type: number
+}
+
+export interface PlayHistory {
+  song: Song
+  playedAt: string
+}
+
+/** 扫码登录 - 获取二维码的响应 */
+export interface QrLoginResponse {
+  /** 二维码唯一标识，用于轮询登录状态 */
+  qrKey: string
+  /** 二维码图片地址 */
+  qrUrl: string
+  /** 二维码过期时间戳(ms) */
+  expiresAt: number
+}
+
+/** 扫码登录状态：未扫码 / 已扫码待确认 / 已确认 / 已过期 */
+export type QrLoginStatus = 'pending' | 'scanned' | 'confirmed' | 'expired'
+
+/** 登录成功后的用户信息与凭证 */
+export interface LoginResult {
+  token: string
+  user: {
+    nickname: string
+    avatar: string
+    isVip: boolean
+    /** 登录会话过期时间戳(ms)，由后端统一控制 */
+    sessionExpiresAt?: number
+    /** 好友 / 关注 / 粉丝数（来自 user_detail 接口，未返回时缺省） */
+    friends?: number
+    follows?: number
+    fans?: number
+  }
+}

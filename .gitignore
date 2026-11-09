@@ -1,0 +1,16 @@
+build/bin
+node_modules
+go.work
+go.work.sum
+frontend/dist
+frontend/wailsjs/
+/lyrra
+.DS_Store
+frontend/tsconfig.tsbuildinfo
+
+.claude
+tmp
+
+.vscode
+
+diff.txt

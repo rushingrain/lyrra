@@ -1,0 +1,49 @@
+package auth
+
+// 登录相关 DTO，json tag 与前端 frontend/src/types/index.ts 对齐。
+
+// QrLoginResponse 扫码登录 - 获取二维码的响应
+type QrLoginResponse struct {
+	// 二维码唯一标识，用于轮询登录状态
+	QrKey string `json:"qrKey"`
+	// 二维码图片地址（后端直接返回 data:image/png;base64,...，前端 <img> 可直接渲染）
+	QrUrl string `json:"qrUrl"`
+	// 二维码过期时间戳(ms)
+	ExpiresAt int64 `json:"expiresAt"`
+}
+
+// QrLoginStatus 扫码登录状态：未扫码 / 已扫码待确认 / 已确认 / 已过期
+type QrLoginStatus string
+
+const (
+	QrLoginPending   QrLoginStatus = "pending"
+	QrLoginScanned   QrLoginStatus = "scanned"
+	QrLoginConfirmed QrLoginStatus = "confirmed"
+	QrLoginExpired   QrLoginStatus = "expired"
+)
+
+// UserInfo 当前登录用户信息
+type UserInfo struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+	IsVip    bool   `json:"isVip"`
+	// 登录会话过期时间戳(ms)，前端据此在应用持续运行时自动退出登录
+	SessionExpiresAt int64 `json:"sessionExpiresAt"`
+	// 好友 / 关注 / 粉丝数（来自 user_detail 接口 data.friends/follows/fans）
+	Friends int `json:"friends"`
+	Follows int `json:"follows"`
+	Fans    int `json:"fans"`
+}
+
+// UserPlaylist 用户歌单 DTO（侧边栏展示）。
+// json tag 与前端 frontend/src/types/index.ts 的 UserPlaylist 类型对齐。
+type UserPlaylist struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	SongCount int    `json:"songCount"`
+	CoverURL  string `json:"coverUrl"`
+	// 歌单类型：1=默认收藏，2=我喜欢，0=普通歌单
+	IsDefault int `json:"isDefault"`
+	// 归属：0=创建的歌单，1=收藏的歌单
+	Type int `json:"type"`
+}

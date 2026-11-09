@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <!-- macOS 图标主体为 824×824，四周保留 100px 透明安全区。 -->
+  <rect x="100" y="100" width="824" height="824" rx="185.4" fill="#FFFFFF"/>
+
+  <g transform="translate(512 512) scale(28) translate(-12 -12)" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m19 6-5.2-3.9a.5.5 0 0 0-.8.4V18"/>
+    <circle cx="9" cy="18" r="4"/>
+  </g>
+</svg>

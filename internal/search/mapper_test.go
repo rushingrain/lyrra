@@ -1,0 +1,325 @@
+package search
+
+import (
+	"testing"
+
+	"lyrra/internal/play"
+)
+
+func TestMapComplexSearch(t *testing.T) {
+	result := mapComplexSearch(map[string]any{
+		"lists": []any{
+			map[string]any{
+				"type": "song",
+				"lists": []any{
+					map[string]any{
+						"MixSongID":  "33138036",
+						"SongName":   "是时候",
+						"SingerName": "孙燕姿",
+						"AlbumName":  "史上最伤感的网络情歌",
+						"Image":      "https://imge.kugou.com/stdmusic/400/cover.jpg",
+						"Duration":   238,
+						"SQFileHash": "sq-hash",
+						"SQExtName":  "flac",
+						"FileHash":   "song-hash",
+						"SQBitrate":  702,
+						"IsOriginal": 0,
+						"TagContent": "热门|经典",
+					},
+				},
+			},
+			map[string]any{
+				"type": "collect",
+				"lists": []any{
+					map[string]any{
+						"gid":              "collection_3_1461534493_8_0",
+						"specialid":        7215278,
+						"specialname":      "是时候",
+						"nickname":         "孙燕姿",
+						"img":              "https://example.com/playlist.jpg",
+						"intro":            "简介",
+						"contain":          "是时候",
+						"publish_time":     "2024-05-06 11:01:11",
+						"total_play_count": "1994007",
+						"song_count":       40,
+					},
+				},
+			},
+			map[string]any{
+				"type": "album",
+				"lists": []any{
+					map[string]any{
+						"albumid":      2997292,
+						"albumname":    "是时候",
+						"singer":       "孙燕姿",
+						"img":          "https://example.com/album.jpg",
+						"publish_time": "2011-03-08 00:00:00",
+					},
+				},
+			},
+			map[string]any{
+				"type": "author",
+				"lists": []any{
+					map[string]any{
+						"AuthorId":   1090689,
+						"AuthorName": "孙燕姿",
+						"Avatar":     "https://example.com/avatar.jpg",
+						"AudioCount": 15,
+						"FansNum":    27,
+					},
+				},
+			},
+			map[string]any{
+				"type": "mv",
+				"lists": []any{
+					map[string]any{
+						"MvID":       67468,
+						"MvName":     "是时候",
+						"SingerName": "孙燕姿",
+						"Pic":        "https://example.com/mv.jpg",
+					},
+				},
+			},
+		},
+	}, play.PriorityForAny(play.DefaultQuality))
+
+	if len(result.Songs) != 1 || result.Songs[0].ID != 33138036 {
+		t.Fatalf("unexpected songs: %+v", result.Songs)
+	}
+	if result.Songs[0].Duration != 238000 || result.Songs[0].Quality != "无损" {
+		t.Fatalf("unexpected song fields: %+v", result.Songs[0])
+	}
+	// 默认档位是标准，取扁平字段 FileHash
+	if result.Songs[0].Hash != "song-hash" {
+		t.Fatalf("hash = %q, want song-hash", result.Songs[0].Hash)
+	}
+	if len(result.Playlists) != 1 {
+		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
+	}
+	playlist := result.Playlists[0]
+	if playlist.ID != 7215278 || playlist.GlobalCollectionID != "collection_3_1461534493_8_0" || playlist.Creator != "孙燕姿" || playlist.PlayCount != 1994007 || playlist.SongCount != 40 {
+		t.Fatalf("unexpected playlist: %+v", playlist)
+	}
+	if playlist.PublishTime != "2024-05-06 11:01:11" {
+		t.Fatalf("unexpected playlist: %+v", playlist)
+	}
+	if playlist.ContainedSong != "" {
+		t.Fatalf("综合搜索不应填充命中歌曲: %+v", playlist)
+	}
+	if result.Albums[0].ID != 2997292 || result.Albums[0].Date != "2011-03-08" {
+		t.Fatalf("unexpected albums: %+v", result.Albums)
+	}
+	if len(result.Artists) != 1 || result.Artists[0].ID != 1090689 {
+		t.Fatalf("unexpected artists: %+v", result.Artists)
+	}
+	if len(result.MVs) != 1 || result.MVs[0].ID != 67468 {
+		t.Fatalf("unexpected mvs: %+v", result.MVs)
+	}
+}
+
+func TestMapNormalSearch(t *testing.T) {
+	result := mapNormalSearch("song", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":   "33138036",
+				"OriSongName": "是时候",
+				"SingerName":  "孙燕姿",
+				"Image":       "https://example.com/cover.jpg",
+				"Duration":    238,
+				"HQFileHash":  "hq-hash",
+				"FileHash":    "song-hash",
+				"HQBitrate":   float64(320),
+				"IsOriginal":  1,
+				"TagContent":  "热门",
+			},
+		},
+	}, play.PriorityForAny(play.DefaultQuality))
+
+	if len(result.Songs) != 1 {
+		t.Fatalf("song count = %d, want 1", len(result.Songs))
+	}
+	song := result.Songs[0]
+	if song.ID != 33138036 || song.Name != "是时候" || song.Artist != "孙燕姿" {
+		t.Fatalf("unexpected song: %+v", song)
+	}
+	if song.Duration != 238000 || song.Quality != "HQ" || !song.IsOriginal {
+		t.Fatalf("unexpected song fields: %+v", song)
+	}
+	// 默认档位是标准
+	if song.Hash != "song-hash" {
+		t.Fatalf("hash = %q, want song-hash", song.Hash)
+	}
+}
+
+func TestMapNormalSearchSpecial(t *testing.T) {
+	result := mapNormalSearch("special", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"gid":              "collection_3_1634810791_33_0",
+				"specialid":        6644785,
+				"specialname":      "台湾偶像剧主题曲精选",
+				"nickname":         "TatianaCheung",
+				"img":              "https://example.com/playlist.jpg",
+				"intro":            "简介",
+				"contain":          "孤单心事",
+				"publish_time":     "2023-04-07 22:28:22",
+				"total_play_count": "13404521",
+				"song_count":       85,
+			},
+		},
+	}, nil)
+
+	if len(result.Playlists) != 1 {
+		t.Fatalf("playlist count = %d, want 1", len(result.Playlists))
+	}
+	playlist := result.Playlists[0]
+	if playlist.GlobalCollectionID != "collection_3_1634810791_33_0" || playlist.PublishTime != "2023-04-07 22:28:22" || playlist.ContainedSong != "孤单心事" {
+		t.Fatalf("unexpected playlist: %+v", playlist)
+	}
+}
+
+func TestMapNormalSearchMVCover(t *testing.T) {
+	result := mapNormalSearch("mv", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MvID":       67468,
+				"MvName":     "是时候",
+				"SingerName": "孙燕姿",
+				"Pic":        "20240118194600124028.jpg",
+			},
+		},
+	}, play.PriorityForAny(play.DefaultQuality))
+
+	if len(result.MVs) != 1 {
+		t.Fatalf("mv count = %d, want 1", len(result.MVs))
+	}
+	if got, want := result.MVs[0].CoverURL, "https://imge.kugou.com/mvhdpic/400/20240118/20240118194600124028.jpg"; got != want {
+		t.Fatalf("MV cover URL = %q, want %q", got, want)
+	}
+}
+
+// TestMapNormalSearchHashFallsBackUpwards 覆盖“搜索结果只有高音质 hash”的条目：
+// hash 只用于定位歌曲（播放文件由 quality 参数决定），缺标准档时应继续向上取，
+// 而不是把整条结果判成没有可用音质。
+func TestMapNormalSearchHashFallsBackUpwards(t *testing.T) {
+	data := map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":  "1",
+				"SongName":   "只有高音质 hash",
+				"SQFileHash": "sq-flat-hash",
+			},
+		},
+	}
+
+	song := mapNormalSearch("song", data, play.PriorityForAny(play.DefaultQuality)).Songs[0]
+	if song.Hash != "sq-flat-hash" {
+		t.Fatalf("hash = %q, want sq-flat-hash", song.Hash)
+	}
+
+	// 旧的“只取标准档”策略会漏掉这条：hash 为空即不可播放。
+	if got := mapNormalSearch("song", data, []string{play.LevelStandard}).Songs[0].Hash; got != "" {
+		t.Fatalf("只给标准档候选时 hash = %q, want 空", got)
+	}
+}
+
+func TestMapNormalSearchLyricSongs(t *testing.T) {
+	// fixture 取自真实歌词搜索响应（只保留断言用到的字段）。
+	result := mapNormalSearch("lyric", map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":  float64(666646835),
+				"SongName":   "一个人想着一个人",
+				"SingerName": "艾比利",
+				"TimeLength": float64(189),
+				"FileHash":   "A4C9C11B5C6CD698FBA54D0AB3FE71CA",
+				"Image":      "http://imge.kugou.com/stdmusic/{size}/20250107/20250107161435476861.jpg",
+				"Lyric":      "眼角的泪这不是错觉  有太多话想说 ",
+				"trans_param": map[string]any{
+					"songname_suffix": "(说唱版)",
+				},
+				"HQ": map[string]any{
+					"Hash":    "8C66FDE0A9658A623EB44218325FC207",
+					"BitRate": float64(320),
+				},
+				"SQ": map[string]any{
+					"Hash":    "4E0EF1E5562517F9B89AF360B84DD0FF",
+					"BitRate": float64(915),
+				},
+				"Res": map[string]any{
+					"Hash":    "17814477BD57507E7FF6063841C19114",
+					"BitRate": float64(1738),
+				},
+			},
+		},
+	}, play.PriorityForAny(play.DefaultQuality))
+
+	if len(result.Songs) != 1 {
+		t.Fatalf("song count = %d, want 1", len(result.Songs))
+	}
+
+	song := result.Songs[0]
+	if song.ID != 666646835 || song.Name != "一个人想着一个人 (说唱版)" {
+		t.Fatalf("unexpected song: %+v", song)
+	}
+	if song.Artist != "艾比利" {
+		t.Fatalf("artist = %q, want 艾比利", song.Artist)
+	}
+	if want := "https://imge.kugou.com/stdmusic/400/20250107/20250107161435476861.jpg"; song.CoverURL != want {
+		t.Fatalf("cover url = %q, want %q", song.CoverURL, want)
+	}
+	if song.Duration != 189000 {
+		t.Fatalf("duration = %d, want 189000", song.Duration)
+	}
+	// 默认档位是标准，取 FileHash
+	if song.Hash != "A4C9C11B5C6CD698FBA54D0AB3FE71CA" {
+		t.Fatalf("hash = %q, want the standard hash", song.Hash)
+	}
+	if song.Quality != "Hi-Res" {
+		t.Fatalf("quality = %q, want Hi-Res", song.Quality)
+	}
+	// textValue 会去掉首尾空白，词之间的连续空格保留。
+	if song.MatchedLyric != "眼角的泪这不是错觉  有太多话想说" {
+		t.Fatalf("matched lyric = %q", song.MatchedLyric)
+	}
+}
+
+// TestMapNormalSearchHashFollowsPriority 验证 mapper 按调用方给的候选顺序取 Hash：
+// 默认顺序优先标准档，缺档时向上兜底；候选顺序变了取值随之变化。
+func TestMapNormalSearchHashFollowsPriority(t *testing.T) {
+	data := map[string]any{
+		"lists": []any{
+			map[string]any{
+				"MixSongID":   "1",
+				"SongName":    "给未来的自己",
+				"ResFileHash": "res-hash",
+				"SQFileHash":  "sq-hash",
+				"HQFileHash":  "hq-hash",
+				"FileHash":    "standard-hash",
+			},
+		},
+	}
+
+	tests := []struct {
+		name   string
+		levels []string
+		want   string
+	}{
+		{name: "默认顺序优先标准档", levels: play.PriorityForAny(play.DefaultQuality), want: "standard-hash"},
+		{name: "候选顺序决定优先级", levels: []string{play.LevelHQ, play.LevelStandard}, want: "hq-hash"},
+		{name: "只给无损档", levels: []string{play.LevelSQ}, want: "sq-hash"},
+		{name: "只给 Hi-Res 档", levels: []string{play.LevelRes}, want: "res-hash"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := mapNormalSearch("song", data, tt.levels)
+			if len(result.Songs) != 1 {
+				t.Fatalf("song count = %d, want 1", len(result.Songs))
+			}
+			if got := result.Songs[0].Hash; got != tt.want {
+				t.Fatalf("hash = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
