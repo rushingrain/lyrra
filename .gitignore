@@ -12,5 +12,5 @@ frontend/tsconfig.tsbuildinfo
 tmp
 
 .vscode
-
-diff.txt
+.idea
+.run
