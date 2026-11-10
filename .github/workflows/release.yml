@@ -144,11 +144,35 @@ jobs:
         shell: pwsh
         run: Join-Path (go env GOPATH) "bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Install NSIS
+      - name: Install NSIS and configure PATH
         shell: pwsh
         run: |
-          if (-not (Get-Command makensis -ErrorAction SilentlyContinue)) {
+          if (-not (Get-Command makensis.exe -CommandType Application -ErrorAction SilentlyContinue)) {
             choco install nsis --no-progress -y
+            if ($LASTEXITCODE -ne 0) {
+              throw "NSIS installation failed with exit code $LASTEXITCODE"
+            }
+          }
+
+          # Chocolatey 对系统 PATH 的更新不会自动进入后续 Actions 步骤。
+          $nsisCommand = Get-Command makensis.exe -CommandType Application -ErrorAction SilentlyContinue
+          $nsisCandidates = @(
+            $nsisCommand.Source
+            "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+            "$env:ProgramFiles\NSIS\makensis.exe"
+          )
+          $nsisPath = $nsisCandidates | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1
+          if (-not $nsisPath) {
+            throw "Cannot locate makensis.exe after installing NSIS"
+          }
+
+          $nsisDirectory = Split-Path -Parent $nsisPath
+          $env:PATH = "$nsisDirectory;$env:PATH"
+          $nsisDirectory | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+          Write-Host "Using NSIS: $nsisPath"
+          & $nsisPath /VERSION
+          if ($LASTEXITCODE -ne 0) {
+            throw "NSIS version check failed with exit code $LASTEXITCODE"
           }
 
       - name: Stamp application version
@@ -157,7 +181,18 @@ jobs:
 
       - name: Build Windows application and installer
         shell: pwsh
-        run: wails build -clean -trimpath -platform windows/amd64 -nsis
+        run: |
+          # Wails 找不到 makensis 时仅警告并返回成功，必须先确认工具可用。
+          Get-Command makensis.exe -CommandType Application -ErrorAction Stop | Format-List Source
+          wails build -clean -trimpath -platform windows/amd64 -nsis
+          if ($LASTEXITCODE -ne 0) {
+            throw "Wails build failed with exit code $LASTEXITCODE"
+          }
+
+          Get-ChildItem "build\bin" | Select-Object Name, Length
+          if (-not (Test-Path "build\bin\lyrra-amd64-installer.exe" -PathType Leaf)) {
+            throw "Wails did not generate build\bin\lyrra-amd64-installer.exe; check the NSIS output above"
+          }
 
       - name: Verify Windows release artifacts
         shell: pwsh
