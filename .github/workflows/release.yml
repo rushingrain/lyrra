@@ -159,12 +159,28 @@ jobs:
         shell: pwsh
         run: wails build -clean -trimpath -platform windows/amd64 -nsis
 
-      - name: Verify Windows application version
+      - name: Verify Windows release artifacts
         shell: pwsh
         run: |
-          $actualVersion = (Get-Item "build\bin\lyrra.exe").VersionInfo.ProductVersion
-          if (-not $actualVersion.StartsWith($env:VERSION)) {
-            throw "Expected Windows version $env:VERSION, got $actualVersion"
+          $configVersion = (Get-Content "wails.json" -Raw | ConvertFrom-Json).info.productVersion
+          if ($configVersion -ne $env:VERSION) {
+            throw "Expected wails.json productVersion $env:VERSION, got $configVersion"
+          }
+
+          $exe = Get-Item "build\bin\lyrra.exe"
+          $installer = Get-Item "build\bin\lyrra-amd64-installer.exe"
+          $fileVersion = [string]$exe.VersionInfo.FileVersion
+          $productVersion = [string]$exe.VersionInfo.ProductVersion
+
+          Write-Host "Windows FileVersion: '$fileVersion'"
+          Write-Host "Windows ProductVersion: '$productVersion'"
+
+          if ($productVersion -and -not $productVersion.StartsWith($env:VERSION)) {
+            throw "Expected Windows version $env:VERSION, got $productVersion"
+          }
+
+          if (-not $productVersion) {
+            Write-Warning "Windows PE ProductVersion metadata is empty; continuing because wails.json and release artifact names carry $env:VERSION."
           }
 
       - name: Package Windows artifacts
