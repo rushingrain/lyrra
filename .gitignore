@@ -4,6 +4,7 @@ go.work
 go.work.sum
 frontend/dist
 frontend/wailsjs/
+/frontend/package.json.md5
 /lyrra
 .DS_Store
 frontend/tsconfig.tsbuildinfo
