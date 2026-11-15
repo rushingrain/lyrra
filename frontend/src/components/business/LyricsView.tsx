@@ -123,10 +123,10 @@ export function LyricsView({ onClose }: LyricsViewProps) {
 
         {/* 正文：左封面 + 右歌词列，宽度 45:55（歌词起点约在窗口 47% 处） */}
         <div className="flex min-h-0 flex-1 gap-12 px-12 pb-10">
-          <div className="hidden min-w-0 flex-[45] items-center justify-center lg:flex">
+          <div className="flex min-w-0 flex-[45] items-center justify-center">
             <div
-              className="shrink-0"
-              style={{ width: 'clamp(200px, 32vh, 340px)', height: 'clamp(200px, 32vh, 340px)' }}
+              className="aspect-square w-full shrink-0"
+              style={{ maxWidth: 'clamp(200px, 32vh, 340px)' }}
             >
               <Cover
                 src={song?.coverUrl}
