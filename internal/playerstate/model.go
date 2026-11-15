@@ -1,7 +1,7 @@
 // Package playerstate 负责播放器本地状态的持久化。
 //
 // 数据分两类存放：
-//   - 设备数据（播放模式、音量）：与账号无关，登出后保留；
+//   - 设备数据（播放模式、音量、音质偏好）：与账号无关，登出后保留；
 //   - 账号数据（播放队列、当前歌曲）：随登出删除，文件里带 userId 用于校验归属。
 //
 // 播放进度不持久化；播放地址（带签名的 url）也不落盘，恢复后由播放接口重新解析。
@@ -23,8 +23,9 @@ const (
 
 // 默认值：文件缺失或字段非法时回落到这里，与前端默认值保持一致。
 const (
-	DefaultPlayMode = PlayModeListLoop
-	DefaultVolume   = 60
+	DefaultPlayMode          = PlayModeListLoop
+	DefaultVolume            = 60
+	DefaultQualityPreference = "standard"
 )
 
 // MaxPlaylistSize 播放队列上限。
@@ -43,8 +44,9 @@ var validPlayModes = map[string]struct{}{
 
 // DeviceState 设备级播放设置：与账号无关，登出后保留。
 type DeviceState struct {
-	PlayMode string `json:"playMode"`
-	Volume   int    `json:"volume"`
+	PlayMode          string `json:"playMode"`
+	Volume            int    `json:"volume"`
+	QualityPreference string `json:"qualityPreference"`
 }
 
 // AccountState 账号级播放数据：登出即删除。
@@ -67,12 +69,18 @@ type accountFile struct {
 	UserID string `json:"userId,omitempty"`
 }
 
-// normalizeDevice 规整设备设置：播放模式必须在白名单内，音量夹到 0-100。
+// normalizeDevice 规整设备设置：播放模式与音质必须在白名单内，音量夹到 0-100。
 func normalizeDevice(state DeviceState) DeviceState {
 	if _, ok := validPlayModes[state.PlayMode]; !ok {
 		state.PlayMode = DefaultPlayMode
 	}
 	state.Volume = clampVolume(state.Volume)
+	// 与 play 的档位键保持一致；旧文件缺失字段时默认标准音质。
+	switch state.QualityPreference {
+	case "res", "sq", "hq", "standard":
+	default:
+		state.QualityPreference = DefaultQualityPreference
+	}
 	return state
 }
 

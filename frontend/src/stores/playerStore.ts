@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import toast from 'react-hot-toast'
 import type { Song } from '@/types'
-import { getSongPlayURL } from '@/services/play'
+import { getSongPlayURL, type QualityLevel } from '@/services/play'
 import { getSongStats } from '@/services/song'
 
 /**
@@ -31,6 +31,18 @@ function normalizePlayMode(value: string): PlayMode {
   return (PLAY_MODE_ORDER as string[]).includes(value) ? (value as PlayMode) : 'list-loop'
 }
 
+function normalizeQualityPreference(value: string | undefined): QualityLevel {
+  switch (value) {
+    case 'res':
+    case 'sq':
+    case 'hq':
+    case 'standard':
+      return value
+    default:
+      return 'standard'
+  }
+}
+
 /** 音量归一化到 0-100 的整数 */
 function clampVolume(volume: number): number {
   if (!Number.isFinite(volume)) return 0
@@ -54,7 +66,7 @@ export interface PlayerSongStats {
  * 只带歌曲信息，不带播放地址：恢复后第一次播放时重新解析地址。
  */
 export interface StoredPlayerState {
-  device: { playMode: string; volume: number }
+  device: { playMode: string; volume: number; qualityPreference?: string }
   account: { playlist?: Song[]; currentSong?: Song }
 }
 
@@ -83,6 +95,11 @@ interface PlayerState {
   stats: PlayerSongStats | null
   /** 当前播放模式 */
   playMode: PlayMode
+  /** 设备级音质偏好，与当前歌曲实际返回的 quality 分开保存 */
+  qualityPreference: QualityLevel
+  deviceSettingsStatus: 'loading' | 'ready' | 'error'
+  /** 修改偏好不打断当前歌曲，下次解析播放地址时生效 */
+  setQualityPreference: (quality: QualityLevel) => void
   /** 播放列表：点击播放按钮的歌曲按顺序入列，同一首不重复 */
   playlist: Song[]
 
@@ -108,7 +125,7 @@ interface PlayerState {
   playPrev: () => void
   /** 一曲播放结束：按当前模式续播 */
   handleEnded: () => void
-  /** 启动时恢复本地保存的播放状态（播放模式 / 音量 / 播放队列 / 当前歌曲） */
+  /** 启动时恢复本地保存的设备设置、播放队列与当前歌曲 */
   restoreState: (snapshot: StoredPlayerState) => void
   /** 登出：清掉账号级数据（播放队列 / 当前歌曲），设备设置保留 */
   resetAccountData: () => void
@@ -380,6 +397,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   error: null,
   stats: null,
   playMode: 'list-loop',
+  qualityPreference: 'standard',
+  deviceSettingsStatus: 'loading',
   playlist: [],
 
   playSong: async (song) => {
@@ -448,7 +467,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     })
 
     // 第一步：解析地址（播放优先）。统计数据并发拉取，既不阻塞播放，失败也不影响播放。
-    const playRequest = getSongPlayURL(song.hash, song.id, 'standard')
+    const playRequest = getSongPlayURL(song.hash, song.id, state.qualityPreference)
     applySongStats(song, seq)
 
     let playURL
@@ -622,6 +641,8 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const device = {
       playMode: normalizePlayMode(snapshot.device.playMode),
       volume: clampVolume(snapshot.device.volume),
+      qualityPreference: normalizeQualityPreference(snapshot.device.qualityPreference),
+      deviceSettingsStatus: 'ready' as const,
     }
 
     // 恢复是异步的：期间用户可能已经开始播放，这时只补设备设置，不覆盖正在播放的内容
@@ -650,7 +671,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
 
   resetAccountData: () => {
     detachedNextIndex = null
-    // 账号数据随登出清空；设备设置（播放模式 / 音量）保留
+    // 账号数据随登出清空；设备设置（播放模式 / 音量 / 音质偏好）保留
     set({
       playlist: [],
       song: null,
@@ -673,6 +694,11 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
       element.currentTime = target / MS_PER_SECOND
     }
     set({ currentTime: target })
+  },
+
+  setQualityPreference: (quality) => {
+    if (get().deviceSettingsStatus !== 'ready') return
+    set({ qualityPreference: normalizeQualityPreference(quality) })
   },
 
   setVolume: (volume) => {

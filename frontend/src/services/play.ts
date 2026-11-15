@@ -34,7 +34,7 @@ export function qualityLabel(level: string | null | undefined, degraded = false)
 }
 
 /**
- * 获取歌曲播放地址。当前播放器传 standard；偏好设置接入后可传其它档位。
+ * 获取歌曲播放地址，quality 使用设备级音质偏好。
  *
  * 返回的 degraded 表示上游把该档位降级成了别的文件（例如歌曲没有 Hi-Res 时 high 降级），
  * 地址仍可用，本轮按"静默照播"处理。

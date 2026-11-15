@@ -108,7 +108,7 @@ function PhoneLoginForm({ onSuccess }: { onSuccess?: (result: LoginResult) => vo
       <button
         type="submit"
         disabled={!canSubmit || submitting}
-        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--color-accent)] py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md bg-[var(--color-accent)] py-2 text-sm font-medium text-[var(--color-on-accent)] transition-colors duration-200 hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting && <Loader2 size={14} className="animate-spin" />}
         {submitting ? '登录中...' : '登录'}
@@ -294,7 +294,7 @@ export function LoginModal({ open, onClose, onLoginSuccess }: LoginModalProps) {
                     <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 rounded-xl bg-white/80 backdrop-blur-sm">
                       <span className="text-sm text-[var(--color-text-secondary)]">二维码已过期</span>
                       <button
-                        className="cursor-pointer rounded-md bg-[var(--color-accent)] px-3 py-1 text-xs font-medium text-white transition-colors duration-200 hover:bg-[var(--color-accent-hover)]"
+                        className="cursor-pointer rounded-md bg-[var(--color-accent)] px-3 py-1 text-xs font-medium text-[var(--color-on-accent)] transition-colors duration-200 hover:bg-[var(--color-accent-hover)]"
                         onClick={loadQrCode}
                       >
                         点击刷新

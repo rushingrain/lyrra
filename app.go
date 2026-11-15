@@ -15,6 +15,8 @@ type App struct {
 	// mu 保护 ctx：startup 在 Wails 启动时写入，单实例回调在另一个 goroutine 读取。
 	mu  sync.Mutex
 	ctx context.Context
+	// themeMu 串行化主题文件读写，与窗口上下文的锁分开。
+	themeMu sync.Mutex
 }
 
 // NewApp creates a new App application struct

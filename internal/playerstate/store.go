@@ -57,7 +57,11 @@ func (s *Store) Load(session map[string]string) State {
 	defer s.mu.Unlock()
 
 	state := State{
-		Device: DeviceState{PlayMode: DefaultPlayMode, Volume: DefaultVolume},
+		Device: DeviceState{
+			PlayMode:          DefaultPlayMode,
+			Volume:            DefaultVolume,
+			QualityPreference: DefaultQualityPreference,
+		},
 		Account: AccountState{
 			Playlist: normalizePlaylist(nil),
 		},

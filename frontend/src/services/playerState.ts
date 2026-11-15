@@ -10,7 +10,7 @@ import type { Song } from '@/types'
  * 播放器本地状态的读写（后端 window.go.play.Service.*）。
  *
  * 数据落在用户配置目录：
- * - 设备数据（播放模式、音量）：与账号无关，登出保留；
+ * - 设备数据（播放模式、音量、音质偏好）：与账号无关，登出保留；
  * - 账号数据（播放队列、当前歌曲）：随登出删除，未登录时后端直接忽略写入。
  *
  * 播放地址与播放进度都不持久化：恢复只带回歌曲信息，播放时再向后端请求地址。
@@ -31,7 +31,7 @@ export function getPlayerState(): Promise<PlayerStateSnapshot> {
   return GetPlayerState()
 }
 
-/** 保存设备级设置（播放模式 / 音量） */
+/** 保存设备级设置（播放模式 / 音量 / 音质偏好） */
 export function savePlayerDeviceState(device: PlayerDeviceState): Promise<void> {
   return SavePlayerDeviceState(device)
 }

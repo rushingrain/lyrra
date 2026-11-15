@@ -11,7 +11,7 @@ import { WindowControls } from '@/components/layout/WindowControls'
 import { getCurrentUser, logout } from '@/services/auth'
 import { clearDailyRecommendCache } from '@/services/song'
 import { toggleWindowMaximise } from '@/services/window'
-import { Environment } from '../../wailsjs/runtime/runtime'
+import { Environment } from '../../wailsjs/runtime'
 import type { LoginResult } from '@/types'
 import { mockPlayHistory } from '@/data/mock'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -26,7 +26,7 @@ const CONTENT_WRAPPER = 'mx-auto w-full max-w-[1400px]'
  * 窗口顶部交通灯安全区高度：
  * main.go 里用 mac.TitleBarHiddenInset() 隐藏了标题文字但保留原生交通灯，
  * 交通灯会浮在网页内容之上，这里留出一条空白避免侧边栏 logo / 顶栏被压住。
- * 留白按下方分区拆成两段（左段与侧边栏同色），避免出现颜色断层。
+ * 留白与顶部栏、侧边栏 Logo 区域使用同一强调色，避免出现颜色断层。
  */
 const TITLEBAR_SAFE_AREA_CLASS = 'h-[28px] min-h-[28px] shrink-0 select-none titlebar-drag-region'
 
@@ -51,7 +51,7 @@ export function MainLayout() {
       .then(({ platform }) => {
         if (!cancelled) setIsWindows(platform === 'windows')
       })
-      .catch(() => {})
+      .catch(() => { })
     return () => {
       cancelled = true
     }
@@ -65,7 +65,7 @@ export function MainLayout() {
     })
   }, [setUser])
 
-  // 启动时恢复本地播放状态（播放模式 / 音量 / 播放队列 / 当前歌曲）
+  // 启动时恢复本地设备设置、播放队列与当前歌曲。
   useEffect(() => {
     initPlayerPersistence()
   }, [])
@@ -108,7 +108,7 @@ export function MainLayout() {
   /** 会话到期：清理本地状态并提示重新登录 */
   const handleSessionExpired = useCallback(() => {
     logout()
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => {
         clearAuthState()
         toast.error('登录已过期，请重新登录')
@@ -130,14 +130,31 @@ export function MainLayout() {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
-      {/* Windows 使用自绘窗口按钮；macOS 保留原生交通灯安全区。 */}
+      {/*
+        窗口顶部拖拽区：
+        - Windows：自绘窗口按钮，歌词页时透明背景
+        - macOS：保留原生交通灯安全区，使用 accent 背景
+        双击切换窗口缩放（系统默认的标题栏双击行为）
+      */}
       <div
-        className={`${isWindows ? 'relative z-40 h-8 min-h-8 shrink-0 select-none titlebar-drag-region' : TITLEBAR_SAFE_AREA_CLASS} flex ${isWindows && showLyrics ? 'player-on-media' : ''}`}
+        className={`${isWindows
+          ? 'relative z-40 h-8 min-h-8 shrink-0 select-none titlebar-drag-region'
+          : `${TITLEBAR_SAFE_AREA_CLASS} bg-[var(--color-accent)]`
+          } flex ${isWindows && showLyrics ? 'player-on-media' : ''}`}
         onDoubleClick={toggleWindowMaximise}
       >
-        <div className={`${SIDEBAR_WIDTH_CLASS} ${isWindows && showLyrics ? 'bg-transparent' : 'bg-gray-50'}`} aria-hidden="true" />
-        <div className="flex-1" aria-hidden="true" />
-        {isWindows && <WindowControls />}
+        {isWindows ? (
+          <>
+            <div
+              className={`${SIDEBAR_WIDTH_CLASS} ${showLyrics ? 'bg-transparent' : 'bg-gray-50'}`}
+              aria-hidden="true"
+            />
+            <div className="flex-1" aria-hidden="true" />
+            <WindowControls />
+          </>
+        ) : (
+          <div className="flex-1" aria-hidden="true" />
+        )}
       </div>
 
       {/* 上部分：侧边栏 + 顶部栏/主内容区 */}
@@ -145,15 +162,15 @@ export function MainLayout() {
         <Sidebar user={user} />
 
         <div className="flex flex-1 flex-col overflow-hidden">
-          <header className="flex h-[72px] min-h-[72px] items-center bg-[var(--color-background)] px-10">
+          <header className="flex h-[var(--layout-topbar-height)] shrink-0 items-center bg-[var(--color-accent)] px-10">
             <div className={CONTENT_WRAPPER}>
               <TopBar user={user} onLoginSuccess={handleLoginSuccess} onLogout={handleLogout} />
             </div>
           </header>
 
           {/* 内容区外层相对定位：播放列表面板贴右缘覆盖，不挤压正文 */}
-          <div className="relative flex-1 overflow-hidden">
-            <SimpleBar className="h-full scrollbar">
+          <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden pt-3">
+            <SimpleBar className="min-h-0 flex-1 scrollbar">
               <main className="pb-8 px-10">
                 <div className={CONTENT_WRAPPER}>
                   <Outlet />
@@ -174,9 +191,8 @@ export function MainLayout() {
       {/* 底部播放控制器：全宽；歌词展开时背景透明并浮在沉浸背景之上 */}
       {showPlayer && (
         <div
-          className={`h-[82px] min-h-[82px] ${
-            showLyrics ? 'player-on-media relative z-40 bg-transparent' : 'bg-[var(--color-background)]'
-          }`}
+          className={`h-[82px] min-h-[82px] ${showLyrics ? 'player-on-media relative z-40 bg-transparent' : 'bg-[var(--color-background)]'
+            }`}
         >
           <MiniPlayer
             playlistOpen={showPlaylist}
