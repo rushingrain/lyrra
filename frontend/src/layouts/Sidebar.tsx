@@ -137,8 +137,8 @@ export function Sidebar({ user }: SidebarProps) {
   const claimingRef = useRef(false)
 
   // 隐藏入口：在 logo 区域连续点 7 次领取当天 VIP。
-  // 成功（含“今天已领过”的后端缓存结果）撒花，失败撒 ❄️；接口本身在后端做了
-  // “一天只真正请求一次”的风控，所以这里重复触发也不会打到酷狗。
+  // 首次从服务器领取成功时撒花；命中“今天已领取”记录或服务端重复领取时撒 ❄️。
+  // 接口本身在后端做了“一天只真正请求一次”的风控，所以重复触发不会打到酷狗。
   // 未登录时整条链路关闭：不计数、不请求、也不放动画。
   const handleLogoClick = useClickStreak({
     enabled: Boolean(user),
@@ -147,7 +147,13 @@ export function Sidebar({ user }: SidebarProps) {
       if (claimingRef.current) return
       claimingRef.current = true
       claimDailyVip()
-        .then(() => celebrate())
+        .then((result) => {
+          if (result.claimed && result.errorCode === 0) {
+            celebrate()
+          } else {
+            cry()
+          }
+        })
         .catch((error: unknown) => {
           console.error('[vip] 领取当日 VIP 失败', error)
           cry()

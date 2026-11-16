@@ -26,13 +26,13 @@ function getCryShape() {
  */
 export function useConfetti() {
   const celebrate = () => {
-    confetti({ particleCount: 150, spread: 70, origin: ORIGIN })
+    confetti({ particleCount: 100, spread: 70, origin: ORIGIN })
   }
 
   const cry = () => {
     if (typeof confetti.shapeFromText !== 'function') return
     confetti({
-      particleCount: 8,
+      particleCount: 50,
       spread: 60,
       origin: ORIGIN,
       shapes: [getCryShape()],
