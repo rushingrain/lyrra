@@ -2,6 +2,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useLocation, useSearchParams } from 'react-router-dom'
 import { Check } from 'lucide-react'
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
 import { DEFAULT_THEME_COLOR, normalizeHexColor, PRESET_THEMES, useThemeStore } from '@/stores/themeStore'
 import { usePlayerStore } from '@/stores/playerStore'
 
@@ -310,8 +311,22 @@ export default function Settings() {
             </p>
           </div>
           <div className="flex flex-wrap gap-x-6 gap-y-2 pt-4 text-sm">
-            <a className="text-[var(--color-text-secondary)] underline underline-offset-4 decoration-[var(--color-border)] hover:text-[var(--color-accent)]">《意见反馈》</a>
-            <a className="text-[var(--color-text-secondary)] underline underline-offset-4 decoration-[var(--color-border)] hover:text-[var(--color-accent)]">《酷狗音乐官网》</a>
+            <a
+              href="https://github.com/rushingrain/lyrra/issues/new"
+              onClick={(event) => {
+                event.preventDefault()
+                BrowserOpenURL(event.currentTarget.href)
+              }}
+              className="text-[var(--color-text-secondary)] underline underline-offset-4 decoration-[var(--color-border)] hover:text-[var(--color-accent)]"
+            >《意见反馈》</a>
+            <a
+              href="https://www.kugou.com/"
+              onClick={(event) => {
+                event.preventDefault()
+                BrowserOpenURL(event.currentTarget.href)
+              }}
+              className="text-[var(--color-text-secondary)] underline underline-offset-4 decoration-[var(--color-border)] hover:text-[var(--color-accent)]"
+            >《酷狗音乐官网》</a>
           </div>
         </div>
       </SettingsSection>
