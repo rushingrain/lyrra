@@ -27,6 +27,18 @@
   --wails-draggable: drag;
 }
 
+.titlebar-control {
+  --wails-draggable: no-drag;
+}
+
+.titlebar-control-neutral:hover {
+  background-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+}
+
+.titlebar-control-neutral:active {
+  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+}
+
 /*
  * 歌词展开时的播放栏配色：播放栏浮在封面模糊背景（NowPlayingBackdrop）上，
  * 需要浅色文字。这里只覆盖配色变量，组件结构与浅色主题样式完全不受影响。

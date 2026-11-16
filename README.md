@@ -61,7 +61,7 @@
 安装 Wails CLI：
 
 ```bash
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+go install github.com/wailsapp/wails/v2/cmd/wails@v2.13.0
 ```
 
 > **SDK 依赖说明**：`go.mod` 固定了可直接获取的 SDK 版本，正常克隆后无需额外配置即可构建。若需要同时修改本地 SDK，在仓库根目录创建不提交的 `go.work`：

@@ -7,9 +7,11 @@ import { TopBar } from '@/components/layout/TopBar'
 import { PlaylistPanel } from '@/components/business/PlaylistPanel'
 import { LyricsView } from '@/components/business/LyricsView'
 import { NowPlayingBackdrop } from '@/components/business/NowPlayingBackdrop'
+import { WindowControls } from '@/components/layout/WindowControls'
 import { getCurrentUser, logout } from '@/services/auth'
 import { clearDailyRecommendCache } from '@/services/song'
 import { toggleWindowMaximise } from '@/services/window'
+import { Environment } from '../../wailsjs/runtime/runtime'
 import type { LoginResult } from '@/types'
 import { mockPlayHistory } from '@/data/mock'
 import { usePlayerStore } from '@/stores/playerStore'
@@ -29,6 +31,7 @@ const CONTENT_WRAPPER = 'mx-auto w-full max-w-[1400px]'
 const TITLEBAR_SAFE_AREA_CLASS = 'h-[28px] min-h-[28px] shrink-0 select-none titlebar-drag-region'
 
 export function MainLayout() {
+  const [isWindows, setIsWindows] = useState(false)
   const [playHistory] = useState(() => mockPlayHistory.length > 0 ? mockPlayHistory : [])
   const showPlayer = playHistory.length > 0
   // 登录态放在全局 store：MainLayout 负责写入，页面（如首页每日推荐）按需订阅
@@ -40,6 +43,19 @@ export function MainLayout() {
   const [showLyrics, setShowLyrics] = useState(false)
   // 歌词展开时的沉浸背景取当前歌曲封面
   const currentCoverUrl = usePlayerStore((s) => s.song?.coverUrl)
+
+  useEffect(() => {
+    if (!('runtime' in window)) return
+    let cancelled = false
+    Environment()
+      .then(({ platform }) => {
+        if (!cancelled) setIsWindows(platform === 'windows')
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // 启动时恢复已保存的登录会话
   useEffect(() => {
@@ -114,10 +130,14 @@ export function MainLayout() {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
-      {/* 交通灯安全区：留白作为窗口拖拽区，双击切换窗口缩放（系统默认的标题栏双击行为） */}
-      <div className={`${TITLEBAR_SAFE_AREA_CLASS} flex`} onDoubleClick={toggleWindowMaximise} aria-hidden>
-        <div className={`${SIDEBAR_WIDTH_CLASS} bg-gray-50`} />
-        <div className="flex-1" />
+      {/* Windows 使用自绘窗口按钮；macOS 保留原生交通灯安全区。 */}
+      <div
+        className={`${isWindows ? 'relative z-40 h-8 min-h-8 shrink-0 select-none titlebar-drag-region' : TITLEBAR_SAFE_AREA_CLASS} flex ${isWindows && showLyrics ? 'player-on-media' : ''}`}
+        onDoubleClick={toggleWindowMaximise}
+      >
+        <div className={`${SIDEBAR_WIDTH_CLASS} ${isWindows && showLyrics ? 'bg-transparent' : 'bg-gray-50'}`} aria-hidden="true" />
+        <div className="flex-1" aria-hidden="true" />
+        {isWindows && <WindowControls />}
       </div>
 
       {/* 上部分：侧边栏 + 顶部栏/主内容区 */}
