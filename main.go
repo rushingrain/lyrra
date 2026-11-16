@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	goruntime "runtime"
 	"strings"
 
 	"github.com/wailsapp/wails/v2"
@@ -101,9 +102,10 @@ func main() {
 
 	// Create application with options
 	err = wails.Run(&options.App{
-		Title:  "lyrra",
-		Width:  1024,
-		Height: 768,
+		Title:     "lyrra",
+		Width:     1024,
+		Height:    768,
+		Frameless: goruntime.GOOS == "windows",
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
