@@ -127,7 +127,7 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
                 aria-haspopup="menu"
                 aria-expanded={cardOpen}
                 onClick={() => setCardOpen((o) => !o)}
-                className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-sm text-white transition-colors hover:bg-white/10"
+                className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-sm text-white transition-colors"
               >
                 <span className="max-w-[100px] truncate">{user.nickname}</span>
 
