@@ -140,13 +140,13 @@ export function MainLayout() {
         className={`${isWindows
           ? 'relative z-40 h-8 min-h-8 shrink-0 select-none titlebar-drag-region'
           : `${TITLEBAR_SAFE_AREA_CLASS} bg-[var(--color-accent)]`
-          } flex ${isWindows && showLyrics ? 'player-on-media' : ''}`}
+          } flex ${isWindows && !showLyrics ? 'bg-[var(--color-accent)]' : ''} ${isWindows && showLyrics ? 'player-on-media' : ''}`}
         onDoubleClick={toggleWindowMaximise}
       >
         {isWindows ? (
           <>
             <div
-              className={`${SIDEBAR_WIDTH_CLASS} ${showLyrics ? 'bg-transparent' : 'bg-gray-50'}`}
+              className={`${SIDEBAR_WIDTH_CLASS} ${showLyrics ? 'bg-transparent' : 'bg-[var(--color-accent)]'}`}
               aria-hidden="true"
             />
             <div className="flex-1" aria-hidden="true" />

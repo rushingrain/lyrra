@@ -24,11 +24,11 @@
 }
 
 .titlebar-control-neutral:hover {
-  background-color: color-mix(in srgb, var(--color-text-primary) 12%, transparent);
+  background-color: color-mix(in srgb, var(--color-on-accent) 18%, transparent);
 }
 
 .titlebar-control-neutral:active {
-  background-color: color-mix(in srgb, var(--color-text-primary) 20%, transparent);
+  background-color: color-mix(in srgb, var(--color-on-accent) 28%, transparent);
 }
 
 /*
