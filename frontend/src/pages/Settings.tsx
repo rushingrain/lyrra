@@ -26,7 +26,7 @@ function SettingsSection({ id, title, children }: { id: SectionId; title: string
     <section
       id={`settings-${id}`}
       aria-labelledby={`settings-${id}-title`}
-      className="grid items-start scroll-mt-24 grid-cols-[96px_minmax(0,1fr)] gap-8 border-b border-[var(--color-border)] py-7 last:border-b-0"
+      className="grid items-start grid-cols-[96px_minmax(0,1fr)] gap-8 border-b border-[var(--color-border)] py-7 last:border-b-0"
     >
       <h2 id={`settings-${id}-title`} className="relative top-0.5 text-base font-semibold leading-7">{title}</h2>
       <div className="min-w-0">{children}</div>
@@ -158,6 +158,7 @@ function ThemeSettings() {
 
 export default function Settings() {
   const pageRef = useRef<HTMLDivElement>(null)
+  const stickyHeaderRef = useRef<HTMLDivElement>(null)
   const qualityPreference = usePlayerStore((state) => state.qualityPreference)
   const deviceSettingsStatus = usePlayerStore((state) => state.deviceSettingsStatus)
   const setQualityPreference = usePlayerStore((state) => state.setQualityPreference)
@@ -168,12 +169,23 @@ export default function Settings() {
   const [activeSection, setActiveSection] = useState<SectionId>(target)
 
   useLayoutEffect(() => {
-    // 使用路由查询参数定位，避免与 HashRouter 自身的 URL hash 冲突。
+    // 直接滚动 SimpleBar 内容区，避免 scrollIntoView 连带滚动外层窗口。
+    const scrollRoot = pageRef.current?.closest('.simplebar-content-wrapper')
+    if (!scrollRoot) return
+
     if (target === 'skin') {
-      pageRef.current?.closest('.simplebar-content-wrapper')?.scrollTo({ top: 0, behavior: 'instant' })
-    } else {
-      pageRef.current?.querySelector(`#settings-${target}`)?.scrollIntoView({ block: 'start', behavior: 'instant' })
+      scrollRoot.scrollTo({ top: 0, behavior: 'instant' })
+      return
     }
+
+    const section = pageRef.current?.querySelector<HTMLElement>(`#settings-${target}`)
+    if (!section) return
+
+    const rootTop = scrollRoot.getBoundingClientRect().top
+    const sectionTop = section.getBoundingClientRect().top
+    const stickyHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0
+    const top = scrollRoot.scrollTop + sectionTop - rootTop - stickyHeight
+    scrollRoot.scrollTo({ top: Math.max(0, top), behavior: 'instant' })
   }, [target, location.key])
 
   useEffect(() => {
@@ -181,7 +193,15 @@ export default function Settings() {
     const scrollRoot = pageRef.current?.closest('.simplebar-content-wrapper')
     if (!scrollRoot) return
     const updateActiveSection = () => {
-      const threshold = scrollRoot.getBoundingClientRect().top + 88
+      const rootRect = scrollRoot.getBoundingClientRect()
+      const stickyHeight = stickyHeaderRef.current?.getBoundingClientRect().height ?? 0
+      const threshold = rootRect.top + stickyHeight + 8
+      const atBottom = scrollRoot.scrollTop + scrollRoot.clientHeight >= scrollRoot.scrollHeight - 2
+      if (atBottom) {
+        setActiveSection('about')
+        return
+      }
+
       let active: SectionId = 'skin'
       for (const section of SECTIONS) {
         const element = pageRef.current?.querySelector(`#settings-${section.id}`)
@@ -200,7 +220,7 @@ export default function Settings() {
 
   return (
     <div ref={pageRef} className="text-[var(--color-text-primary)]">
-      <div className="sticky top-0 z-20 -mx-10 bg-[var(--color-background)] px-10">
+      <div ref={stickyHeaderRef} className="sticky top-0 z-20 -mx-10 bg-[var(--color-background)] px-10">
         <h1 className="pb-3 text-2xl font-semibold">设置</h1>
         <nav aria-label="设置分类" className="flex gap-8 border-b border-[var(--color-border)]">
           {SECTIONS.map((section) => (
