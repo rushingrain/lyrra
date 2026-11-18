@@ -5,6 +5,10 @@ import { Check } from 'lucide-react'
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
 import { DEFAULT_THEME_COLOR, normalizeHexColor, PRESET_THEMES, useThemeStore } from '@/stores/themeStore'
 import { usePlayerStore } from '@/stores/playerStore'
+import { useAuthStore } from '@/stores/authStore'
+import { useClickStreak } from '@/hooks/useClickStreak'
+import { useConfetti } from '@/hooks/useConfetti'
+import { upgradeDailyVip } from '@/services/vip'
 
 const QUALITY_OPTIONS = [
   { value: 'standard', label: '标准' },
@@ -160,14 +164,42 @@ function ThemeSettings() {
 export default function Settings() {
   const pageRef = useRef<HTMLDivElement>(null)
   const stickyHeaderRef = useRef<HTMLDivElement>(null)
+  const upgradingRef = useRef(false)
   const qualityPreference = usePlayerStore((state) => state.qualityPreference)
   const deviceSettingsStatus = usePlayerStore((state) => state.deviceSettingsStatus)
   const setQualityPreference = usePlayerStore((state) => state.setQualityPreference)
+  const user = useAuthStore((state) => state.user)
+  const { celebrate, cry } = useConfetti()
   const [searchParams, setSearchParams] = useSearchParams()
   const location = useLocation()
   const requestedSection = searchParams.get('section')
   const target = SECTIONS.find((section) => section.id === requestedSection)?.id ?? 'skin'
   const [activeSection, setActiveSection] = useState<SectionId>(target)
+
+  const handleVersionClick = useClickStreak({
+    enabled: Boolean(user),
+    times: 6,
+    onTrigger: () => {
+      if (upgradingRef.current) return
+      upgradingRef.current = true
+
+      upgradeDailyVip()
+        .then((result) => {
+          if (result.requested && result.errorCode === 0) {
+            celebrate()
+          } else {
+            cry()
+          }
+        })
+        .catch((error: unknown) => {
+          console.error('[vip] 升级每日 VIP 失败', error)
+          cry()
+        })
+        .finally(() => {
+          upgradingRef.current = false
+        })
+    },
+  })
 
   useLayoutEffect(() => {
     // 直接滚动 SimpleBar 内容区，避免 scrollIntoView 连带滚动外层窗口。
@@ -301,7 +333,14 @@ export default function Settings() {
         <div>
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 py-4 text-base">
             <span>当前版本</span>
-            <span className="text-[var(--color-text-secondary)]">{__APP_VERSION__ === '开发版' ? __APP_VERSION__ : `v${__APP_VERSION__}`}</span>
+            <button
+              type="button"
+              onClick={handleVersionClick}
+              aria-label="当前版本"
+              className="cursor-default border-0 bg-transparent p-0 text-left text-[var(--color-text-secondary)] focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--color-accent)]"
+            >
+              {__APP_VERSION__ === '开发版' ? __APP_VERSION__ : `v${__APP_VERSION__}`}
+            </button>
           </div>
           <div className="border-t border-[var(--color-border)] py-4">
             <h3 className="text-base">免责声明</h3>

@@ -22,7 +22,7 @@ import { claimDailyVip } from '@/services/vip'
 import eighthNote from '@/assets/icons/eighth-note.svg'
 
 /** 隐藏入口：logo 区域连续点击多少次触发领 VIP */
-const LOGO_CLAIM_CLICK_TIMES = 7
+const LOGO_CLAIM_CLICK_TIMES = 6
 
 /** 侧边栏宽度：MainLayout 的窗口顶部交通灯留白要与它对齐，所以在同一处定义 */
 export const SIDEBAR_WIDTH_CLASS = 'w-[200px] min-w-[200px]'

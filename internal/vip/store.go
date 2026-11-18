@@ -32,7 +32,7 @@ var chinaZone = time.FixedZone("CST", 8*3600)
 type record struct {
 	// Date 动作日期（北京时间 YYYY-MM-DD），风控按它判断“当天”
 	Date string `json:"date"`
-	// At 动作时间戳(ms)
+	// At 动作或从服务端确认状态的时间戳(ms)
 	At int64 `json:"at"`
 	// Days 本次领取天数（仅领取动作，升级动作不填）
 	Days int `json:"days,omitempty"`
@@ -44,7 +44,7 @@ type record struct {
 	UserID string `json:"userId,omitempty"`
 	// Message 结果文案
 	Message string `json:"message,omitempty"`
-	// ServerAlready 该记录来自服务端返回“当天已领取”，并非本次请求成功
+	// ServerAlready 该记录来自查询或重复操作响应，并非本次领取、升级成功
 	ServerAlready bool `json:"serverAlready,omitempty"`
 	// ExpiresAt 记录有效期(ms)，0 表示按 Date 判断（整个自然日有效）
 	ExpiresAt int64 `json:"expiresAt,omitempty"`

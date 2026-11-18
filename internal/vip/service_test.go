@@ -53,6 +53,12 @@ func (s *stubClient) YouthDayVipUpgrade(_ context.Context, req kg.YouthDayVipUpg
 	return s.upgradeResp, s.upgradeErr
 }
 
+func (s *stubClient) YouthMonthVipRecord(_ context.Context, _ kg.YouthMonthVipRecordRequest) (*kg.YouthMonthVipRecordResponse, error) {
+	return &kg.YouthMonthVipRecordResponse{Body: map[string]any{
+		"status": 1, "error_code": 0, "data": map[string]any{"list": []any{}},
+	}}, nil
+}
+
 // okUpgradeResponse 构造升级业务成功的响应体。
 func okUpgradeResponse(data map[string]any) *kg.YouthDayVipUpgradeResponse {
 	body := map[string]any{"status": float64(1), "error_code": float64(0)}
