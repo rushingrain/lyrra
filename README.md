@@ -114,8 +114,6 @@ npm run dev
 
 主要文件包括 `session.json`、`player-device.json`、`player-account.json`、`vip.json` 和 `logs/lyrra.log`。登录态、播放记录等敏感信息不会写入日志。
 
-`vip.json` 缓存当前账号的每日领取和升级成功记录。本地缺少当天领取记录或升级前，应用会查询服务端，同步官方 App 等其它设备的操作；查询成功缓存 30 秒，失败后冷却 1 分钟。查询失败或响应无法识别时，不会直接发送领取或升级请求。
-
 ## 开发检查
 
 ```bash
