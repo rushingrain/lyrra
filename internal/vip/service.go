@@ -18,9 +18,7 @@ import (
 // ErrNotLoggedIn 未登录或登录态已失效（语义与 auth.ErrNotLoggedIn 一致）。
 var ErrNotLoggedIn = errors.New("未登录")
 
-// ErrClaimRequired 当天还没成功领取 VIP 就调用了升级。
-// 上游对“没领就升级”的请求没有定义（可能直接报错，也可能被判定为异常请求触发风控），
-// 所以这里在本地直接拦住：一次请求都不发。
+// ErrClaimRequired 本地和服务端都没有当天领取记录时，禁止发送升级请求。
 var ErrClaimRequired = errors.New("今天还没有领取 VIP，请先领取当天 VIP 再升级")
 
 const (
@@ -46,6 +44,7 @@ var alreadyUpgradedErrorCodes = []int{30002}
 type youthVipClient interface {
 	YouthDayVip(ctx context.Context, req kg.YouthDayVipRequest) (*kg.YouthDayVipResponse, error)
 	YouthDayVipUpgrade(ctx context.Context, req kg.YouthDayVipUpgradeRequest) (*kg.YouthDayVipUpgradeResponse, error)
+	YouthMonthVipRecord(ctx context.Context, req kg.YouthMonthVipRecordRequest) (*kg.YouthMonthVipRecordResponse, error)
 	// SetCookie 用于把最新登录态同步进 client 内部 cookie 池：
 	// SDK 的请求参数（dfid 等）取自池里的值，只传请求级 Cookie 不会生效。
 	SetCookie(key, value string)
@@ -60,7 +59,8 @@ type youthVipClient interface {
 //  1. 当天已成功过（本地记录命中）直接返回，不请求服务器；
 //  2. 同一进程内失败后 1 分钟冷却，冷却期内不再请求服务器；
 //  3. 互斥锁串行化，避免并发点击造成重复请求；
-//  4. 升级额外要求当天已经成功领取过（见 ErrClaimRequired）。
+//  4. 本地缺少领取记录或升级前，查询服务端以同步其它设备的操作。
+//  5. 升级额外要求当天已经成功领取过（见 ErrClaimRequired）。
 type Service struct {
 	client youthVipClient
 	log    *slog.Logger
@@ -77,6 +77,7 @@ type Service struct {
 	// claimCooldown / upgradeCooldown 两个动作各自独立的失败冷却
 	claimCooldown   cooldown
 	upgradeCooldown cooldown
+	statusCache     dailyStatusCache
 }
 
 // cooldown 记录某个动作最近一次失败的时间与原因，用于失败后的冷却。
@@ -128,8 +129,8 @@ func newService(client youthVipClient, log *slog.Logger, path string, loadCookie
 // 对外不接收任何参数：领取日由后端固定取北京时间当天（见 claimDate），
 // 调用方（前端）无法指定日期或其它请求参数。
 //
-// 返回的 DailyVipResult.Claimed 表示本次是否真的请求了服务器：
-// 当天已经领取成功过时直接返回本地记录，Claimed=false，不产生任何网络请求。
+// 返回的 DailyVipResult.Claimed 表示本次是否发送了领取请求：
+// 本地或服务端查询确认当天已领取时返回 Claimed=false。
 // 未登录返回 ErrNotLoggedIn；上游业务失败返回带 error_code 的错误。
 //
 // 实测记录（2026-09-28，lite 平台，脚本见 tmp/tmp_vip_claim）：
@@ -165,6 +166,16 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 		return nil, fmt.Errorf("操作过于频繁，请 %d 秒后重试", int(remaining.Seconds())+1)
 	}
 
+	if _, err := s.syncDailyVipStatus(cookie, userID, now, &st); err != nil {
+		return nil, err
+	}
+	if rec := st.Claim; rec.covers(now, userID) {
+		return recordResult(rec, false), nil
+	}
+	if claimDate(s.now()) != claimDate(now) {
+		return nil, errDailyStatusChanged
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
@@ -181,6 +192,8 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 		ReceiveDay: claimDate(now),
 		Cookie:     cookie,
 	})
+	// 操作可能改变服务端状态，升级时不能复用操作前的查询结果。
+	s.statusCache = dailyStatusCache{}
 	if err != nil {
 		s.claimCooldown.fail(now, err)
 		if isLoginError(err) {
@@ -255,12 +268,12 @@ func (s *Service) ClaimDailyVip() (*DailyVipResult, error) {
 // UpgradeDailyVip 升级当天领到的 VIP（酷狗“升级 VIP 奖励”，每天一次）。
 //
 // 前置条件：当天必须已经成功领取过 VIP。上游对“没领就升级”的请求行为未定义
-// （可能直接报错，也可能被判定为异常请求触发风控），所以这里用本地记录拦住，
-// 未领取时返回 ErrClaimRequired，一次请求都不发。
+// （可能直接报错，也可能被判定为异常请求触发风控），所以先核对本地与服务端记录，
+// 未领取时返回 ErrClaimRequired，不发送升级请求。
 //
 // 对外不接收任何参数：升级对象就是“当天”的奖励，由后端按北京时间当天判定。
 // 返回的 UpgradeVipResult.Requested 表示本次是否真的请求了服务器：
-// 当天已经升级过时直接返回本地记录，Requested=false，不产生任何网络请求。
+// 本地或服务端查询确认当天已升级时返回 Requested=false。
 // 未登录返回 ErrNotLoggedIn；上游业务失败返回带 error_code 的错误。
 //
 // 实测记录（2026-09-29，lite 平台，脚本见 tmp/tmp_vip_claim）：
@@ -282,12 +295,6 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 	now := s.now()
 	st := loadState(s.recordPath)
 
-	// 前置条件：当天已经成功领取过 VIP（本地记录命中才放行）。
-	if !st.Claim.covers(now, userID) {
-		s.log.Warn("vip upgrade rejected: daily vip not claimed yet", "date", claimDate(now))
-		return nil, ErrClaimRequired
-	}
-
 	// 风控一：当天已升级过，直接返回本地记录，不请求服务器。
 	if rec := st.Upgrade; rec.covers(now, userID) {
 		s.log.Info("daily vip upgrade already done, skip request",
@@ -302,6 +309,25 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 		return nil, fmt.Errorf("操作过于频繁，请 %d 秒后重试", int(remaining.Seconds())+1)
 	}
 
+	// 即使电脑端领过，也可能随后在手机端升过级，需要重新核对。
+	status, err := s.syncDailyVipStatus(cookie, userID, now, &st)
+	if err != nil {
+		return nil, err
+	}
+	if rec := st.Upgrade; rec.covers(now, userID) {
+		return upgradeResult(rec, false), nil
+	}
+	if !st.Claim.covers(now, userID) {
+		s.log.Warn("vip upgrade rejected: daily vip not claimed yet", "date", claimDate(now))
+		return nil, ErrClaimRequired
+	}
+	if !status.upgradeKnown {
+		return nil, errors.New("暂时无法确认今日 VIP 是否已升级，请稍后重试")
+	}
+	if claimDate(s.now()) != claimDate(now) {
+		return nil, errDailyStatusChanged
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), requestTimeout)
 	defer cancel()
 
@@ -313,6 +339,7 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 	// 升级请求的参数（ad_type=1 等）全部由 SDK 兼容层内部补齐，
 	// 这里只带登录态，不接受任何外部传入。
 	resp, err := s.client.YouthDayVipUpgrade(ctx, kg.YouthDayVipUpgradeRequest{Cookie: cookie})
+	s.statusCache = dailyStatusCache{}
 	if err != nil {
 		s.upgradeCooldown.fail(now, err)
 		if isLoginError(err) {
@@ -372,10 +399,10 @@ func (s *Service) UpgradeDailyVip() (*UpgradeVipResult, error) {
 	return nil, fmt.Errorf("升级 VIP 失败（error_code=%d）：%s", code, message)
 }
 
-// GetDailyVipStatus 查询当天领取状态（只读本地记录，不请求服务器）。
-// 前端可据此决定按钮是否可点；未登录返回 ErrNotLoggedIn。
+// GetDailyVipStatus 查询当天领取状态，本地缺少记录时查询服务端并同步。
+// 查询失败返回错误，不能把无法确认状态当成尚未领取。
 func (s *Service) GetDailyVipStatus() (*DailyVipResult, error) {
-	_, userID, err := s.loginCookie()
+	cookie, userID, err := s.loginCookie()
 	if err != nil {
 		return nil, err
 	}
@@ -383,7 +410,15 @@ func (s *Service) GetDailyVipStatus() (*DailyVipResult, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if rec := loadState(s.recordPath).Claim; rec.covers(s.now(), userID) {
+	now := s.now()
+	st := loadState(s.recordPath)
+	if rec := st.Claim; rec.covers(now, userID) {
+		return recordResult(rec, false), nil
+	}
+	if _, err := s.syncDailyVipStatus(cookie, userID, now, &st); err != nil {
+		return nil, err
+	}
+	if rec := st.Claim; rec.covers(now, userID) {
 		return recordResult(rec, false), nil
 	}
 	return &DailyVipResult{Days: claimedDays, Message: "今天还未领取 VIP"}, nil

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
-import { ArrowLeft, Search, User, Settings, Shirt, Mail, ChevronDown, Power } from 'lucide-react'
+import { ChevronLeft, Search, User, Settings, Shirt, Mail, ChevronDown, Power } from 'lucide-react'
 import { LoginModal } from '@/components/business/LoginModal'
 import type { LoginResult } from '@/types'
 
@@ -92,11 +92,11 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
       {/* 左侧：回退按钮 + 搜索框 */}
       <div className="flex items-center gap-3">
         <button
-          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-[var(--color-border)] bg-[var(--color-background)] text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100"
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md border border-white/25 bg-white/10 text-white transition-colors duration-200 hover:bg-white/20"
           aria-label="回退"
           onClick={() => navigate(-1)}
         >
-          <ArrowLeft size={16} />
+          <ChevronLeft size={16} />
         </button>
 
         <div className="flex w-[280px] items-center gap-3 rounded-md border border-[var(--color-border)] bg-[var(--color-background)] px-3 py-2 transition-colors duration-200 focus-within:border-[var(--color-accent)]">
@@ -127,36 +127,36 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
                 aria-haspopup="menu"
                 aria-expanded={cardOpen}
                 onClick={() => setCardOpen((o) => !o)}
-                className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-sm text-[var(--color-text-secondary)]"
+                className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-sm text-white transition-colors"
               >
                 <span className="max-w-[100px] truncate">{user.nickname}</span>
 
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center" title="VIP">
                   <svg viewBox="0 0 1024 1024" className="h-full w-full">
-                    {/* 徽章背景：颜色随 VIP 状态切换 */}
+                    {/* VIP 使用加深的强调色，与顶部栏背景区分。 */}
                     <path
                       d="M768 307.2H256a153.6 153.6 0 0 0-153.6 153.6v102.4a153.6 153.6 0 0 0 153.6 153.6h512a153.6 153.6 0 0 0 153.6-153.6v-102.4a153.6 153.6 0 0 0-153.6-153.6z"
-                      fill={user.isVip ? 'var(--color-accent)' : '#9CA3AF'}
+                      fill={user.isVip ? 'var(--color-accent-hover)' : '#9CA3AF'}
                     />
                     {/* VIP 线条/文字：原 svg 的单个 path 拆分成 V / I / P 三部分 */}
                     <path
                       d="M353.536 640h-2.816a25.6 25.6 0 0 1-22.016-19.712l-46.592-204.8a25.6 25.6 0 1 1 51.2-11.264L362.496 537.6l67.84-139.264a25.6 25.6 0 1 1 45.824 22.528l-99.584 204.8a25.6 25.6 0 0 1-23.04 14.336z"
-                      fill="#FFFFFF"
+                      fill="var(--color-on-accent)"
                     />
                     <path
                       d="M519.168 618.752a25.6 25.6 0 0 1-25.6 21.248 14.08 14.08 0 0 1-4.608 0 25.6 25.6 0 0 1-20.736-29.44l36.096-204.8a25.6 25.6 0 0 1 51.2 8.704z"
-                      fill="#FFFFFF"
+                      fill="var(--color-on-accent)"
                     />
                     <path
                       d="M751.104 465.152A89.344 89.344 0 0 1 665.6 537.6h-29.696l-14.336 81.152a25.6 25.6 0 0 1-25.6 21.248 14.08 14.08 0 0 1-4.608 0 25.6 25.6 0 0 1-20.736-29.44l18.176-102.4a25.6 25.6 0 0 1 25.6-21.76h51.2a38.4 38.4 0 0 0 35.072-29.952 18.432 18.432 0 0 0-3.328-15.616 17.152 17.152 0 0 0-13.568-5.632h-51.2a25.6 25.6 0 0 1 0-51.2h51.2a68.352 68.352 0 0 1 52.736 23.808 69.888 69.888 0 0 1 14.592 57.344z"
-                      fill="#FFFFFF"
+                      fill="var(--color-on-accent)"
                     />
                   </svg>
                 </span>
 
                 <ChevronDown
                   size={14}
-                  className={`shrink-0 text-[var(--color-text-secondary)] transition-transform duration-200 ${cardOpen ? 'rotate-180' : ''
+                  className={`shrink-0 text-white/80 transition-transform duration-200 ${cardOpen ? 'rotate-180' : ''
                     }`}
                 />
               </button>
@@ -201,29 +201,41 @@ export function TopBar({ user = null, onLoginSuccess, onLogout }: TopBarProps) {
             </>
           ) : (
             <button
-              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 transition-colors duration-200 hover:bg-gray-100"
+              className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 transition-colors duration-200 hover:bg-white/10"
               onClick={() => setLoginModalOpen(true)}
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-[var(--color-text-secondary)]">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-white">
                 <User size={16} />
               </div>
-              <span className="text-sm text-[var(--color-text-secondary)]">未登录</span>
+              <span className="text-sm text-white">未登录</span>
             </button>
           )}
         </div>
 
         {/* 消息按钮 */}
-        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
+        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-white transition-colors duration-200 hover:bg-white/10">
           <Mail size={18} />
         </button>
 
         {/* 皮肤按钮 */}
-        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
+        <button
+          type="button"
+          aria-label="皮肤"
+          title="皮肤"
+          onClick={() => navigate('/settings?section=skin')}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-white transition-colors duration-200 hover:bg-white/10"
+        >
           <Shirt size={18} />
         </button>
 
         {/* 设置按钮 */}
-        <button className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors duration-200 hover:bg-gray-100">
+        <button
+          type="button"
+          aria-label="设置"
+          title="设置"
+          onClick={() => navigate('/settings')}
+          className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-md text-white transition-colors duration-200 hover:bg-white/10"
+        >
           <Settings size={18} />
         </button>
       </div>

@@ -21,7 +21,7 @@ AI 代理的操作指令见 `AGENTS.md`；项目启动方式见 `README.md`。
 
 - `internal/` 按业务域分包，如 `auth`、`search`、`play`、`vip`。服务入口通常放在 `service.go`，模型、持久化等逻辑分别放在 `model.go`、`store.go` 等文件。
 - 跨服务复用的音乐实体放在 `internal/dto/`；SDK 动态值读取放在 `internal/kgapi/`；音乐实体映射放在 `internal/catalogmap/`；通用分页回退放在 `internal/paging/`；原子文件写入放在 `internal/atomicfile/`。业务服务负责流程编排，不复制这些共享能力。
-- `frontend/src/pages/` 放页面，`components/` 放组件，`services/` 放 Wails 调用封装，`stores/` 放全局状态，`types/` 放共用类型，`hooks/` 放 React hooks。
+- `frontend/src/pages/` 放页面，`layouts/` 放路由级布局及应用外壳组件，`components/` 放业务和通用 UI 组件，`services/` 放 Wails 调用封装，`stores/` 放全局状态，`types/` 放共用类型，`hooks/` 放 React hooks。
 - 沿用现有命名：Go 包和文件名使用小写；React 页面与组件文件使用 PascalCase，服务与 hook 文件使用 camelCase，测试文件与对应 Go 代码相邻并以 `_test.go` 结尾。
 
 ## 约束：Go 后端复用

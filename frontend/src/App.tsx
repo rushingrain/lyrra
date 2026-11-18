@@ -12,6 +12,7 @@ import SongList from './pages/SongList'
 import Playlist from './pages/Playlist'
 import Playlists from './pages/Playlists'
 import Album from './pages/Album'
+import Settings from './pages/Settings'
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
             <Route path="songs/:kind" element={<SongList />} />
             <Route path="songs/playlist/:globalId" element={<Playlist />} />
             <Route path="songs/album/:albumId" element={<Album />} />
+            <Route path="settings" element={<Settings />} />
           </Route>
         </Routes>
       </HashRouter>

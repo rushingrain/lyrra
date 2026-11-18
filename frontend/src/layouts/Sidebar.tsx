@@ -19,9 +19,10 @@ import { useClickStreak } from '@/hooks/useClickStreak'
 import { useConfetti } from '@/hooks/useConfetti'
 import { getUserPlaylists } from '@/services/userPlaylist'
 import { claimDailyVip } from '@/services/vip'
+import eighthNote from '@/assets/icons/eighth-note.svg'
 
 /** 隐藏入口：logo 区域连续点击多少次触发领 VIP */
-const LOGO_CLAIM_CLICK_TIMES = 7
+const LOGO_CLAIM_CLICK_TIMES = 6
 
 /** 侧边栏宽度：MainLayout 的窗口顶部交通灯留白要与它对齐，所以在同一处定义 */
 export const SIDEBAR_WIDTH_CLASS = 'w-[200px] min-w-[200px]'
@@ -136,8 +137,8 @@ export function Sidebar({ user }: SidebarProps) {
   const claimingRef = useRef(false)
 
   // 隐藏入口：在 logo 区域连续点 7 次领取当天 VIP。
-  // 成功（含“今天已领过”的后端缓存结果）撒花，失败撒 ❄️；接口本身在后端做了
-  // “一天只真正请求一次”的风控，所以这里重复触发也不会打到酷狗。
+  // 首次从服务器领取成功时撒花；命中“今天已领取”记录或服务端重复领取时撒 ❄️。
+  // 接口本身在后端做了“一天只真正请求一次”的风控，所以重复触发不会打到酷狗。
   // 未登录时整条链路关闭：不计数、不请求、也不放动画。
   const handleLogoClick = useClickStreak({
     enabled: Boolean(user),
@@ -146,7 +147,13 @@ export function Sidebar({ user }: SidebarProps) {
       if (claimingRef.current) return
       claimingRef.current = true
       claimDailyVip()
-        .then(() => celebrate())
+        .then((result) => {
+          if (result.claimed && result.errorCode === 0) {
+            celebrate()
+          } else {
+            cry()
+          }
+        })
         .catch((error: unknown) => {
           console.error('[vip] 领取当日 VIP 失败', error)
           cry()
@@ -176,23 +183,21 @@ export function Sidebar({ user }: SidebarProps) {
   }, [user])
 
   return (
-    <aside className={`h-full ${SIDEBAR_WIDTH_CLASS} bg-gray-50`}>
-      <SimpleBar className="h-full scrollbar">
-        {/* Logo：吸顶在侧边栏顶部，下方导航/歌单滚动时不会被带走 */}
-        <div
-          className="sticky top-0 z-10 flex h-[68px] min-h-[68px] items-center gap-2.5 bg-gray-50 px-6 select-none"
-          onClick={handleLogoClick}
-        >
-          {/* 品牌字标：SVG 轮廓作为遮罩，颜色随主题色变量切换 */}
-          <span
-            className="sidebar-brand-wordmark h-9 w-[100px] shrink-0"
-            role="img"
-            aria-label="lyrra"
-          />
-        </div>
+    <aside className={`flex h-full ${SIDEBAR_WIDTH_CLASS} flex-col overflow-hidden bg-gray-50`}>
+      {/* Logo 区域与 TopBar 共用高度，独立于下方滚动区域。 */}
+      <div
+        className="flex h-[var(--layout-topbar-height)] shrink-0 items-center gap-2.5 bg-[var(--color-accent)] px-6 select-none"
+        onClick={handleLogoClick}
+      >
+        <span className="flex items-center gap-2 text-3xl font-normal text-white">
+          <img src={eighthNote} alt="" aria-hidden="true" className="h-7 w-7 shrink-0" />
+          <span>lyrra</span>
+        </span>
+      </div>
+      <SimpleBar className="min-h-0 flex-1 scrollbar">
 
         {/* 主导航 */}
-        <nav className="flex flex-col gap-1 px-2">
+        <nav className="flex flex-col gap-1 px-2 pt-3">
           <NavItem icon={<Music size={20} />} label="精选" to="/" />
           <NavItem icon={<UserRound size={20} />} label="关注" to="/following" />
           <NavItem icon={<Radio size={20} />} label="FM电台" to="/fm" />

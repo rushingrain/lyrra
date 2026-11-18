@@ -2,6 +2,7 @@ import React from 'react'
 import { createRoot } from 'react-dom/client'
 import './style.css'
 import App from './App'
+import { initThemePersistence } from '@/stores/themeStore'
 
 // 前端 console 转发到后端日志：wails runtime.Log* 路由到 options.Logger，
 // 与后端 slog 日志落入同一文件 logs/lyrra.log。
@@ -35,6 +36,8 @@ if (rt && typeof rt.LogDebug === 'function') {
 const container = document.getElementById('root')
 
 const root = createRoot(container!)
+
+void initThemePersistence()
 
 root.render(
     <React.StrictMode>
