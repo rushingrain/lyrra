@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import type { ReactNode } from 'react'
 import { Headphones } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { PlayAllButton } from '@/components/business/PlayAllButton'
@@ -8,6 +9,7 @@ import { usePlayerStore } from '@/stores/playerStore'
 import type { Song } from '@/types'
 
 interface SongCollectionDetailProps {
+  cover?: ReactNode
   coverUrl?: string
   title?: string
   description?: string
@@ -40,6 +42,7 @@ function formatPublishDate(value?: string): string {
 
 /** 歌单与专辑共用的详情布局：封面头图、元信息、播放全部和分页歌曲列表。 */
 export function SongCollectionDetail({
+  cover,
   coverUrl,
   title,
   description,
@@ -85,9 +88,9 @@ export function SongCollectionDetail({
       {title && (
         <div className="flex gap-6">
           <div className="relative h-[160px] w-[160px] shrink-0 overflow-hidden rounded-lg bg-[var(--color-surface)]">
-            {coverUrl ? (
+            {cover ?? (coverUrl ? (
               <img src={coverUrl} alt={title} className="h-full w-full object-cover" loading="lazy" />
-            ) : null}
+            ) : null)}
             {playCount > 0 ? (
               <span className="absolute left-1.5 top-1.5 flex items-center gap-1 text-xs font-medium text-white">
                 <Headphones size={12} />
@@ -146,8 +149,8 @@ export function SongCollectionDetail({
 
         {hasMore && <div ref={sentinelRef} className="h-px" aria-hidden />}
 
-        <div className="pt-4 text-center text-sm text-[var(--color-text-secondary)]">
-          {loadMoreError && (
+        {loadMoreError && (
+          <div className="pt-4 text-center text-sm text-[var(--color-text-secondary)]">
             <button
               type="button"
               className="cursor-pointer hover:text-[var(--color-text-primary)]"
@@ -155,9 +158,8 @@ export function SongCollectionDetail({
             >
               加载失败，点击重试
             </button>
-          )}
-          {!loadMoreError && !hasMore && songs.length > 0 && <span>没有更多了</span>}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   )

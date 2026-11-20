@@ -3,7 +3,7 @@ import { GetUserPlaylists } from '../../wailsjs/go/playlist/Service'
 
 /** 前端请求用户歌单的默认参数 */
 export const DEFAULT_USER_PLAYLIST_PAGE = 1
-export const DEFAULT_USER_PLAYLIST_PAGE_SIZE = 30
+export const DEFAULT_USER_PLAYLIST_PAGE_SIZE = 150
 
 /**
  * 获取当前登录用户的歌单列表。

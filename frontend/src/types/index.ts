@@ -77,6 +77,8 @@ export interface Banner {
 /** 用户歌单（侧边栏展示，来自 /v7/get_all_list） */
 export interface UserPlaylist {
   id: string
+  /** 上游全局歌单 ID，用于获取歌单歌曲；与 listid 对应的 id 区分 */
+  globalCollectionId: string
   name: string
   songCount: number
   coverUrl: string

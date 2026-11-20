@@ -1,5 +1,6 @@
 import { useLocation, useParams } from 'react-router-dom'
 import { SongCollectionDetail } from '@/components/business/SongCollectionDetail'
+import { DefaultPlaylistCover } from '@/components/common/DefaultPlaylistCover'
 import { usePlaylistSongs } from '@/hooks/usePlaylistSongs'
 import { getAllPlaylistSongs } from '@/services/playlist'
 import type { Playlist as PlaylistType } from '@/types'
@@ -11,11 +12,13 @@ import type { Playlist as PlaylistType } from '@/types'
 export default function Playlist() {
   const { globalId = '' } = useParams<{ globalId: string }>()
   const location = useLocation()
-  const statePlaylist = (location.state as { playlist?: PlaylistType } | null)?.playlist
+  const statePlaylist = (location.state as {
+    playlist?: Partial<PlaylistType> & { isDefault?: number }
+  } | null)?.playlist
   const { info, songs, hasMore, loadError, loadMoreError, sentinelRef, loadMore } =
     usePlaylistSongs(globalId)
 
-  // 接口返回的 list_info 为准；拿不到有效信息时回退首页传入的歌单
+  // 接口返回的 list_info 为准；拿不到有效信息时回退歌单入口传入的名称和封面。
   const playlist = info?.name ? info : statePlaylist
 
   if (loadError) {
@@ -24,6 +27,9 @@ export default function Playlist() {
 
   return (
     <SongCollectionDetail
+      cover={statePlaylist?.isDefault === 1 || statePlaylist?.isDefault === 2
+        ? <DefaultPlaylistCover isDefault={statePlaylist.isDefault} />
+        : undefined}
       coverUrl={playlist?.coverUrl}
       title={playlist?.name}
       description={playlist?.description}

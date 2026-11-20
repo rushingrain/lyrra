@@ -19,6 +19,7 @@ import { useClickStreak } from '@/hooks/useClickStreak'
 import { useConfetti } from '@/hooks/useConfetti'
 import { getUserPlaylists } from '@/services/userPlaylist'
 import { claimDailyVip } from '@/services/vip'
+import { DefaultPlaylistCover } from '@/components/common/DefaultPlaylistCover'
 import eighthNote from '@/assets/icons/eighth-note.svg'
 
 /** 隐藏入口：logo 区域连续点击多少次触发领 VIP */
@@ -51,11 +52,7 @@ function NavItem({ icon, label, to }: NavItemProps) {
 }
 
 /** 侧边栏歌单项的最小结构：创建/收藏的歌单共用 */
-interface SidebarPlaylist {
-  id: string
-  name: string
-  coverUrl: string
-}
+type SidebarPlaylist = Pick<UserPlaylist, 'id' | 'globalCollectionId' | 'name' | 'coverUrl' | 'isDefault'>
 
 interface PlaylistSectionProps {
   title: string
@@ -92,27 +89,58 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
       </div>
       {!collapsed && (
         <div className="mt-2">
-          {playlists.map((pl) => (
-            <a
-              key={pl.id}
-              href="#"
-              className="flex items-center gap-3 rounded-lg px-3 py-1 mx-3 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-gray-200"
-            >
-              {pl.coverUrl ? (
-                <img
-                  src={pl.coverUrl}
-                  alt={pl.name}
-                  className="h-8 w-8 shrink-0 rounded object-cover"
-                  loading="lazy"
-                />
-              ) : (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-200">
-                  <Music size={14} className="text-[var(--color-text-secondary)]" />
-                </div>
-              )}
-              <span className="truncate">{pl.name}</span>
-            </a>
-          ))}
+          {playlists.map((pl) => {
+            const className =
+              'flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-lg px-3 py-1 mx-3 text-left text-xs transition-colors'
+            const content = (
+              <>
+                {pl.isDefault === 1 || pl.isDefault === 2 ? (
+                  <div className="h-8 w-8 shrink-0 overflow-hidden rounded">
+                    <DefaultPlaylistCover isDefault={pl.isDefault} />
+                  </div>
+                ) : pl.coverUrl ? (
+                  <img
+                    src={pl.coverUrl}
+                    alt={pl.name}
+                    className="h-8 w-8 shrink-0 rounded object-cover"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-gray-200">
+                    <Music size={14} className="text-[var(--color-text-secondary)]" />
+                  </div>
+                )}
+                <span className="truncate">{pl.name}</span>
+              </>
+            )
+
+            if (!pl.globalCollectionId || pl.globalCollectionId === '0') {
+              return (
+                <button
+                  key={pl.id}
+                  type="button"
+                  className={`${className} cursor-pointer text-[var(--color-text-secondary)] hover:bg-gray-200`}
+                  onClick={() => toast.error('暂无法获取该歌单歌曲')}
+                >
+                  {content}
+                </button>
+              )
+            }
+
+            return (
+              <NavLink
+                key={pl.id}
+                to={`/songs/playlist/${encodeURIComponent(pl.globalCollectionId)}`}
+                state={{ playlist: { name: pl.name, coverUrl: pl.coverUrl, isDefault: pl.isDefault } }}
+                className={({ isActive }) => `${className} ${isActive
+                  ? 'text-white bg-[var(--color-accent)]'
+                  : 'text-[var(--color-text-secondary)] hover:bg-gray-200'
+                }`}
+              >
+                {content}
+              </NavLink>
+            )
+          })}
         </div>
       )}
     </div>
