@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 	"sync"
 	"time"
 
@@ -12,7 +11,6 @@ import (
 
 	"lyrra/internal/imageurl"
 	"lyrra/internal/kgapi"
-	"lyrra/internal/paging"
 	"lyrra/internal/playerstate"
 )
 
@@ -214,65 +212,6 @@ func (s *Service) clearLoginState() {
 	if err := playerstate.ClearAccount(); err != nil {
 		s.log.Warn("failed to clear player account state", "err", err.Error())
 	}
-}
-
-// GetUserPlaylists 拉取当前登录用户的歌单列表（/v7/get_all_list）。
-// page / pagesize 由前端传入：page<=0 回退 1，pagesize<=0 回退 20。
-//
-// 兼容说明：历史登录流程可能把 userid 存成科学计数法字符串（如 "8.63006722e+08"），
-// 直接放入 Cookie 会导致接口返回 20010 未登录。这里规整为十进制整数后
-// 通过请求参数 + 请求 Cookie 覆盖两种方式显式传入，与手动排查时验证有效的请求一致。
-func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	page, pagesize = paging.Normalize(page, pagesize, 20)
-	userid := normalizeUserID(s.client.Cookie()["userid"])
-
-	resp, err := s.client.UserPlaylist(context.Background(), kg.UserPlaylistRequest{
-		Page:     page,
-		Pagesize: pagesize,
-		Userid:   userid,
-		Cookie: map[string]string{
-			"userid": strconv.FormatInt(int64(userid), 10),
-		},
-	})
-	if err != nil {
-		s.log.Warn("failed to fetch user playlists", "err", err.Error())
-		return nil, err
-	}
-	if !kgapi.StatusOK(resp.Body) {
-		s.log.Warn("user playlists business failure", "error_code", resp.Body["error_code"])
-		return nil, ErrNotLoggedIn
-	}
-
-	data := kgapi.RecordOf(resp.Body["data"])
-	items := kgapi.Records(data["info"])
-	playlists := make([]UserPlaylist, 0, len(items))
-	for _, item := range items {
-		playlists = append(playlists, UserPlaylist{
-			ID:        strconv.FormatInt(kgapi.Int64(item["listid"]), 10),
-			Name:      kgapi.Text(item["name"]),
-			SongCount: kgapi.Int(item["count"]),
-			CoverURL:  imageurl.Normalize(kgapi.Text(item["pic"])),
-			IsDefault: kgapi.Int(item["is_def"]),
-			Type:      kgapi.Int(item["type"]),
-		})
-	}
-	return playlists, nil
-}
-
-// normalizeUserID 把可能为科学计数法（如 "8.63006722e+08"）的 userid 规整为十进制整数。
-func normalizeUserID(raw string) int {
-	uid := normalizeUserIDString(raw)
-	if uid == "" {
-		return 0
-	}
-	i, err := strconv.ParseInt(uid, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return int(i)
 }
 
 // pickInt 在嵌套 map 中按 key 依次查找第一个可解析为整数的值。

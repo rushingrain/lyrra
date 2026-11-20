@@ -4,13 +4,16 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"strconv"
 	"strings"
 	"sync"
 
 	kg "github.com/rushingrain/kugou-music-api"
 
+	"lyrra/internal/auth"
 	"lyrra/internal/catalogmap"
 	"lyrra/internal/dto"
+	"lyrra/internal/imageurl"
 	"lyrra/internal/kgapi"
 	"lyrra/internal/paging"
 	"lyrra/internal/play"
@@ -25,9 +28,9 @@ const maxSongPageSize = 300
 // 全量拉取的安全上限（300 × 10 = 3000 首），防止异常数据导致无限请求。
 const maxAllSongsPages = 10
 
-// Service 首页官方歌单服务。
+// Service 歌单服务，提供官方歌单、用户歌单和歌单歌曲。
 //
-// 结构体实例常驻进程，持有独立的 *kg.Client（无需登录态）；前端通过 Wails
+// 结构体实例常驻进程，持有独立的 *kg.Client；用户歌单请求读取最新登录态。前端通过 Wails
 // 绑定调用其导出方法（window.go.playlist.Service.xxx）。
 type Service struct {
 	client *kg.Client
@@ -36,7 +39,7 @@ type Service struct {
 	mu sync.Mutex
 }
 
-// New 创建官方歌单服务。
+// New 创建歌单服务。
 // 只做本地初始化，不发起网络请求，因此不会阻塞应用启动。
 func New(log *slog.Logger) (*Service, error) {
 	client, err := kgapi.NewClient(kg.WithAutoRefresh(false))
@@ -69,6 +72,55 @@ func (s *Service) GetHotPlaylists(pageSize int, withSong int) ([]dto.Playlist, e
 
 	data := kgapi.RecordOf(resp.Body["data"])
 	return catalogmap.HotPlaylists(kgapi.Records(data["special_list"])), nil
+}
+
+// GetUserPlaylists 拉取当前登录用户的歌单列表（/v7/get_all_list）。
+// page / pagesize 由前端传入：page<=0 回退 1，pagesize<=0 回退 20。
+func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	page, pagesize = paging.Normalize(page, pagesize, 20)
+	// 每次读取最新会话；历史科学计数法 userid 由 auth.LoadSession 统一规整。
+	cookie := auth.LoginCookie(auth.LoadSession())
+	// SDK 请求参数会读取 client 内部 cookie；缺失字段也要覆盖，避免残留旧账号身份。
+	for _, key := range []string{"token", "userid", "dfid"} {
+		s.client.SetCookie(key, cookie[key])
+	}
+	userid, err := strconv.Atoi(cookie["userid"])
+	if cookie["token"] == "" || err != nil || userid <= 0 {
+		return nil, auth.ErrNotLoggedIn
+	}
+
+	resp, err := s.client.UserPlaylist(context.Background(), kg.UserPlaylistRequest{
+		Page:     page,
+		Pagesize: pagesize,
+		Userid:   userid,
+		Cookie:   cookie,
+	})
+	if err != nil {
+		s.log.Warn("failed to fetch user playlists", "err", err.Error())
+		return nil, err
+	}
+	if !kgapi.StatusOK(resp.Body) {
+		s.log.Warn("user playlists business failure", "error_code", resp.Body["error_code"])
+		return nil, auth.ErrNotLoggedIn
+	}
+
+	data := kgapi.RecordOf(resp.Body["data"])
+	items := kgapi.Records(data["info"])
+	playlists := make([]UserPlaylist, 0, len(items))
+	for _, item := range items {
+		playlists = append(playlists, UserPlaylist{
+			ID:        strconv.FormatInt(kgapi.Int64(item["listid"]), 10),
+			Name:      kgapi.Text(item["name"]),
+			SongCount: kgapi.Int(item["count"]),
+			CoverURL:  imageurl.Normalize(kgapi.Text(item["pic"])),
+			IsDefault: kgapi.Int(item["is_def"]),
+			Type:      kgapi.Int(item["type"]),
+		})
+	}
+	return playlists, nil
 }
 
 // GetPlaylistSongs 获取歌单歌曲（PlaylistTrackAll），按页返回。
