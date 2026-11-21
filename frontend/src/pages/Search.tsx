@@ -250,20 +250,21 @@ export default function Search() {
           {/* 无限滚动哨兵：进入视口即追加下一页 */}
           {hasMore && <div ref={sentinelRef} className="h-px" aria-hidden />}
 
-          <div className="pt-4 text-center text-sm text-[var(--color-text-secondary)]">
-            {loadMoreError && (
-              <button
-                type="button"
-                className="cursor-pointer hover:text-[var(--color-text-primary)]"
-                onClick={loadMore}
-              >
-                加载失败，点击重试
-              </button>
-            )}
-            {!loadMoreError && !hasMore && (
-              <span>{limitReached ? `最多展示 ${SEARCH_MAX_ITEMS} 条` : '没有更多了'}</span>
-            )}
-          </div>
+          {(loadMoreError || (!hasMore && limitReached)) && (
+            <div className="pt-4 text-center text-sm text-[var(--color-text-secondary)]">
+              {loadMoreError ? (
+                <button
+                  type="button"
+                  className="cursor-pointer hover:text-[var(--color-text-primary)]"
+                  onClick={loadMore}
+                >
+                  加载失败，点击重试
+                </button>
+              ) : (
+                <span>最多展示 {SEARCH_MAX_ITEMS} 条</span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
