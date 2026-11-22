@@ -3,7 +3,10 @@ package dto
 
 // Song 是音乐单曲 DTO，JSON 字段与前端 types/index.ts 的 Song 类型对齐。
 type Song struct {
-	ID       int64  `json:"id"`
+	ID int64 `json:"id"`
+	// FileID 是歌曲在歌单中的条目 ID，仅用于从该歌单移除歌曲。
+	FileID   string `json:"fileId,omitempty"`
+	AlbumID  string `json:"albumId,omitempty"`
 	Name     string `json:"name"`
 	Artist   string `json:"artist"`
 	Album    string `json:"album,omitempty"`

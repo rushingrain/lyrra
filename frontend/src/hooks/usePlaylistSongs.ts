@@ -10,12 +10,13 @@ export type PlaylistSongsState = PaginatedSongsState<Playlist>
  * 与搜索分页相同的处理：请求代次丢弃过期响应、在途请求去重、按歌曲 id 去重；
  * 追加失败时保留已加载内容，并停止自动加载，等用户点重试。
  */
-export function usePlaylistSongs(globalCollectionId: string): PlaylistSongsState {
+export function usePlaylistSongs(globalCollectionId: string, reloadKey?: string | number): PlaylistSongsState {
   return usePaginatedSongs<Playlist>({
     collectionId: globalCollectionId,
     pageSize: PLAYLIST_PAGE_SIZE,
     fetchPage: getPlaylistSongs,
     firstPageError: '歌单歌曲加载失败，请稍后重试',
     nextPageError: '加载更多失败，请重试',
+    reloadKey,
   })
 }

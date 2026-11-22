@@ -1,5 +1,8 @@
 export interface Song {
   id: number
+  /** 歌单内歌曲条目 ID，仅用于移除歌曲，不能以 id 替代 */
+  fileId?: string
+  albumId?: string
   name: string
   artist: string
   /** 专辑名；搜索等接口不返回，消费端按需做空值守卫 */
@@ -77,11 +80,13 @@ export interface Banner {
 /** 用户歌单（侧边栏展示，来自 /v7/get_all_list） */
 export interface UserPlaylist {
   id: string
-  /** 上游全局歌单 ID，用于获取歌单歌曲；与 listid 对应的 id 区分 */
+  /** 读取歌曲的全局 ID；收藏项指向原歌单，id 仍是当前账号的 listid */
   globalCollectionId: string
   name: string
   songCount: number
   coverUrl: string
+  description: string
+  tags: string[]
   /** 1=默认收藏，2=我喜欢，0=普通歌单 */
   isDefault: number
   /** 0=创建的歌单，1=收藏的歌单 */

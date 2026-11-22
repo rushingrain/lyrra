@@ -87,14 +87,14 @@ export default function Home() {
       </Section>
       {user && (
         <Section title="每日推荐" onClick={() => navigate('/songs/daily')}>
-          <SongGrid songs={dailySongs} columns="responsive" rows={HOME_SONG_ROWS} />
+          <SongGrid songs={dailySongs} columns="responsive" rows={HOME_SONG_ROWS} showCollectAction={false} />
         </Section>
       )}
       <Section title="最新音乐" onClick={() => navigate('/songs/new')}>
-        <SongGrid songs={newSongs} columns="responsive" rows={HOME_SONG_ROWS} />
+        <SongGrid songs={newSongs} columns="responsive" rows={HOME_SONG_ROWS} showCollectAction={false} />
       </Section>
       <Section title="热门音乐" onClick={() => navigate('/songs/hot')}>
-        <SongGrid songs={hotSongs} columns="responsive" rows={HOME_SONG_ROWS} />
+        <SongGrid songs={hotSongs} columns="responsive" rows={HOME_SONG_ROWS} showCollectAction={false} />
       </Section>
     </div>
   )

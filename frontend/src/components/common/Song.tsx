@@ -1,4 +1,5 @@
 import type { Song as SongType } from '@/types'
+import type { ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
 import { Cover } from '@/components/common/Cover'
 import { Tag } from '@/components/common/Tag'
@@ -14,6 +15,7 @@ interface SongProps {
   playing?: boolean
   /** 是否是当前曲目：标题高亮（播放列表用来标记正在播放的那一行） */
   active?: boolean
+  actions?: ReactNode
 }
 
 const PRESETS = {
@@ -29,11 +31,12 @@ export function Song({
   onPlay,
   playing = false,
   active = false,
+  actions,
 }: SongProps) {
   const preset = PRESETS[size]
   const titleColor = active ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-primary)]'
   return (
-    <div className={`group flex min-w-0 items-center ${preset.root} ${className}`}>
+    <div className={`group group/song flex min-w-0 items-center ${preset.root} ${className}`}>
       <div className="relative shrink-0">
         <Cover src={song.coverUrl || ''} alt={song.name} className={preset.cover} />
         {onPlay && (
@@ -72,6 +75,11 @@ export function Song({
           </div>
         )}
       </div>
+      {actions && (
+        <div className="pointer-events-none shrink-0 opacity-0 transition-opacity group-hover/song:pointer-events-auto group-hover/song:opacity-100 group-hover/song-row:pointer-events-auto group-hover/song-row:opacity-100 group-focus-within/song:pointer-events-auto group-focus-within/song:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100 has-[[aria-expanded=true]]:pointer-events-auto has-[[aria-expanded=true]]:opacity-100">
+          {actions}
+        </div>
+      )}
     </div>
   )
 }

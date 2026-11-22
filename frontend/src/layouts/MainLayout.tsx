@@ -5,6 +5,7 @@ import { Sidebar, SIDEBAR_WIDTH_CLASS } from '@/layouts/Sidebar'
 import { MiniPlayer } from '@/layouts/MiniPlayer'
 import { TopBar } from '@/layouts/TopBar'
 import { PlaylistPanel } from '@/components/business/PlaylistPanel'
+import { UserPlaylistDialogs } from '@/components/business/UserPlaylistDialogs'
 import { LyricsView } from '@/components/business/LyricsView'
 import { NowPlayingBackdrop } from '@/components/business/NowPlayingBackdrop'
 import { WindowControls } from '@/layouts/WindowControls'
@@ -130,6 +131,7 @@ export function MainLayout() {
 
   return (
     <div className="relative flex h-screen w-screen flex-col overflow-hidden bg-[var(--color-background)]">
+      <UserPlaylistDialogs />
       {/*
         窗口顶部拖拽区：
         - Windows：自绘窗口按钮，歌词页时透明背景

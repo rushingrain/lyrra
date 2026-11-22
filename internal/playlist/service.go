@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -13,7 +12,6 @@ import (
 	"lyrra/internal/auth"
 	"lyrra/internal/catalogmap"
 	"lyrra/internal/dto"
-	"lyrra/internal/imageurl"
 	"lyrra/internal/kgapi"
 	"lyrra/internal/paging"
 	"lyrra/internal/play"
@@ -82,40 +80,17 @@ func (s *Service) GetUserPlaylists(page int, pagesize int) ([]UserPlaylist, erro
 
 	page, pagesize = paging.Normalize(page, pagesize, 20)
 	// 每次读取最新会话；历史科学计数法 userid 由 auth.LoadSession 统一规整。
-	cookie := s.syncLoginCookie()
-	userid, err := strconv.Atoi(cookie["userid"])
-	if cookie["token"] == "" || err != nil || userid <= 0 {
-		return nil, auth.ErrNotLoggedIn
-	}
-
-	resp, err := s.client.UserPlaylist(context.Background(), kg.UserPlaylistRequest{
-		Page:     page,
-		Pagesize: pagesize,
-		Userid:   userid,
-		Cookie:   cookie,
-	})
+	cookie, err := s.loginCookie()
 	if err != nil {
-		s.log.Warn("failed to fetch user playlists", "err", err.Error())
 		return nil, err
 	}
-	if !kgapi.StatusOK(resp.Body) {
-		s.log.Warn("user playlists business failure", "error_code", resp.Body["error_code"])
-		return nil, auth.ErrNotLoggedIn
+	items, _, err := s.fetchUserPlaylists(page, pagesize, cookie)
+	if err != nil {
+		return nil, err
 	}
-
-	data := kgapi.RecordOf(resp.Body["data"])
-	items := kgapi.Records(data["info"])
 	playlists := make([]UserPlaylist, 0, len(items))
 	for _, item := range items {
-		playlists = append(playlists, UserPlaylist{
-			ID:                 strconv.FormatInt(kgapi.Int64(item["listid"]), 10),
-			GlobalCollectionID: kgapi.Scalar(item["global_collection_id"]),
-			Name:               kgapi.Text(item["name"]),
-			SongCount:          kgapi.Int(item["count"]),
-			CoverURL:           imageurl.Normalize(kgapi.Text(item["pic"])),
-			IsDefault:          kgapi.Int(item["is_def"]),
-			Type:               kgapi.Int(item["type"]),
-		})
+		playlists = append(playlists, catalogmap.UserPlaylist(item))
 	}
 	return playlists, nil
 }

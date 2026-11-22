@@ -12,6 +12,8 @@ interface SongCollectionDetailProps {
   cover?: ReactNode
   coverUrl?: string
   title?: string
+  titleAction?: ReactNode
+  actions?: ReactNode
   description?: string
   author?: string
   authorAvatar?: string
@@ -45,6 +47,8 @@ export function SongCollectionDetail({
   cover,
   coverUrl,
   title,
+  titleAction,
+  actions,
   description,
   author,
   authorAvatar,
@@ -66,10 +70,10 @@ export function SongCollectionDetail({
   const publishDate = formatPublishDate(publishTime)
 
   const handlePlayAll = async () => {
-    if (songs.length === 0 || isPreparingPlayAll) return
+    if (isPreparingPlayAll) return
 
     let queueSongs = songs
-    if (hasMore) {
+    if (songs.length === 0 || hasMore) {
       setIsPreparingPlayAll(true)
       try {
         queueSongs = await loadAllSongs()
@@ -80,6 +84,7 @@ export function SongCollectionDetail({
         setIsPreparingPlayAll(false)
       }
     }
+    if (queueSongs.length === 0) return
     await playAll(queueSongs, { replaceQueue: true })
   }
 
@@ -100,7 +105,10 @@ export function SongCollectionDetail({
           </div>
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <h1 className="truncate text-xl font-semibold text-[var(--color-text-primary)]">{title}</h1>
+            <div className="flex min-w-0 items-center gap-2">
+              <h1 className="truncate text-xl font-semibold text-[var(--color-text-primary)]">{title}</h1>
+              {titleAction}
+            </div>
             {description ? (
               <p className="mt-2 line-clamp-1 text-sm leading-relaxed text-[var(--color-text-secondary)]">
                 {description}
@@ -133,12 +141,12 @@ export function SongCollectionDetail({
                 ) : null}
               </div>
             ) : null}
-            <div className="mt-auto pt-4">
+            <div className="mt-auto flex items-center gap-3 pt-4">
               <PlayAllButton
                 onClick={() => void handlePlayAll()}
-                disabled={songs.length === 0}
                 loading={isPreparingPlayAll}
               />
+              {actions}
             </div>
           </div>
         </div>

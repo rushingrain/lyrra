@@ -14,6 +14,8 @@ interface SongGridProps {
   columns?: 'auto' | 'responsive' | number
   /** 固定展示行数（仅 responsive 模式生效）：窄窗口每行 2 条、宽窗口每行 3 条 */
   rows?: number
+  /** 摘要区可只保留“更多”，收藏仍可从菜单操作。 */
+  showCollectAction?: boolean
 }
 
 /**
@@ -24,7 +26,7 @@ interface SongGridProps {
  * 并按 1fr 均分整行，指定数字时列数固定；auto / 数字模式的列宽为
  * minmax(clamp(160px, 20vw, 220px), 1fr)，随窗口连续缩放。
  */
-export function SongGrid({ songs, columns = 'auto', rows }: SongGridProps) {
+export function SongGrid({ songs, columns = 'auto', rows, showCollectAction = true }: SongGridProps) {
   if (songs.length === 0) return null
 
   // 首页歌曲板块：小窗口 2 列、大窗口 3 列，列宽 1fr 均分整行
@@ -45,6 +47,7 @@ export function SongGrid({ songs, columns = 'auto', rows }: SongGridProps) {
             key={song.id}
             song={song}
             size="md"
+            showCollectAction={showCollectAction}
             // 窄窗口只保留前 rows 行的条目，避免多出一行
             className={`rounded-lg${index >= narrowCount ? ' max-xl:hidden' : ''}`}
           />
@@ -54,7 +57,7 @@ export function SongGrid({ songs, columns = 'auto', rows }: SongGridProps) {
   }
 
   const items = songs.map((song) => (
-    <PlayableSong key={song.id} song={song} size="md" className="rounded-lg" />
+    <PlayableSong key={song.id} song={song} size="md" className="rounded-lg" showCollectAction={showCollectAction} />
   ))
 
   // 列数：'auto' → auto-fit 按窗口自适应；数字 → 固定列数。其余（每列尺寸、缩放）保持一致。

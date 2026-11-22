@@ -14,13 +14,15 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"sync"
 )
 
 // allowedCleartextHosts 允许明文 http 的 host 白名单（不含端口，精确匹配）。
 //
-// 目前为空：我们需要的接口全部走 https。若将来确有必须走明文的接口，
+// 通用白名单目前为空；歌单封面上传由 isPlaylistImageUpload 单独严格限定。
+// 若将来确有必须走明文的接口，
 // 在这里显式放行并写明理由，而不是放开整个护栏。
 var allowedCleartextHosts = map[string]struct{}{}
 
@@ -58,7 +60,7 @@ type guard struct {
 func (g *guard) RoundTrip(req *http.Request) (*http.Response, error) {
 	if err := g.check(req); err != nil {
 		if g.logger != nil {
-			g.logger.Warn("blocked cleartext http request", "host", hostOf(req), "url", req.URL.String(), "err", err.Error())
+			g.logger.Warn("blocked cleartext http request", "host", hostOf(req), "path", req.URL.EscapedPath(), "err", err.Error())
 		}
 		return nil, err
 	}
@@ -77,10 +79,41 @@ func (g *guard) check(req *http.Request) error {
 	if host == "" || isLoopback(host) {
 		return nil
 	}
+	if isPlaylistImageUpload(req) {
+		return nil
+	}
 	if _, ok := g.allowed[host]; ok {
 		return nil
 	}
 	return fmt.Errorf("明文 http 请求被拒绝（host=%s）：账号凭证不允许走 http；如确需明文请显式加入白名单", host)
+}
+
+// 封面上传沿用上游的 HTTP 专用接口，只放行不携带账号信息的图片 POST。
+func isPlaylistImageUpload(req *http.Request) bool {
+	if req.Method != http.MethodPost || req.URL.Host != "imgphp.kugou.com" || req.URL.User != nil || req.URL.Path != "/imageupload/stream.php" {
+		return false
+	}
+	if req.Header.Get("Cookie") != "" || req.Header.Get("Authorization") != "" || req.Header.Get("Proxy-Authorization") != "" {
+		return false
+	}
+	if req.Header.Get("token") != "" || req.Header.Get("userid") != "" || req.Header.Get("vip_token") != "" {
+		return false
+	}
+	if req.Header.Get("Content-Type") != "application/octet-stream" {
+		return false
+	}
+	query, err := url.ParseQuery(req.URL.RawQuery)
+	if err != nil {
+		return false
+	}
+	for key := range query {
+		switch key {
+		case "type", "extendName", "md5", "jsonResponse":
+		default:
+			return false
+		}
+	}
+	return query.Get("type") == "custom" && query.Get("jsonResponse") == "1"
 }
 
 func hostOf(req *http.Request) string {

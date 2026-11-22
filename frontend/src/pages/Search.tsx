@@ -213,7 +213,7 @@ export default function Search() {
 
           {result.songs.length > 0 && (
             <Section title="单曲" onClick={(event) => switchTab('song', event.currentTarget)}>
-              <SongGrid columns={2} songs={result.songs.slice(0, 6)} />
+              <SongGrid columns={2} songs={result.songs.slice(0, 6)} showCollectAction={false} />
             </Section>
           )}
 

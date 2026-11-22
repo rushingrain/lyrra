@@ -103,6 +103,13 @@ export async function GetHotPlaylists(
 // 歌单歌曲只在途请求去重，不缓存已完成的页：歌单内容可能变化，也避免多份列表常驻内存。
 const songsInflight = new Map<string, Promise<PlaylistSongsPage>>()
 
+/** 修改歌单或切换账号后，新请求不能复用修改前仍在途的旧页。 */
+export function invalidatePlaylistSongs(globalId?: string): void {
+  for (const key of songsInflight.keys()) {
+    if (!globalId || key.startsWith(`${globalId}:`)) songsInflight.delete(key)
+  }
+}
+
 /**
  * 获取歌单歌曲（分页）。
  * @param globalCollectionId 歌单的 global_collection_id
@@ -133,7 +140,7 @@ export function getPlaylistSongs(
   if (existing) return existing
 
   const request = GetPlaylistSongsAPI(globalCollectionId, page, pageSize).finally(() => {
-    songsInflight.delete(key)
+    if (songsInflight.get(key) === request) songsInflight.delete(key)
   })
   songsInflight.set(key, request)
   return request

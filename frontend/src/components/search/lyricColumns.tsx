@@ -1,7 +1,7 @@
 import type { Song as SongType } from '@/types'
 import type { ResultColumn } from '@/components/common/ResultTable'
 import { PlayableSong } from '@/components/business/PlayableSong'
-import { DurationCell, LikeCell } from './cells'
+import { DurationCell } from './cells'
 
 /**
  * 歌词搜索的展示列：结果本身是歌曲，标题列复用 Song 组件
@@ -19,12 +19,6 @@ export const lyricColumns: ResultColumn<SongType>[] = [
     title: '标题',
     className: 'min-w-0 flex-1',
     render: (song) => <PlayableSong song={song} />,
-  },
-  {
-    key: 'like',
-    title: '喜欢',
-    className: 'w-[6%] shrink-0',
-    render: () => <LikeCell />,
   },
   {
     key: 'duration',

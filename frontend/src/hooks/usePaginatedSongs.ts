@@ -26,6 +26,7 @@ interface UsePaginatedSongsOptions<TInfo> {
   fetchPage: (id: string, page: number, pageSize: number) => Promise<PaginatedSongsPage<TInfo>>
   firstPageError: string
   nextPageError: string
+  reloadKey?: string | number
 }
 
 /**
@@ -38,6 +39,7 @@ export function usePaginatedSongs<TInfo = unknown>({
   fetchPage,
   firstPageError,
   nextPageError,
+  reloadKey,
 }: UsePaginatedSongsOptions<TInfo>): PaginatedSongsState<TInfo> {
   const [info, setInfo] = useState<TInfo | null>(null)
   const [songs, setSongs] = useState<Song[]>([])
@@ -71,6 +73,7 @@ export function usePaginatedSongs<TInfo = unknown>({
     epochRef.current = epoch
     pendingRef.current = true
     setIsLoading(true)
+    setIsLoadingMore(false)
     setLoadError(null)
     setLoadMoreError(null)
     setInfo(null)
@@ -101,7 +104,7 @@ export function usePaginatedSongs<TInfo = unknown>({
     return () => {
       epochRef.current += 1
     }
-  }, [collectionId, pageSize, fetchPage, firstPageError, appendSongs])
+  }, [collectionId, pageSize, fetchPage, firstPageError, appendSongs, reloadKey])
 
   const loadMore = useCallback(() => {
     if (pendingRef.current || !hasMore || loadMoreError) return

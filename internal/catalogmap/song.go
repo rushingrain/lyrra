@@ -22,6 +22,7 @@ func SearchSongs(items []kgapi.Record, hashPriority []string) []dto.Song {
 	for _, item := range items {
 		songs = append(songs, dto.Song{
 			ID:         kgapi.Int64(item["MixSongID"]),
+			AlbumID:    kgapi.Scalar(item["AlbumID"]),
 			Name:       searchSongName(item),
 			Artist:     searchArtist(item, "SingerName", "Singers"),
 			Album:      kgapi.Text(item["AlbumName"]),
@@ -42,6 +43,7 @@ func LyricSongs(items []kgapi.Record, hashPriority []string) []dto.Song {
 	for _, item := range items {
 		songs = append(songs, dto.Song{
 			ID:           kgapi.Int64(item["MixSongID"]),
+			AlbumID:      kgapi.Scalar(item["AlbumID"]),
 			Name:         lyricSongName(item),
 			Artist:       searchArtist(item, "SingerName", "Singers"),
 			CoverURL:     imageurl.Normalize(kgapi.Text(item["Image"])),
@@ -120,6 +122,7 @@ func AlbumSongs(items []kgapi.Record, hashPriority []string) []dto.Song {
 
 		songs = append(songs, dto.Song{
 			ID:         kgapi.Int64(base["album_audio_id"]),
+			AlbumID:    kgapi.Scalar(albumInfo["album_id"]),
 			Name:       name,
 			Artist:     artist,
 			Album:      kgapi.Text(albumInfo["album_name"]),
@@ -163,6 +166,7 @@ func secondsDuration(value any) int64 {
 func parseFlatSong(item kgapi.Record, idKey string, name string, hashPriority []string) dto.Song {
 	return dto.Song{
 		ID:         kgapi.Int64(item[idKey]),
+		AlbumID:    kgapi.Scalar(item["album_id"]),
 		Name:       name,
 		Artist:     flatArtist(item),
 		Album:      kgapi.Text(item["album_name"]),
@@ -198,6 +202,7 @@ func parseRecommendedSong(item kgapi.Record, hashPriority []string) dto.Song {
 
 	return dto.Song{
 		ID:         kgapi.Int64(item["mixsongid"]),
+		AlbumID:    kgapi.Scalar(albumInfo["album_id"]),
 		Name:       joinSongNameSuffix(kgapi.Text(item["ori_audio_name"]), kgapi.Text(trans["songname_suffix"])),
 		Artist:     flatArtist(item),
 		Album:      kgapi.Text(albumInfo["album_name"]),
@@ -280,6 +285,8 @@ func parsePlaylistSong(item kgapi.Record, hashPriority []string) dto.Song {
 		ID:         kgapi.Int64(item["mixsongid"]),
 		Name:       name,
 		Artist:     artist,
+		FileID:     kgapi.Scalar(item["fileid"]),
+		AlbumID:    kgapi.Scalar(albumInfo["id"]),
 		Album:      kgapi.Text(albumInfo["name"]),
 		CoverURL:   imageurl.Normalize(cover),
 		Duration:   kgapi.Int64(item["timelen"]),

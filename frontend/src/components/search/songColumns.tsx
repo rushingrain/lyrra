@@ -1,7 +1,7 @@
 import type { Song as SongType } from '@/types'
 import type { ResultColumn } from '@/components/common/ResultTable'
 import { PlayableSong } from '@/components/business/PlayableSong'
-import { DurationCell, LikeCell } from './cells'
+import { DurationCell } from './cells'
 
 export const songColumns: ResultColumn<SongType>[] = [
   {
@@ -21,12 +21,6 @@ export const songColumns: ResultColumn<SongType>[] = [
     title: '专辑',
     className: 'w-1/5 shrink-0 truncate text-sm text-[var(--color-text-secondary)]',
     render: (song) => song.album ?? '',
-  },
-  {
-    key: 'like',
-    title: '喜欢',
-    className: 'w-[6%] shrink-0',
-    render: () => <LikeCell />,
   },
   {
     key: 'duration',

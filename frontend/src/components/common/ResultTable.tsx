@@ -37,7 +37,7 @@ export function ResultTable<T>({ columns, rows, rowKey, onRowClick }: ResultTabl
         {rows.map((item, index) => (
           <div
             key={rowKey(item, index)}
-            className="flex items-center cursor-pointer gap-4 rounded-md px-3 py-3 transition-colors hover:bg-[var(--color-surface)]"
+            className="group/song-row flex items-center cursor-pointer gap-4 rounded-md px-3 py-3 transition-colors hover:bg-[var(--color-surface)]"
             role={onRowClick ? 'link' : undefined}
             tabIndex={onRowClick ? 0 : undefined}
             onClick={onRowClick ? () => onRowClick(item, index) : undefined}

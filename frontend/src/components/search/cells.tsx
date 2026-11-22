@@ -1,5 +1,4 @@
 import type { ReactNode } from 'react'
-import { Heart } from 'lucide-react'
 import { Cover } from '@/components/common/Cover'
 
 interface CoverTextCellProps {
@@ -27,11 +26,6 @@ export function CoverTextCell({ coverUrl, title, subtitle, circle = false }: Cov
       </div>
     </div>
   )
-}
-
-/** 「喜欢」列占位：纯展示的空心心形 */
-export function LikeCell() {
-  return <Heart size={16} className="block text-[var(--color-text-secondary)]" />
 }
 
 /** 后端 duration 单位为毫秒 */
