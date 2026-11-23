@@ -7,7 +7,7 @@
   --color-on-accent: #FFFFFF;
   --color-accent-bg: color-mix(in srgb, var(--color-accent) 8%, transparent);
   --color-background: #FFFFFF;
-  --color-surface: #F0F3F6;
+  --color-surface: #F7F8FA;
   --color-text-primary: #111827;
   --color-text-secondary: #6B7280;
   --color-border: #E5E7EB;

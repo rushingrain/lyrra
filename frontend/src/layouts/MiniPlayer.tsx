@@ -13,10 +13,14 @@ import {
   MoreHorizontal,
   ListVideo,
   RotateCw,
-  MoveRight
+  MoveRight,
+  SquarePlus
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
+import { useAuthStore } from '@/stores/authStore'
 import { usePlayerStore, type PlayMode } from '@/stores/playerStore'
+import { useUserPlaylistStore } from '@/stores/userPlaylistStore'
 import { Cover } from '@/components/common/Cover'
 import { qualityLabel } from '@/services/play'
 
@@ -59,8 +63,6 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
 
   const isPlaying = status === 'playing'
   const isLoading = status === 'loading'
-
-  const [isLiked, setIsLiked] = useState(false)
 
   // 进度条拖拽与悬浮
   const trackRef = useRef<HTMLDivElement>(null)
@@ -159,6 +161,12 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
     const ratio = Math.min(1, Math.max(0, (rect.bottom - e.clientY) / rect.height))
     setIsVolumeDragging(true)
     setVolume(Math.round(ratio * 100))
+  }
+
+  const handleCollect = () => {
+    if (!currentSong) return
+    if (!useAuthStore.getState().user) { toast.error('请先登录'); return }
+    useUserPlaylistStore.getState().collectSong(currentSong)
   }
 
   // 通用图标按钮样式
@@ -336,12 +344,14 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
             {qualityLabel(quality, degraded)}
           </button>
           <button
-            className={`${iconBtn} ${isLiked ? 'text-red-400' : ''}`}
-            onClick={() => setIsLiked((v) => !v)}
-            aria-label="收藏"
-            title="收藏"
+            type="button"
+            className={`${iconBtn} disabled:cursor-not-allowed disabled:opacity-50`}
+            onClick={handleCollect}
+            disabled={!currentSong}
+            aria-label={currentSong ? `收藏到歌单：${currentSong.name}` : '收藏到歌单'}
+            title="收藏到歌单"
           >
-            <Heart size={18} fill={isLiked ? 'currentColor' : 'none'} />
+            <SquarePlus size={18} />
           </button>
           <button
             className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"

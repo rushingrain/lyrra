@@ -58,7 +58,7 @@ export function ContextMenu({ position, actions, onClose }: {
       {actions.map(({ icon: Icon, ...action }) => <button
         key={action.label} type="button" role="menuitem" disabled={action.disabled}
         onClick={() => { onClose(); action.onSelect() }}
-        className="flex w-full cursor-pointer items-center gap-2.5 rounded px-3 py-2 text-left text-sm font-normal text-[var(--color-text-secondary)] outline-none hover:bg-[color-mix(in_srgb,var(--color-text-secondary)_4%,transparent)] focus-visible:outline-1 focus-visible:outline-[var(--color-border)] disabled:cursor-not-allowed disabled:opacity-40"
+        className="flex w-full cursor-pointer items-center gap-2.5 rounded px-3 py-2 text-left text-sm font-normal text-[var(--color-text-secondary)] outline-none hover:bg-[var(--color-surface)] focus-visible:outline-1 focus-visible:outline-[var(--color-border)] disabled:cursor-not-allowed disabled:opacity-40"
       >
         {Icon && <Icon size={16} className="shrink-0" aria-hidden="true" />}
         <span>{action.label}</span>

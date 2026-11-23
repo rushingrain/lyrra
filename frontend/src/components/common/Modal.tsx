@@ -36,7 +36,7 @@ export function Modal({ title, onClose, busy = false, initialFocusRef, children 
       <div className="p-6" onClick={(event) => event.stopPropagation()}>
         <div className="mb-5 flex items-center justify-between gap-4">
           <h2 ref={titleRef} id={titleId} tabIndex={-1} className="text-lg font-semibold outline-none">{title}</h2>
-          <button type="button" aria-label="关闭" disabled={busy} onClick={onClose} className="cursor-pointer rounded p-1 hover:bg-[var(--color-surface)] disabled:opacity-50"><X size={18} /></button>
+          <button type="button" aria-label="关闭" disabled={busy} onClick={onClose} className="cursor-pointer rounded p-1 disabled:opacity-50"><X size={18} /></button>
         </div>
         {children}
       </div>

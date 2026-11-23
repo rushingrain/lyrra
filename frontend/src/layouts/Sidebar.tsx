@@ -50,9 +50,9 @@ function NavItem({ icon, label, to }: NavItemProps) {
     <NavLink
       to={to}
       className={({ isActive }) =>
-        `flex items-center rounded-lg text-sm font-medium transition-all duration-200 gap-3 ml-3 mr-3 py-2 px-3 ${isActive
+        `flex items-center rounded-lg text-sm font-normal transition-all duration-200 gap-3 ml-3 mr-3 py-2 px-3 ${isActive
           ? 'text-white bg-[var(--color-accent)]'
-          : 'text-[var(--color-text-secondary)] bg-transparent hover:bg-gray-200'
+          : 'text-[var(--color-text-secondary)] bg-transparent hover:bg-gray-200/60'
         }`
       }
     >
@@ -108,14 +108,14 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
   return (
     <>
     <div className="flex flex-col px-2 py-2">
-      <div className="flex items-center justify-between px-3 mx-3">
-        <span className="text-xs font-medium text-[var(--color-text-secondary)]">
+      <div className="flex items-center justify-between px-2 mx-3">
+        <span className="text-xs font-normal text-[var(--color-text-secondary)]">
           {title}
         </span>
         <div className="flex items-center gap-0.5">
           {showCreate && (
             <button
-              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-[var(--color-text-secondary)] transition-colors hover:bg-gray-200"
+              className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-[var(--color-text-secondary)] transition-colors"
               aria-label="新建歌单"
               onClick={() => {
                 if (!user) { toast.error('请先登录'); return }
@@ -126,7 +126,7 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
             </button>
           )}
           <button
-            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-[var(--color-text-secondary)] transition-colors hover:bg-gray-200"
+            className="flex h-6 w-6 cursor-pointer items-center justify-center rounded text-[var(--color-text-secondary)] transition-colors"
             onClick={() => setCollapsed((v) => !v)}
             aria-label={collapsed ? '展开' : '收起'}
           >
@@ -135,10 +135,10 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
         </div>
       </div>
       {!collapsed && (
-        <div className="mt-2">
+        <div className="mx-3 mt-2 flex flex-col gap-1">
           {playlists.map((pl) => {
             const className =
-              'flex w-[calc(100%-1.5rem)] items-center gap-3 rounded-lg px-3 py-1 mx-3 text-left text-xs transition-colors'
+              'flex min-w-0 w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-xs transition-colors'
             const content = (
               <>
                 {pl.isDefault === 1 || pl.isDefault === 2 ? (
@@ -157,7 +157,7 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
                     <Music size={14} className="text-[var(--color-text-secondary)]" />
                   </div>
                 )}
-                <span className="truncate">{pl.name}</span>
+                <span className="min-w-0 flex-1 truncate text-[13px]">{pl.name}</span>
               </>
             )
 
@@ -166,7 +166,7 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
                 <button
                   key={pl.id}
                   type="button"
-                  className={`${className} cursor-pointer text-[var(--color-text-secondary)] hover:bg-gray-200`}
+                  className={`${className} cursor-pointer text-[var(--color-text-secondary)] hover:bg-gray-200/60`}
                   onClick={() => toast.error('暂无法获取该歌单歌曲')}
                   onContextMenu={(event) => { event.preventDefault(); setMenu({ playlist: pl, position: { x: event.clientX, y: event.clientY } }) }}
                 >
@@ -183,7 +183,7 @@ function PlaylistSection({ title, playlists, showCreate = false }: PlaylistSecti
                 onContextMenu={(event) => { event.preventDefault(); setMenu({ playlist: pl, position: { x: event.clientX, y: event.clientY } }) }}
                 className={({ isActive }) => `${className} ${isActive
                   ? 'text-white bg-[var(--color-accent)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-gray-200'
+                  : 'text-[var(--color-text-secondary)] hover:bg-gray-200/60'
                 }`}
               >
                 {content}
