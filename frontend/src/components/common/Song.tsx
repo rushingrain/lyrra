@@ -6,7 +6,7 @@ import { Tag } from '@/components/common/Tag'
 
 interface SongProps {
   song: SongType
-  /** sm: 表格行内（48px 封面）；md: 卡片网格（60px 封面） */
+  /** sm: 表格行内（44px 封面）；md: 卡片网格（56px 封面） */
   size?: 'sm' | 'md'
   className?: string
   /** 传入即开启播放：点击封面触发（同一首再点由调用方决定播放/暂停） */
@@ -19,11 +19,11 @@ interface SongProps {
 }
 
 const PRESETS = {
-  sm: { root: 'gap-3', cover: 'h-12 w-12', meta: 'mt-0.5' },
-  md: { root: 'gap-4', cover: 'h-15 w-15', meta: 'mt-1.5' },
+  sm: { root: 'min-h-12 gap-3', cover: 'h-11 w-11', meta: 'mt-0.5' },
+  md: { root: 'min-h-15 gap-4', cover: 'h-14 w-14', meta: 'mt-1.5' },
 } as const
 
-/** 歌曲条目：封面 + 标题 + 元信息行（音质/原唱标签 + 歌手）+ 风格标签 */
+/** 歌曲条目：封面 + 标题 + 元信息行（风格标签 + 音质 + 原唱 + 歌手） */
 export function Song({
   song,
   size = 'sm',
@@ -60,20 +60,16 @@ export function Song({
       </div>
       <div className="min-w-0 flex-1">
         <p className={`truncate text-sm text-[15px] ${titleColor}`}>{song.name}</p>
-        <div className={`${preset.meta} flex min-w-0 items-center gap-1.5 text-[13px] text-[var(--color-text-secondary)]`}>
-          {song.quality && <Tag variant="outline">{song.quality}</Tag>}
-          {song.isOriginal && <Tag variant="solid">原唱</Tag>}
-          <span className="min-w-0 truncate text-[13px]">{song.artist}</span>
+        <div className={`${preset.meta} flex h-4 min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-[13px] leading-4 text-[var(--color-text-secondary)]`}>
+          {song.tags?.map((tag) => (
+            <span key={tag} className="inline-flex h-4 shrink-0 items-center rounded-xs bg-[var(--color-accent-bg)] px-px py-0 text-[9px] leading-none text-[var(--color-accent)]">
+              {tag}
+            </span>
+          ))}
+          {song.quality && <Tag variant="outline" className="inline-flex h-4 items-center px-0.5 py-0">{song.quality}</Tag>}
+          {song.isOriginal && <Tag variant="solid" className="inline-flex h-4 items-center px-0.5 py-0">原唱</Tag>}
+          <span className="min-w-0 truncate">{song.artist}</span>
         </div>
-        {song.tags && song.tags.length > 0 && (
-          <div className={`${preset.meta} flex flex-wrap items-center gap-1.5`}>
-            {song.tags.map((tag) => (
-              <span key={tag} className="shrink-0 rounded bg-[var(--color-accent-bg)] px-1 py-0.5 text-[10px] leading-relaxed text-[var(--color-accent)]">
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
       {actions && (
         <div className="pointer-events-none shrink-0 opacity-0 transition-opacity group-hover/song:pointer-events-auto group-hover/song:opacity-100 group-hover/song-row:pointer-events-auto group-hover/song-row:opacity-100 group-focus-within/song:pointer-events-auto group-focus-within/song:opacity-100 focus-within:pointer-events-auto focus-within:opacity-100 has-[[aria-expanded=true]]:pointer-events-auto has-[[aria-expanded=true]]:opacity-100">

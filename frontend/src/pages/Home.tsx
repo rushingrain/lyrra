@@ -83,7 +83,7 @@ export default function Home() {
         <BannerCarousel banners={banners} />
       </Section>
       <Section title="歌单推荐" onClick={() => navigate('/playlists')}>
-        <PlaylistList minWidth={116} playlists={playlists} />
+        <PlaylistList minWidth={106} maxWidth={140} ratio={0.11} playlists={playlists} />
       </Section>
       {user && (
         <Section title="每日推荐" onClick={() => navigate('/songs/daily')}>

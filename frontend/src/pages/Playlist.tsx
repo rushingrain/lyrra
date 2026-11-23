@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
-import { BookmarkCheck, BookmarkPlus, Pencil, SquarePen } from 'lucide-react'
+import { BookmarkCheck, BookmarkPlus, SquarePen } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { SongCollectionDetail } from '@/components/business/SongCollectionDetail'
 import { OwnedPlaylistContext } from '@/components/business/SongActions'
@@ -77,7 +77,7 @@ export default function Playlist() {
         cover={isDefault === 1 || isDefault === 2 ? <DefaultPlaylistCover isDefault={isDefault} /> : undefined}
         coverUrl={playlist?.coverUrl}
         title={playlist?.name}
-        titleAction={editable ? <button type="button" title="编辑歌单信息" aria-label="编辑歌单信息" onClick={() => navigate(`/songs/playlist/${encodeURIComponent(globalId)}/edit`)} className="shrink-0 cursor-pointer rounded p-1 text-[var(--color-text-secondary)] hover:bg-[var(--color-surface)] hover:text-[var(--color-accent)]"><SquarePen size={16} /></button> : undefined}
+        titleAction={editable ? <button type="button" title="编辑歌单信息" aria-label="编辑歌单信息" onClick={() => navigate(`/songs/playlist/${encodeURIComponent(globalId)}/edit`)} className="shrink-0 cursor-pointer rounded p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"><SquarePen size={16} /></button> : undefined}
         actions={!membership.loading && !membership.error && (!own || own.type === 1) ? <button
           type="button" title={own?.type === 1 ? '取消收藏歌单' : '收藏歌单'} aria-label={own?.type === 1 ? '取消收藏歌单' : '收藏歌单'}
           disabled={collecting || membership.loading || Boolean(membership.error)}
