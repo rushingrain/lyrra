@@ -171,7 +171,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
 
   // 通用图标按钮样式
   const iconBtn =
-    'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]'
+    'flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-[var(--color-text-secondary)] transition-colors enabled:hover:text-[var(--color-text-primary)]'
 
   return (
     <div className="flex h-full w-full flex-col">
@@ -236,7 +236,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
             </p>
           </div>
           <button
-            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors enabled:hover:text-[var(--color-text-primary)]"
             aria-label="收藏"
             title="收藏数"
             disabled
@@ -245,7 +245,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
             <span>{favoriteText}</span>
           </button>
           <button
-            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
+            className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs text-[var(--color-text-secondary)] transition-colors enabled:hover:text-[var(--color-text-primary)]"
             aria-label="评论"
             title="评论数"
             disabled
@@ -295,7 +295,7 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
             <SkipBack size={20} fill="currentColor" />
           </button>
           <button
-            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors hover:bg-[var(--color-accent-hover)] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-on-accent)] transition-colors enabled:hover:text-[color-mix(in_srgb,var(--color-on-accent)_80%,#000)] disabled:cursor-not-allowed disabled:opacity-50"
             onClick={toggle}
             disabled={!currentSong || isLoading}
             aria-label={isPlaying ? '暂停' : '播放'}
@@ -318,8 +318,10 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
           </button>
 
           <button
-            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors hover:bg-[var(--color-surface)] ${
-              playlistOpen ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-secondary)]'
+            className={`flex h-8 w-8 cursor-pointer items-center justify-center rounded-md transition-colors ${
+              playlistOpen
+                ? 'text-[var(--color-accent)] enabled:hover:text-[var(--color-accent-hover)]'
+                : 'text-[var(--color-text-secondary)] enabled:hover:text-[var(--color-text-primary)]'
             }`}
             onClick={onTogglePlaylist}
             data-playlist-toggle
@@ -334,12 +336,13 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
         {/* 右：播放列表 + 音质 + 收藏 + 桌面歌词 + 音量 + 更多 */}
         <div className="flex w-[340px] items-center justify-end gap-1">
           <button
-            className="flex h-7 cursor-pointer items-center rounded px-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
+            className="flex h-7 cursor-pointer items-center rounded px-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition-colors enabled:hover:text-[var(--color-text-primary)]"
             title={
               quality
                 ? `当前音质：${qualityLabel(quality, degraded)}${degraded ? '（上游把该档位降级成了其它文件）' : ''}`
                 : '尚未播放，音质选择待接入'
             }
+            disabled
           >
             {qualityLabel(quality, degraded)}
           </button>
@@ -354,7 +357,8 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
             <SquarePlus size={18} />
           </button>
           <button
-            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-surface)]"
+            // className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-md text-base font-medium text-[var(--color-text-secondary)] transition-colors hover:text-[var(--color-text-primary)]"
+            className={iconBtn}
             aria-label="桌面歌词"
             title="桌面歌词"
             disabled
@@ -373,30 +377,34 @@ export function MiniPlayer({ playlistOpen, onTogglePlaylist, lyricsOpen, onToggl
               <VolumeIcon size={18} />
             </button>
             <div
-              className={`absolute bottom-full left-1/2 z-30 -translate-x-1/2 flex-col items-center gap-2 rounded-lg bg-[var(--color-background)] p-2 shadow-lg ${isVolumeDragging ? 'flex' : 'hidden group-hover:flex'
+              className={`absolute bottom-full left-1/2 z-30 -translate-x-1/2 flex-col items-center pb-2 ${isVolumeDragging ? 'flex' : 'hidden group-hover:flex'
                 }`}
+              style={{ filter: 'drop-shadow(0 -2px 4px rgb(0 0 0 / 0.08)) drop-shadow(0 6px 10px rgb(0 0 0 / 0.12))' }}
             >
-              <div
-                className="relative flex h-24 w-6 cursor-pointer items-center justify-center"
-                onMouseDown={handleVolumeMouseDown}
-              >
+              <div className="flex flex-col items-center gap-2 rounded-lg bg-[var(--color-background)] p-2">
                 <div
-                  ref={volumeTrackRef}
-                  className="relative h-full w-1 rounded-full bg-[var(--color-border)]"
+                  className="relative flex h-24 w-6 cursor-pointer items-center justify-center"
+                  onMouseDown={handleVolumeMouseDown}
                 >
-                  {/* 已调节音量（从下往上） */}
                   <div
-                    className="absolute bottom-0 left-0 w-full rounded-full bg-[var(--color-accent)]"
-                    style={{ height: `${volume}%` }}
+                    ref={volumeTrackRef}
+                    className="relative h-full w-1 rounded-full bg-[var(--color-border)]"
                   >
-                    <div className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent)] shadow" />
+                    {/* 已调节音量（从下往上） */}
+                    <div
+                      className="absolute bottom-0 left-0 w-full rounded-full bg-[var(--color-accent)]"
+                      style={{ height: `${volume}%` }}
+                    >
+                      <div className="absolute left-1/2 top-0 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--color-accent)] shadow" />
+                    </div>
                   </div>
                 </div>
+                {/* 百分比 */}
+                <span className="text-[10px] tabular-nums text-[var(--color-text-secondary)]">
+                  {volume}%
+                </span>
               </div>
-              {/* 百分比 */}
-              <span className="text-[10px] tabular-nums text-[var(--color-text-secondary)]">
-                {volume}%
-              </span>
+              <span aria-hidden="true" className="pointer-events-none absolute bottom-0 left-1/2 h-2 w-3 -translate-x-1/2 bg-[var(--color-background)] [clip-path:polygon(0_0,100%_0,50%_100%)]" />
             </div>
           </div>
 
